@@ -3,7 +3,7 @@
 ## 阶段状态
 
 - [x] 阶段0 准备（总指挥）：git 仓库初始化、docs/SPEC.md、docs/IMPL_CONTRACT.md、Node20+pnpm10 环境
-- [ ] 阶段1 脚手架与规范
+- [x] 阶段1 脚手架与规范：lint/typecheck/test/build/e2e 全过零警告；截图 docs/screenshots/stage1-home.png
 - [ ] 阶段2 核心层（模型/命令/布局/IO/单元测试）
 - [ ] 阶段3 画布（与阶段4并行）
 - [ ] 阶段4 界面外壳（与阶段3并行）
