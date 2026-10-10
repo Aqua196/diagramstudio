@@ -48,7 +48,7 @@ core/       纯 TS：model · commands(命令+补丁历史) · layout · io · c
 
 **① 一次拖动 → 可撤销命令**：拖动期间只改 React Flow 内部态（文档不动）→ 松手 `execute(setNodePositions(...))` → `produceWithPatches` 收补丁入栈 → undo 回放 `inversePatches`。见 `src/store/documentStore.ts`、`src/core/commands/history.ts`。
 
-**② 导出图片**：画布容器 DOM → `html-to-image` 的 `toPng/toSvg`（`ds-export-exclude` 过滤手柄等交互件）→ 可选 `frameSvg` 图框标题栏叠加 → `<a download>` 落盘。见 `src/core/io/export.ts`、`titleblock.ts`。
+**② 导出图片**：画布容器 DOM → `html-to-image` 的 `toPng/toSvg`（`ds-export-exclude` 过滤手柄等交互件）→ 可选 `frameSvg` 图框标题栏叠加 → `<a download>` 落盘。见 `src/io/export.ts`、`titleblock.ts`。
 
 **③ 协作同步**：`join(room)` 建 `WebsocketProvider` → 本地 `execute` 后 `computeDocDiff` 在一次 `ydoc.transact` 写 nodes/edges/meta 三个 Y.Map → 服务端 y-protocols 广播 → 对端 `observeDeep` → `setDoc(remote:true)`（不进历史、不回播）。光标走 awareness，50ms 节流。见 `src/core/collab/*.ts`、`src/store/collabStore.ts`、`server/dev.mjs`。
 

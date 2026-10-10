@@ -271,7 +271,7 @@ sequenceDiagram
 2. **可换**：画布换成别的库、协作换成别的协议时 core 不动（`CollabAdapter`/`ShapeDef<R>` 泛型已经把 React/yjs 类型挡在边界外）。
 3. **可控**：core 对 UI 零了解，`EV.*` 事件名也是纯字符串常量（`events.ts` 不引 DOM），发不发事件由 features 决定。
 
-> 当前已知违例：`src/core/io/export.ts` 直接 import 了 `html-to-image`，lint 报 1 个 error——按契约该 DOM 截图调用应上移到 `features/io`，core 侧只保留文本类导出。该问题记录在 `docs/TEST_REPORT.md` 已知缺陷。
+> 当前已知违例：`src/io/export.ts` 直接 import 了 `html-to-image`，lint 报 1 个 error——按契约该 DOM 截图调用应上移到 `features/io`，core 侧只保留文本类导出。该问题记录在 `docs/TEST_REPORT.md` 已知缺陷。
 
 ## 9. 跨模块通信
 
