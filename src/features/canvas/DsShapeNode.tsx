@@ -26,6 +26,7 @@ function DsShapeNode({ id, data, selected, width, height, dragging }: NodeProps)
   const editing = useCanvasStore((s) => s.editingNodeId === id)
   const isDropTarget = useCanvasStore((s) => s.dropTargetId === id)
   const execute = useDocumentStore((s) => s.execute)
+  const doc = useDocumentStore((s) => s.doc)
 
   // 渲染期尺寸以 RF 实测为准（resize 拖动中即时反馈），文档尺寸是兜底
   const liveNode: DiagramNode = useMemo(
@@ -37,8 +38,8 @@ function DsShapeNode({ id, data, selected, width, height, dragging }: NodeProps)
   )
 
   const ctx: ShapeRenderContext = useMemo(
-    () => ({ editing, dispatch: execute }),
-    [editing, execute],
+    () => ({ editing, dispatch: execute, doc }),
+    [editing, execute, doc],
   )
 
   const shape = plugin.shapes.find((s) => s.kind === node.kind)
