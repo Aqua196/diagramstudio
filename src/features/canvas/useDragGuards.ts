@@ -74,12 +74,33 @@ export function useDragGuards(doc: DiagramDoc, plugin: DiagramPlugin, setNodes: 
         return
       }
     }
+    // RF 上报的 node.position 是未吸附的原始拖拽坐标；与拖动中一致地补算吸附偏移，
+    // 否则松手会写回偏一格的位置（视觉位置会往回跳）
+    const dn = (node.data as FlowNodeData).node
+    const res = computeSnap(
+      { x: node.position.x, y: node.position.y, w: dn.size.w, h: dn.size.h },
+      othersRef.current,
+    )
+    const moved = new Set(dragNodes.map((n) => n.id))
     const positions: Record<string, Point> = {}
-    for (const n of dragNodes) positions[n.id] = { x: n.position.x, y: n.position.y }
+    for (const n of dragNodes) {
+      positions[n.id] = moved.has(n.id)
+        ? { x: n.position.x + res.dx, y: n.position.y + res.dy }
+        : n.position
+    }
+    if (res.dx !== 0 || res.dy !== 0) {
+      setNodes((ns) =>
+        ns.map((n) =>
+          moved.has(n.id)
+            ? { ...n, position: { x: n.position.x + res.dx, y: n.position.y + res.dy } }
+            : n,
+        ),
+      )
+    }
     if (Object.keys(positions).length > 0) {
       useDocumentStore.getState().execute(setNodePositions(positions, '移动元素'))
     }
-  }, [])
+  }, [setNodes])
 
   return { onNodeDragStart, onNodeDrag, onNodeDragStop }
 }
