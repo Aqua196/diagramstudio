@@ -47,6 +47,33 @@ export function selectFlowEdges(doc: DiagramDoc, plugin: DiagramPlugin): Edge<Fl
       zIndex: 1000,
     })
   }
+  // 思维导图等以 node.data.parentId 表达父子关系的插件：派生只读连接线
+  const d = plugin.edgeDefaults
+  for (const id of doc.zOrder) {
+    const node = doc.nodes[id]
+    const parentId = node?.data?.parentId
+    if (!node || typeof parentId !== 'string' || !doc.nodes[parentId]) continue
+    if (hidden.has(id) || hidden.has(parentId)) continue
+    const edge: DiagramEdge = {
+      id: `__parent_${id}`,
+      source: parentId,
+      target: id,
+      routing: d?.routing ?? 'bezier',
+      arrowStart: 'none',
+      arrowEnd: 'none',
+      style: d?.style ?? { stroke: 'ink-2', strokeWidth: 1.5, dash: 'solid' },
+    }
+    out.push({
+      id: edge.id,
+      type: 'dsEdge',
+      source: edge.source,
+      target: edge.target,
+      data: { edge },
+      selectable: false,
+      focusable: false,
+      zIndex: 999,
+    })
+  }
   return out
 }
 

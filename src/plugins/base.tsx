@@ -84,7 +84,7 @@ function makeBasePlugin(type: DiagramType, layout: DiagramPlugin['layout']): Dia
       routing: 'bezier',
       arrowStart: 'none',
       arrowEnd: 'arrow',
-      style: { stroke: 'ink', strokeWidth: 1.5, dash: 'solid' },
+      style: { stroke: 'ink-2', strokeWidth: 1.5, dash: 'solid' },
     },
     layout,
     templates: [template],

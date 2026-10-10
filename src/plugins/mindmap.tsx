@@ -122,7 +122,7 @@ export const mindmapPlugin: DiagramPlugin<ReactNode> = {
     routing: 'bezier',
     arrowStart: 'none',
     arrowEnd: 'none',
-    style: { stroke: 'ink', strokeWidth: 1.5, dash: 'solid' },
+    style: { stroke: 'ink-2', strokeWidth: 1.5, dash: 'solid' },
   },
   layout: mindmapLayout,
   autoLayoutOnChange: true,
