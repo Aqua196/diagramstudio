@@ -22,6 +22,8 @@ export interface FrameOptions {
   margin: number
   info: TitleBlockInfo
   colors: FrameColors
+  /** 可选：完整 <svg …> 字串，原样嵌入外框内侧（SVG 导出时放图形内容） */
+  content?: string
 }
 
 export const TITLE_BLOCK_W = 200
@@ -35,7 +37,7 @@ function esc(s: string): string {
  * 返回覆盖整幅导出画面的 <svg>：外边框 + 右下角工程标题栏。
  * width/height 是最终导出像素尺寸（含 margin）。
  */
-export function frameSvg({ width, height, margin, info, colors }: FrameOptions): string {
+export function frameSvg({ width, height, margin, info, colors, content }: FrameOptions): string {
   const bx = margin / 2
   const by = margin / 2
   const bw = width - margin
@@ -60,7 +62,8 @@ export function frameSvg({ width, height, margin, info, colors }: FrameOptions):
     <text x="${x + 6}" y="${y + h / 2 + 11}" font-size="${valueSize}" font-weight="600" fill="${colors.ink}" font-family="'Barlow Semi Condensed', Barlow, 'PingFang SC', 'Microsoft YaHei', sans-serif">${esc(value)}</text>`
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-  <rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="none" stroke="${colors.ink}" stroke-width="1.2"/>
+  ${content ? `<g transform="translate(${bx},${by})">${content}</g>` : ''}
+  <rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="none" stroke="${colors.ink}" stroke-width="1.2" pointer-events="none"/>
   <g>
     <rect x="${tx}" y="${ty}" width="${TITLE_BLOCK_W}" height="${TITLE_BLOCK_H}" fill="${colors.panel}" stroke="${colors.ink}" stroke-width="1"/>
     ${cell(tx, ty, TITLE_BLOCK_W, rowH, '图名', info.title)}
