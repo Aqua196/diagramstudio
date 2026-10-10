@@ -8,6 +8,8 @@ export interface ShapeRenderContext {
   editing: boolean
   /** 行内编辑（如 ER 字段）提交命令的唯一通道 */
   dispatch: (cmd: Command) => void
+  /** 当前文档（形状做结构性渲染时用，如判断有无子节点） */
+  doc: DiagramDoc
 }
 
 export interface ShapeDef<R = unknown> {

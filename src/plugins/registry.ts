@@ -17,7 +17,15 @@ export function getPlugin(type: DiagramType): ReactPlugin {
   return registry.get(type) ?? basePlugin(type)
 }
 
-// 预置基座插件：保证阶段3/4 的开发期接口即真实接口
+// 预置基座插件：保证阶段3/4 的开发期接口即真实接口；完整插件实现覆盖同名条目
 registerPlugin(basePlugin('flowchart'))
 registerPlugin(basePlugin('mindmap'))
 registerPlugin(basePlugin('er'))
+
+import { erPlugin } from './er'
+import { flowchartPlugin } from './flowchart'
+import { mindmapPlugin } from './mindmap'
+
+registerPlugin(flowchartPlugin)
+registerPlugin(mindmapPlugin)
+registerPlugin(erPlugin)
