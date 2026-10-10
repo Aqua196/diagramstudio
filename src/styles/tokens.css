@@ -1,0 +1,39 @@
+/* 设计令牌：亮色「描图纸」/ 暗色「蓝图」。组件只许引用这些变量。 */
+:root {
+  --sheet: #f1f4f6;
+  --panel: #fafbfc;
+  --panel-sunken: #edf0f3;
+  --line: #d9dee4;
+  --ink: #1b2430;
+  --ink-2: #4b5664;
+  --ink-3: #6b7684;
+  --accent: #0b7a75;
+  --accent-wash: rgba(11, 122, 117, 0.1);
+  --danger: #b42318;
+  --grid-fine: rgba(27, 36, 48, 0.06);
+  --grid-coarse: rgba(27, 36, 48, 0.12);
+  /* 唯一一档弹出阴影：菜单/对话框共用 */
+  --shadow-pop: 0 6px 20px rgba(27, 36, 48, 0.14);
+  --radius-control: 4px;
+  --radius-pop: 8px;
+  --focus-ring: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent);
+  --dur-fast: 120ms;
+  --dur-layout: 300ms;
+}
+
+.dark {
+  --sheet: #0e2745;
+  --panel: #0b1f38;
+  --panel-sunken: #0f2a4a;
+  --line: #214a75;
+  --ink: #e6eef7;
+  --ink-2: #b4c6da;
+  --ink-3: #8ca5c0;
+  --accent: #4fd1c0;
+  --accent-wash: rgba(79, 209, 192, 0.12);
+  --danger: #f04438;
+  --grid-fine: #1b3f66;
+  --grid-coarse: #285585;
+  --shadow-pop: 0 6px 20px rgba(0, 0, 0, 0.45);
+  --focus-ring: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent);
+}
