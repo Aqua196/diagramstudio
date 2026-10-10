@@ -9,6 +9,7 @@
   --ink-3: #5d6875;
   --accent: #0b7a75;
   --accent-wash: rgba(11, 122, 117, 0.1);
+  --accent-ink: #ffffff;
   --danger: #b42318;
   --grid-fine: rgba(27, 36, 48, 0.06);
   --grid-coarse: rgba(27, 36, 48, 0.12);
@@ -31,6 +32,7 @@
   --ink-3: #8ca5c0;
   --accent: #4fd1c0;
   --accent-wash: rgba(79, 209, 192, 0.12);
+  --accent-ink: #0b1f38;
   --danger: #f04438;
   --grid-fine: #1b3f66;
   --grid-coarse: #285585;

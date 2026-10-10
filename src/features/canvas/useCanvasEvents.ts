@@ -61,7 +61,7 @@ export function useCanvasEvents(doc: DiagramDoc, plugin: DiagramPlugin, deps: De
           const d = docRef.current
           const p = pluginRef.current
           const nodeIds = p.expandDeletion ? p.expandDeletion(d, s.nodeIds) : s.nodeIds
-          if (copySelection(d, s.nodeIds)) {
+          if (copySelection(d, nodeIds)) {
             execute(deleteElements(nodeIds, s.edgeIds))
             selectIds([], [])
           }

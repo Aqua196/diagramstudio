@@ -4,7 +4,7 @@
 import { toSvg } from 'html-to-image'
 import { docToJson } from '@/core/io/serialize'
 import { docToMermaid } from '@/core/io/mermaid'
-import { frameSvg, type FrameColors } from '@/core/io/titleblock'
+import { frameSvg, TITLE_BLOCK_H, type FrameColors } from '@/core/io/titleblock'
 import type { DiagramDoc } from '@/core/model/types'
 
 function download(name: string, url: string): void {
@@ -50,6 +50,8 @@ export interface ComposeOptions {
 
 const GRID_FINE = 24
 const GRID_COARSE = 120
+const FRAME_MARGIN = 40
+const FRAME_GAP = 12
 
 function backgroundSvg(o: ComposeOptions): string {
   if (o.background === 'transparent') return ''
@@ -77,10 +79,11 @@ export function composeExportSvg(contentSvg: string, o: ComposeOptions): string 
   ${contentSvg}
 </svg>`
   if (!o.frame) return inner
+  // 底部额外预留标题栏高度 + 间隙，内容不会压到标题栏（R2）
   return frameSvg({
-    width: o.width + 40,
-    height: o.height + 40,
-    margin: 40,
+    width: o.width + FRAME_MARGIN,
+    height: o.height + FRAME_MARGIN + TITLE_BLOCK_H + FRAME_GAP,
+    margin: FRAME_MARGIN,
     info: o.frame,
     colors: o.colors,
     content: inner,
@@ -158,8 +161,8 @@ export async function exportPngFile(
 ): Promise<void> {
   const c = await captureContentSvg(element, o)
   const finalSvg = composeExportSvg(c.svg, { ...o, frame: o.frame ?? null })
-  const w = o.frame ? o.width + 40 : o.width
-  const h = o.frame ? o.height + 40 : o.height
+  const w = o.frame ? o.width + FRAME_MARGIN : o.width
+  const h = o.frame ? o.height + FRAME_MARGIN + TITLE_BLOCK_H + FRAME_GAP : o.height
   const url = await rasterize(finalSvg, w, h, o.scale ?? 2)
   download(`${doc.title}.png`, url)
 }

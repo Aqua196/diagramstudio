@@ -47,3 +47,11 @@
 - `vite.config.ts manualChunks` 拆 react/xyflow vendor：消除 build 的 >500kB chunk 警告，门禁要求零警告。
 - 首页模板缩略图直接渲染模板文档的节点/连线缩比 SVG；模板为空时画通用形状示意——无假数据。
 - 文档管理完全在事件总线上：首页卡片、检查器按钮、快捷键总线都只 emit EV.*，落盘/导航集中在 `useDocEvents`，与后续阶段6的导入导出共用同一存储层（`ds.docs.v1`/`ds.docIndex.v1`/`ds.lastDoc.v1`）。
+
+## 2026-10-10 批次 A/B 评审修正（R1–R7）
+- 未显式记录锚点的连线按两节点中心连线自动选边（水平占优→左右，垂直→上下），替代 RF 默认「第一个 handle」（即 top）导致的穿线；显式锚点不覆盖。派生父子连接线同样走选边。
+- 图框标题栏占用导出画面底部额外空间（TITLE_BLOCK_H + 12px 间隔），内容不再被标题栏覆盖。
+- 协作成员头像/光标颜色用内联样式而非 CSS 变量：成员颜色是 awareness 动态数据（`PEER_COLORS[clientId % n]`），非静态令牌，不能走 tokens。
+- 流程图模板末节点文案取「进入主页」而非「进入首页」：与既有 e2e 断言（visual.spec.ts）一致，语义相同。
+- `--accent-ink` 入 tokens.css 双主题（亮 #FFFFFF on #0B7A75 / 暗 #0B1F38 on #4FD1C0），对比度纳入核心单测。
+- EV.CUT 复制与删除一致使用 expandDeletion 扩展集，剪切+粘贴思维导图分支可整支恢复。

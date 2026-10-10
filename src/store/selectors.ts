@@ -31,6 +31,42 @@ export function selectFlowNodes(doc: DiagramDoc, plugin: DiagramPlugin): Node<Fl
   return out
 }
 
+export type EdgeSide = 'top' | 'right' | 'bottom' | 'left'
+
+/** 未显式记录锚点时按两节点中心连线选边：水平占优→左右，否则上下（R1，通用不分图类型） */
+export function pickEdgeSides(
+  s: { x: number; y: number; w: number; h: number },
+  t: { x: number; y: number; w: number; h: number },
+): { source: EdgeSide; target: EdgeSide } {
+  const dx = t.x + t.w / 2 - (s.x + s.w / 2)
+  const dy = t.y + t.h / 2 - (s.y + s.h / 2)
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    return dx >= 0 ? { source: 'right', target: 'left' } : { source: 'left', target: 'right' }
+  }
+  return dy >= 0 ? { source: 'bottom', target: 'top' } : { source: 'top', target: 'bottom' }
+}
+
+/** 文档边 → RF 边：显式锚点原样使用，缺省按节点中心自动选边 */
+function edgeHandles(
+  doc: DiagramDoc,
+  edge: DiagramEdge,
+): { sourceHandle?: string; targetHandle?: string } {
+  if (edge.sourceHandle && edge.targetHandle) {
+    return { sourceHandle: edge.sourceHandle, targetHandle: edge.targetHandle }
+  }
+  const s = doc.nodes[edge.source]
+  const t = doc.nodes[edge.target]
+  if (!s || !t) return {}
+  const sides = pickEdgeSides(
+    { x: s.position.x, y: s.position.y, w: s.size.w, h: s.size.h },
+    { x: t.position.x, y: t.position.y, w: t.size.w, h: t.size.h },
+  )
+  return {
+    sourceHandle: edge.sourceHandle ?? sides.source,
+    targetHandle: edge.targetHandle ?? sides.target,
+  }
+}
+
 export function selectFlowEdges(doc: DiagramDoc, plugin: DiagramPlugin): Edge<FlowEdgeData>[] {
   const hidden = plugin.hiddenNodeIds?.(doc) ?? new Set<string>()
   const out: Edge<FlowEdgeData>[] = []
@@ -41,8 +77,7 @@ export function selectFlowEdges(doc: DiagramDoc, plugin: DiagramPlugin): Edge<Fl
       type: 'dsEdge',
       source: edge.source,
       target: edge.target,
-      sourceHandle: edge.sourceHandle,
-      targetHandle: edge.targetHandle,
+      ...edgeHandles(doc, edge),
       data: { edge },
       zIndex: 1000,
     })
@@ -68,6 +103,7 @@ export function selectFlowEdges(doc: DiagramDoc, plugin: DiagramPlugin): Edge<Fl
       type: 'dsEdge',
       source: edge.source,
       target: edge.target,
+      ...edgeHandles(doc, edge),
       data: { edge },
       selectable: false,
       focusable: false,

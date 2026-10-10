@@ -41,3 +41,7 @@ function luminance(hex: string): number {
 
 /** 深色底上的文字色 / 浅色底上的文字色（与 tokens 一致，仅供测试与导出使用） */
 export const TEXT_ON = { light: '#1B2430', dark: '#E6EEF7' } as const
+
+/** 主题强调色与其上的文字色（与 tokens.css --accent/--accent-ink 一致） */
+export const ACCENT = { light: '#0B7A75', dark: '#4FD1C0' } as const
+export const ACCENT_INK = { light: '#FFFFFF', dark: '#0B1F38' } as const

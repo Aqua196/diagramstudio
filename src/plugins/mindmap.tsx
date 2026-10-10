@@ -18,11 +18,56 @@ import {
 const sh = zh.plugins.shapes
 const mm = zh.plugins.mindmap
 
+function CollapseBtn({ node, ctx }: { node: DiagramNode; ctx: ShapeRenderContext }) {
+  const d = mindData(node)
+  return (
+    <button
+      type="button"
+      className="ds-mind-collapse ds-export-exclude"
+      aria-label={d.collapsed ? mm.expand : mm.collapse}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation()
+        ctx.dispatch(
+          patchNode(node.id, { data: { ...d, collapsed: !d.collapsed } }, mm.toggleCollapse),
+        )
+      }}
+    >
+      {d.collapsed ? '+' : '−'}
+    </button>
+  )
+}
+
+function MindText({ node, ctx, accent }: { node: DiagramNode; ctx: ShapeRenderContext; accent: boolean }) {
+  const { w, h } = node.size
+  return (
+    <foreignObject x={8} y={2} width={w - 16} height={h - 6}>
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: node.style.fontSize,
+          fontWeight: accent || node.style.bold ? 700 : 400,
+          color: accent ? 'var(--accent-ink)' : 'var(--node-text)',
+          overflow: 'hidden',
+          textAlign: 'center',
+          pointerEvents: 'none',
+          wordBreak: 'break-word',
+        }}
+      >
+        {ctx.editing ? '' : node.text}
+      </div>
+    </foreignObject>
+  )
+}
+
 /** 节点渲染：圆角胶囊；有子节点时右侧挂折叠按钮（真 button，键盘可达） */
 function mindShape(accent: boolean) {
   return (node: DiagramNode, ctx: ShapeRenderContext): ReactNode => {
     const { w, h } = node.size
-    const d = mindData(node)
     const hasChildren = childrenOf(ctx.doc, node.id).length > 0
     return (
       <svg
@@ -51,46 +96,10 @@ function mindShape(accent: boolean) {
             opacity={0.35}
           />
         )}
-        <foreignObject x={8} y={2} width={w - 16} height={h - 6}>
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: node.style.fontSize,
-              fontWeight: accent || node.style.bold ? 700 : 400,
-              color: accent ? 'var(--accent-ink, #fff)' : 'var(--node-text)',
-              overflow: 'hidden',
-              textAlign: 'center',
-              pointerEvents: 'none',
-              wordBreak: 'break-word',
-            }}
-          >
-            {ctx.editing ? '' : node.text}
-          </div>
-        </foreignObject>
+        <MindText node={node} ctx={ctx} accent={accent} />
         {hasChildren && (
           <foreignObject x={w + 1} y={h / 2 - 8} width={16} height={16}>
-            <button
-              type="button"
-              className="ds-mind-collapse ds-export-exclude"
-              aria-label={d.collapsed ? mm.expand : mm.collapse}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation()
-                ctx.dispatch(
-                  patchNode(
-                    node.id,
-                    { data: { ...d, collapsed: !d.collapsed } },
-                    mm.toggleCollapse,
-                  ),
-                )
-              }}
-            >
-              {d.collapsed ? '+' : '−'}
-            </button>
+            <CollapseBtn node={node} ctx={ctx} />
           </foreignObject>
         )}
       </svg>

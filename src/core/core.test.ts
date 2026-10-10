@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { contrastRatio, NODE_COLORS, TEXT_ON } from './palette'
+import { ACCENT, ACCENT_INK, contrastRatio, NODE_COLORS, TEXT_ON } from './palette'
 import { validateDoc } from './model/schema'
 import { docToJson, jsonToDoc } from './io/serialize'
 import { dagreLayout } from './layout/dagre'
@@ -15,6 +15,10 @@ describe('配色对比度（SPEC：每对节点底色与文字色 ≥4.5:1）', 
       expect(contrastRatio(c.light, TEXT_ON.light)).toBeGreaterThanOrEqual(4.5)
       expect(contrastRatio(c.dark, TEXT_ON.dark)).toBeGreaterThanOrEqual(4.5)
     }
+  })
+  it('强调色上的文字色（--accent-ink）≥4.5:1', () => {
+    expect(contrastRatio(ACCENT.light, ACCENT_INK.light)).toBeGreaterThanOrEqual(4.5)
+    expect(contrastRatio(ACCENT.dark, ACCENT_INK.dark)).toBeGreaterThanOrEqual(4.5)
   })
 })
 

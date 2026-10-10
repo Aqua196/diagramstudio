@@ -26,16 +26,16 @@ function Feet({ x, y, position, card, stroke }: FeetProps) {
   const parts: string[] = []
   // 从节点向外：'1' 双竖线、'0' 小圆、'N' 三叉爪；端点旁补小号文字
   if (card === '1') {
-    parts.push('M-2,-6 L-2,6', 'M-7,-6 L-7,6')
+    parts.push('M-3,-7 L-3,7', 'M-8,-7 L-8,7')
   } else if (card === '0..1') {
-    parts.push('M-11,-6 L-11,6')
+    parts.push('M-12,-7 L-12,7')
   } else if (card === 'N') {
-    parts.push('M-11,0 L0,-7', 'M-11,0 L0,0', 'M-11,0 L0,7')
+    parts.push('M-12,0 L0,-8', 'M-12,0 L0,0', 'M-12,0 L0,8')
   } else {
-    parts.push('M-15,0 L-4,-7', 'M-15,0 L-4,0', 'M-15,0 L-4,7')
+    parts.push('M-16,0 L-4,-8', 'M-16,0 L-4,0', 'M-16,0 L-4,8')
   }
   const hasCircle = card === '0..1' || card === '0..N'
-  const circleCx = card === '0..1' ? -4 : -8
+  const circleCx = card === '0..1' ? -4.5 : -8.5
   return (
     <g
       transform={`translate(${x},${y}) rotate(${angle})`}
@@ -46,14 +46,14 @@ function Feet({ x, y, position, card, stroke }: FeetProps) {
         {parts.map((d) => (
           <path key={d} d={d} />
         ))}
-        {hasCircle && <circle cx={circleCx} cy={0} r={3} fill="var(--panel)" />}
+        {hasCircle && <circle cx={circleCx} cy={0} r={3.5} fill="var(--panel)" />}
       </g>
       <text
-        x={-30}
-        y={-8}
-        fontSize={9}
-        fill="var(--ink-3)"
-        transform={`rotate(${-angle} ${-30} -8)`}
+        x={-34}
+        y={-10}
+        fontSize={11}
+        fill="var(--ink-2)"
+        transform={`rotate(${-angle} ${-34} -10)`}
       >
         {card}
       </text>
