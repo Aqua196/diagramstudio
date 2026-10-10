@@ -22,7 +22,9 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
-    "dev:collab": "node server/dev.mjs"
+    "dev:collab": "node server/dev-all.mjs",
+    "collab:server": "node server/dev.mjs",
+    "build:e2e": "vite build --mode e2e --outDir dist-e2e"
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.1.1",

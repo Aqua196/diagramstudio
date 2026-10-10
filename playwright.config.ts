@@ -23,10 +23,26 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 720 } },
     },
   ],
-  webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: true,
-    timeout: 60_000,
-  },
+  // A7：dev 5173（常规用例）、dist-e2e 预览 4173（stage8 性能/无障碍）、协作 ws 1234
+  webServer: [
+    {
+      command: 'pnpm dev',
+      url: 'http://localhost:5173',
+      reuseExistingServer: true,
+      timeout: 60_000,
+    },
+    {
+      command:
+        'pnpm build:e2e && pnpm exec vite preview --outDir dist-e2e --port 4173 --strictPort',
+      url: 'http://localhost:4173',
+      reuseExistingServer: true,
+      timeout: 120_000,
+    },
+    {
+      command: 'pnpm collab:server',
+      url: 'http://localhost:1234',
+      reuseExistingServer: true,
+      timeout: 30_000,
+    },
+  ],
 })

@@ -63,6 +63,27 @@ describe('copySelection/buildPaste', () => {
     expect(p2.nodes[0].position.x).toBe(p1.nodes[0].position.x + PASTE_OFFSET)
   })
 
+  it('连续粘贴 3 次：id 全部互不相同且与原件不同，偏移 24/48/72（A4）', () => {
+    const { doc, a, b, e1 } = setup()
+    copySelection(doc, [a.id, b.id])
+    const allIds = new Set([a.id, b.id, e1.id])
+    const offsets: number[] = []
+    for (let i = 0; i < 3; i++) {
+      const p = buildPaste(doc)!
+      for (const n of p.nodes) {
+        expect(allIds.has(n.id)).toBe(false)
+        allIds.add(n.id)
+      }
+      for (const e of p.edges) {
+        expect(allIds.has(e.id)).toBe(false)
+        allIds.add(e.id)
+      }
+      const minX = Math.min(...p.nodes.map((n) => n.position.x))
+      offsets.push(minX)
+    }
+    expect(offsets).toEqual([24, 48, 72])
+  })
+
   it('未复制时 buildPaste 返回 null', () => {
     const { doc } = setup()
     expect(buildPaste(doc)).toBeNull()
@@ -77,5 +98,19 @@ describe('buildDuplicate', () => {
     expect(d).not.toBeNull()
     expect(d.nodes).toHaveLength(2)
     expect(d.nodes[0].position.x).toBe(a.position.x + 24)
+  })
+
+  it('Ctrl+D 副本：id 与原件互不相同且内部连线重映射（A4）', () => {
+    const { doc, a, b, e1 } = setup()
+    const d = buildDuplicate(doc, [a.id, b.id])
+    const origIds = new Set([a.id, b.id, e1.id])
+    const newIds = new Set(d.nodes.map((n) => n.id))
+    for (const n of d.nodes) expect(origIds.has(n.id)).toBe(false)
+    for (const e of d.edges) {
+      expect(origIds.has(e.id)).toBe(false)
+      expect(newIds.has(e.source)).toBe(true)
+      expect(newIds.has(e.target)).toBe(true)
+    }
+    expect(d.nodes[0].position.y).toBe(a.position.y + 24)
   })
 })
