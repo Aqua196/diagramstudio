@@ -61,9 +61,9 @@ core/       纯 TS：model · commands(命令+补丁历史) · layout · io · c
 ## 6. 质量保障
 
 - **类型**：TS strict；禁 `any` 与 `@ts-ignore`（确需绕过用带说明的 `@ts-expect-error`）。
-- **边界**：ESLint `no-restricted-imports` 强制 core 无 UI 依赖；`pnpm lint` 当前 1 个已知违例已记录（`io/export.ts` 引入 html-to-image，待上移到 features/io）。
-- **测试**：32 个 Vitest 单测（命令/历史/布局/校验/Mermaid/diff/对比度/i18n），Playwright e2e 按 SPEC 8 场景，axe 无障碍检查，1440×900 与 1280×720 双视口。
-- **覆盖率**：core 行覆盖阶段 2 实测 93.7%、当前 71.49%（新增 IO/协作文件待补测），门槛 80% 已在 `vitest.config.ts` 固化。
+- **边界**：ESLint `no-restricted-imports` 强制 core 无 UI 依赖；`pnpm lint` 0 error 0 warning。
+- **测试**：96 个 Vitest 单测（命令/历史/布局/校验/Mermaid/diff/yjs/persist/importer/对比度/i18n）；Playwright e2e 覆盖 SPEC §8 全部 8 场景（含双上下文协作同步），axe 无障碍检查，1440×900 与 1280×720 双视口。
+- **覆盖率**：core 行/语句 98.43%、分支 86.15%、函数 98.14%，门槛 80% 已在 `vitest.config.ts` 固化。
 - **一致性**：文档（本套 docs）与实现同仓演进；`docs/IMPL_CONTRACT.md` 冻结公共接口；`docs/DECISIONS.md` 记录取舍。
 
 ## 7. 设计模式 ↔ 文件速查
@@ -143,7 +143,7 @@ core/       纯 TS：model · commands(命令+补丁历史) · layout · io · c
     A：不违反——形状 `render` 拿到 `ctx.dispatch`，字段增删改都是 `patchNode` 命令进历史，只是命令的发起方从检查器换成了节点自己。`src/plugins/er.tsx`、`ShapeRenderContext.dispatch`
 
 20. **Q：测试覆盖了多少？哪里没覆盖？**
-    A：32 个单测覆盖命令/历史/布局/校验/Mermaid/diff/对比度；当前 core 行覆盖 71.49%（阶段 2 曾 93.7%），缺口集中在 `io/export`、`io/persist`、`collab/yjs` 这几个 IO/网络边界文件——如实记录在 TEST_REPORT §4，不算达标项。
+    A：96 个单测，core 行覆盖 98.43%。连网络边界也覆盖了——`collab/yjs` 用假 WebsocketProvider 驱动真 Y.Doc 与 Awareness，sync/pushLocal/observeDeep/awareness/节流全路径有断言。`plugin.ts`/`adapter.ts`/`command.ts`/`types.ts` 是纯类型声明文件无可执行行。TEST_REPORT §4。
 
 21. **Q：localStorage 方案有什么风险？**
     A：容量 ~5MB、清浏览器数据即丢、无多端同步——这是刻意的取舍（个人作业、离线优先）。索引（`DocMeta`）与正文分键存储，列表页不读全文；导出 JSON 是备份通道。`src/core/io/persist.ts`
@@ -159,15 +159,13 @@ core/       纯 TS：model · commands(命令+补丁历史) · layout · io · c
 **当前局限**（不掩饰）：
 
 - 协作是「演示级」：房间存内存、无鉴权、无持久化；同 key 冲突 LWW 整节点覆盖；协作撤销跳过已被删元素。
-- UI 层（features/）仍在实现中：画布交互、首页、检查器按计划推进；e2e 目前只有冒烟用例，性能专项数据未出。
-- 质量门有 2 处未达标：lint 1 个边界违例（`io/export.ts` 引 `html-to-image`）、core 行覆盖 71.49% < 80%；1 个计时敏感的 flaky 单测已定位根因。
 - Mermaid 仅为子集；不做 subgraph/样式指令。
 - 桌面优先：<1024 宽仅提示，无移动端/触屏精细适配。
+- 性能实测 500n/800e 局部视口 p95≈17.8ms 达标（PERFORMANCE.md），但全览最坏场景接近上限。
 
 **改进方向**：
 
-1. `io/export.ts` 的 DOM 截图调用上移到 `features/io`，core 只留文本导出——恢复 lint 零违例。
-2. 给 `io/persist`、`io/importer`、`collab/yjs`（mock provider）补单测，把行覆盖拉回 80%+。
-3. 修 flaky 测试：`executeCommand` 仅在业务补丁非空时更新 `updatedAt`。
-4. 协作升级：Hocuspocus/持久化后端、字段级冲突合并、可选昵称。
-5. 性能专项出数并挂入 CI；e2e 补齐 SPEC §8 全场景 + axe 门禁。
+1. 协作升级：Hocuspocus/持久化后端、字段级冲突合并、可选昵称。
+2. 虚拟滚动/分层渲染提升全览场景帧率余量。
+3. Mermaid 子集扩语法（subgraph、注释、更多节点形状）。
+4. 组件级单测补齐（features/ 目前靠 e2e 覆盖）。

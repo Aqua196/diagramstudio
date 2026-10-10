@@ -1,6 +1,6 @@
 // 持久化层：localStorage 读写的全部路径（SPEC §5，离线可用）。
 import { beforeEach, describe, expect, it } from 'vitest'
-import { createDoc, createNode } from '../model/factories'
+import { createNode } from '../model/factories'
 import {
   deleteDoc,
   duplicateDoc,

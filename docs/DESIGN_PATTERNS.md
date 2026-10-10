@@ -29,7 +29,7 @@
 
 ## 2. 策略/插件模式 Strategy & Plugin——三种图共享引擎
 
-**用到什么**：`DiagramPlugin` 接口把「图类型差异」变成可替换的策略对象：`shapes`、`edgeDefaults`、`layout(doc,opts)`、`keymap?`、`onDropOnNode?`、`autoLayoutOnChange?`、`hiddenNodeIds?`、`edgeFields?`、`templates`。
+**用到什么**：`DiagramPlugin` 接口把「图类型差异」变成可替换的策略对象：`shapes`、`edgeDefaults`、`layout(doc,opts)`、`keymap?`、`onDropOnNode?`、`autoLayoutOnChange?`、`hiddenNodeIds?`、`expandDeletion?`、`edgeFields?`、`templates`。其中 `expandDeletion(doc, nodeIds)` 让插件声明「删这些节点时还应连带哪些 id」（思维导图=整棵子树），画布的删除/剪切路径统一调用它；配合 `Command.mergeWithPrevious` 与 `documentStore.lastChange`，「加子主题+自动重排」可合并为一条历史（一次撤销同时回退两者）。
 
 **在哪**：
 

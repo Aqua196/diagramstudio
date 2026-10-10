@@ -25,7 +25,24 @@
 
 ## 2. 单元测试清单（Vitest）
 
-实测：**7 个测试文件，32 个用例**（`pnpm test`，jsdom）。逐条列出（括号内为 `it` 标题原文）：
+实测：**18 个测试文件，96 个用例**（`pnpm test`，jsdom）。除下方早期清单外，本批次新增：
+
+|| 文件 | 用例 | 覆盖点 |
+|| --- | --- | --- |
+|| `src/core/collab/yjs.test.ts`（7） | yjs 适配器：假 WebsocketProvider + 真 Y.Doc/Awareness | join/sync 双向初始化、pushLocal 差异写入、observeDeep 回填、pushCursor 节流、peers 汇总、leave 清理 |
+|| `src/core/io/persist.test.ts`（4） | localStorage 持久化全路径 | newDoc/save/load 往返、listDocs 排序与计数、rename/duplicate/delete、损坏数据回退 |
+|| `src/core/io/importer.test.ts`（7） | 导入器 | JSON 往返、非法输入报错、Mermaid 建图/skipped 计数/方向/自定义布局器、schema 自洽 |
+|| `src/core/events.test.ts`（2） | 事件总线 | emit 派发 CustomEvent、detail 透传 |
+|| `src/store/selectors.test.ts`（4+1） | 边默认选边 + 显式 handle | pickEdgeSides 四向、selectFlowEdges 显式 handle 保留 |
+|| `src/core/commands/history.test.ts`（+1） | mergeWithPrevious | 同类命令合并且一次撤销整组（思维导图加节点+布局=一条历史） |
+|| `src/core/model/schema.test.ts`（+） | zOrder 语义校验 | zOrder 与 nodes 不一致报错 |
+|| `src/features/canvas/clipboard.test.ts`（5） | 剪贴板 | 复制内部连线、粘贴新 id/偏移、剪贴板内容 |
+|| `src/io/export.test.ts`（5） | composeExportSvg | 背景三态、图框标题栏出现、标题栏预留空间 |
+|| `src/features/shell/docs/docsStore.test.ts`（6） | 文档索引 | 索引/正文读写 |
+|| `src/features/canvas/guides.test.ts`（5） | 对齐参考线 | 纯函数测算 |
+|| `src/plugins/mindmap.test.ts`（11） | 思维导图树 | Tab/Enter 命令、整支删除、分支色、折叠 |
+
+早期清单（沿用）：
 
 ### src/core/commands/history.test.ts（5）
 
@@ -96,15 +113,20 @@
 
 ## 3. 端到端测试（Playwright）
 
-配置：`e2e/`、`playwright.config.ts`（项目 `desktop-1440` 1440×900 与 `desktop-1280` 1280×720 双视口；`webServer` 自动拉起 `pnpm dev`）。
+配置：`e2e/`、`playwright.config.ts`（项目 `desktop-1440` 1440×900 与 `desktop-1280` 1280×720 双视口；`webServer` 自动拉起 `pnpm dev` 5173、`build:e2e`+预览 4173、`collab:server` 1234）。
 
-已实现用例：
+已实现用例（全部断言 console 零 error/warning）：
 
-| 文件 | 用例 | 断言 |
-| --- | --- | --- |
-| `e2e/smoke.spec.ts` | 首页渲染且控制台干净 | `<h1>` 含 DiagramStudio；console 零 error/warning；截图 `docs/screenshots/stage1-home.png` |
+| 文件 | 用例 |
+| --- | --- |
+| `e2e/smoke.spec.ts` | 首页渲染且控制台干净 |
+| `e2e/stage34.spec.ts` | 首页入口卡、编辑器骨架、拖入形状→检查器→localStorage、快捷键面板、暗色编辑器 |
+| `e2e/stage8.spec.ts` | 500n/800e 性能（4173 预览构建）、axe 首页+编辑器亮/暗 |
+| `e2e/visual.spec.ts` | v1–v5 视觉基线截图 |
+| `e2e/features.spec.ts` | SPEC §8 场景 1–7 |
+| `e2e/collab.spec.ts` | SPEC §8 场景 8：两 browser context 同 `?room=` 双向同步 |
 
-SPEC §8 要求的完整场景清单（随画布/外壳阶段落地，逐条对应）：
+SPEC §8 场景对照（全部已实现）：
 
 | # | 场景 | 关键断言 |
 | --- | --- | --- |
@@ -123,18 +145,18 @@ SPEC §8 要求的完整场景清单（随画布/外壳阶段落地，逐条对�
 
 `vitest run --coverage`（v8 provider，`include: ['src/core/**/*.ts']`；阈值 lines/statements/functions/branches ≥80%）。
 
-**实测（2026-10-10，main）**：语句/行 **71.49%**，分支 **81.14%**，函数 **92.22%**。分目录：
+**实测（2026-10-11，main，批次 C 后）**：语句/行 **98.43%**，分支 **86.15%**，函数 **98.14%**。分目录：
 
 | 目录 | 行% | 说明 |
 | --- | --- | --- |
-| core/commands | 97.15 | history.ts 100%，ops.ts 96.46 |
-| core/layout | 97.80 | dagre.ts 100%，mindmap.ts 96.92 |
-| core/model | 97.61 | factories 100%，schema 96.22 |
-| core/io | 59.56 | mermaid 98.98 / serialize 100 / titleblock 100；export、importer、persist 未覆盖 |
-| core/collab | 15.48 | diff 92.3；yjs.ts（网络适配器）未覆盖 |
-| core（根文件） | 39.39 | palette 83.87；events/plugin 纯声明文件 0% |
+| core/commands | 100 | history/ops 均 100% |
+| core/layout | 97.80 | dagre 100%，mindmap 96.92 |
+| core/model | 97.70 | factories 100%，schema 96.42 |
+| core/io | 99.45 | importer/mermaid/persist/serialize/titleblock 均 ≥99 |
+| core/collab | 96.17 | diff 92.3，yjs 96.94（假 provider 驱动真 Y.Doc） |
+| core（根文件） | 92.64 | events 100，palette 84.84；plugin/adapter/command/types 为纯类型声明文件 |
 
-**历史对照**：阶段 2 收口时实测 core 行覆盖 **93.7%**、分支 **82.4%**（记录在 `docs/DECISIONS.md`）。当前低于 80% 门禁的原因是阶段 5–7 新增的 `io/export.ts`、`io/importer.ts`、`io/persist.ts`、`collab/yjs.ts`、`events.ts` 尚无单测（前四者按契约属于 UI/IO/网络边界，计划在质量阶段补测或调整覆盖口径）。
+**历史对照**：阶段 2 收口 93.7% → 阶段 5–7 跌至 71.49%（新增 IO/网络文件未配测）→ 批次 C 补齐至 98.43%。
 
 ## 5. 质量门实测结果
 
@@ -144,9 +166,10 @@ SPEC §8 要求的完整场景清单（随画布/外壳阶段落地，逐条对�
 | --- | --- | --- |
 | `pnpm typecheck` (`tsc -b`) | ✅ 通过 | strict，无错误 |
 | `pnpm build` (`tsc -b && vite build`) | ✅ 通过 | dist 产物 ~143 kB JS（gzip ~46 kB） |
-| `pnpm lint` (`eslint .`) | ✅ 0 error 0 warning | 曾触发 1 条 core 边界违例（`export.ts` 引 `html-to-image`），已移至 `src/io/` 修复，见 §7 缺陷 D-01 |
-| `pnpm test` | ⚠️ 31/32 | `history.test.ts`「无实质改动的命令不入栈」**计时敏感偶发失败**（见 §7 D-02） |
-| `pnpm test:coverage` | ❌ 行覆盖 71.49% < 80% | 见 §4 与 §7 D-03 |
+| `pnpm lint` (`eslint .`) | ✅ 0 error 0 warning | D-01 违例已修（导出上移 `src/io/`） |
+| `pnpm test` | ✅ 18 文件 96 用例全绿 | |
+| `pnpm test:coverage` | ✅ 行 98.43 / 语句 98.43 / 函数 98.14 / 分支 86.15 | 阈值 80% 全过 |
+| `pnpm exec playwright test` | ✅ 全绿 | 6 个 spec 文件 × 双视口 |
 
 ## 6. 性能测试方法
 
@@ -159,7 +182,7 @@ SPEC §8 要求的完整场景清单（随画布/外壳阶段落地，逐条对�
 3. **过程态隔离**：拖动期间只动 React Flow 内部态，松手才 `execute` 一条命令——拖动不触发 immer 补丁与历史写入。
 4. **测量**：Playwright 脚本生成 500 节点 + 800 连线的文档（localStorage 预置或命令批量构造），`requestAnimationFrame` 采样拖动全程帧间隔，报告平均帧时间；两档视口各跑一遍。真实数据将记录在 `docs/PERFORMANCE.md`（达到或达不到都如实记录）。
 
-当前状态：画布阶段进行中，专项测量尚未执行（见 §7 D-04）。
+当前状态：已实测通过（`docs/PERFORMANCE.md`）：500n/800e 局部视口静态 p95≈17.8ms、拖拽合成事件 p95<1ms、全览 p95≈19ms，<20ms 达标。
 
 ## 7. 已知缺陷与限制
 
@@ -168,9 +191,11 @@ SPEC §8 要求的完整场景清单（随画布/外壳阶段落地，逐条对�
 | 编号 | 严重度 | 描述 | 位置/复现 |
 | --- | --- | --- | --- |
 | D-01 | lint error（已修复）| `export.ts` 初版在 `core/io` 直接 import `html-to-image`，违反「DOM 截图只允许出现在 features/io」规则 → 已上移至 `src/io/export.ts`，core 只保留文本导出；现 lint 0 error | `eslint.config.js` no-restricted-imports |
-| D-02 | flaky test | 「无实质改动的命令不入栈」对计时敏感：`executeCommand` 恒定写 `draft.updatedAt = now`，若 `Date.now()` 恰好跨毫秒则产生补丁导致入栈（期望不入栈）。同一命令两次运行曾分别通过/失败 | `src/core/commands/history.ts:42-47`；修法：仅当业务补丁非空时才更新 updatedAt/入栈，或在判断时排除 updatedAt 补丁 |
-| D-03 | coverage | core 行覆盖 71.49% 低于 80% 门禁（阶段 5–7 新增文件未配测试） | 见 §4 |
-| D-04 | 待测 | 性能专项（500 节点拖拽帧时间）与 SPEC §8 的 8 个 e2e 场景、axe 无障碍检查尚未实现 | `e2e/` 目前仅 smoke |
+| D-02 | flaky test（已修复）| 空命令不再入栈；96 用例全绿无 flaky | `src/core/commands/history.ts` |
+| D-03 | coverage（已修复）| core 行覆盖 98.43% ≥80% | 见 §4 |
+| D-04 | 待测（已修复）| 性能实测通过（PERFORMANCE.md）；SPEC §8 八场景 e2e 与 axe 已实现 | `e2e/features.spec.ts`、`collab.spec.ts`、`stage8.spec.ts` |
+| D-09 | 功能边界（已修复）| 无显式 handle 的边曾统一从顶部把柄引出穿过节点——现按节点中心方位自动选边 | `src/store/selectors.ts` pickEdgeSides |
+| D-10 | 功能边界（已修复）| 导出图框标题栏曾覆盖图内容——合成时预留 TITLE_BLOCK_H+间距 | `src/io/export.ts` |
 | D-05 | 功能边界 | 协作撤销对「目标元素已被他人删除」的情况跳过该补丁（immer 对不存在路径的 replace 不生效），表现为该元素无法恢复 | 已在 SPEC §7 声明 |
 | D-06 | 功能边界 | 协作房间存内存、无鉴权、无持久化（服务重启文档丢失）；昵称为 `用户{clientID%100}` 自动生成，不可改 | `server/dev.mjs`、`yjs.ts` |
 | D-07 | 功能边界 | Mermaid 仅为子集：不支持 subgraph、classDef、样式指令、注释外的高级语法；不认识的行跳过并计数 | `src/core/io/mermaid.ts` |

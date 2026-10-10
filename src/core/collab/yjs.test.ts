@@ -12,15 +12,16 @@ const h = vi.hoisted(() => {
 })
 
 vi.mock('y-websocket', async () => {
-  const Y2 = await import('yjs')
   const { Awareness: Aw } = await import('y-protocols/awareness')
   class FakeProvider {
     readonly awareness: InstanceType<typeof Aw>
-    readonly ydoc: InstanceType<typeof Y2.Doc>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    readonly ydoc: any
     destroyed = false
     private handlers = new Map<string, Handler[]>()
 
-    constructor(_url: string, _room: string, ydoc: InstanceType<typeof Y2.Doc>, _opts?: unknown) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    constructor(_url: string, _room: string, ydoc: any, _opts?: unknown) {
       this.ydoc = ydoc
       this.awareness = new Aw(ydoc)
       h.state.instances.push(this)

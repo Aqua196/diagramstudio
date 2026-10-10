@@ -51,3 +51,10 @@
 - 无障碍修复：--ink-3 #6b7684→#5d6875（WCAG ≥4.5）、形状按钮去掉非法 role=listitem、首页/编辑器补 main/h1 landmark——axe 扫描首页+编辑器×亮暗×双视口 0 violation
 - 性能（pnpm preview 生产构建）：500n/800e 局部视口静态 p95≈17.8ms、拖拽合成事件 p95<1ms、全览 p95≈19ms——断言 <20ms 通过；headless 帧率节流以 launch arg 解除；详见 docs/PERFORMANCE.md
 - measureFrame 改单 rAF 口径；EditorCanvas 暴露 __ds.rf 测试钩子；setGuides 等值守卫减少拖拽重渲染
+
+## 批次 C 收口 ✅ 2026-10-11
+- 评审修复 R1–R7：无 handle 边按节点中心自动选边（pickEdgeSides）；导出图框标题栏预留 TITLE_BLOCK_H；思维导图折叠钮 16px 圆形样式；新增 --accent-ink 令牌（双主题，对比度有单测）；ER 基数标注 11px + 鹰爪放大；EV.CUT 复制扩展集；DECISIONS 记录协作颜色内联与「进入主页」措辞
+- C1 拆分：TopBar/Inspector/HomePage/EditorCanvas/ExportDialog/DsEdge/ConnectMenu/erEntity 等全部组件 ≤200 行、函数 ≤50 行（erEntity→erEntity+erFields+erFieldButtons；EditorCanvas 接线→useCanvasWiring/useCollabCursor）
+- C2 覆盖：新增 yjs（假 provider）/persist/importer/events/selectors 等测试至 96 用例；core 行/语句 98.43%、函数 98.14%、分支 86.15%，四项阈值 80% 全过
+- C3 e2e：features.spec.ts（场景 1–7）+ collab.spec.ts（场景 8 双 context 同房同步），全断言 console 零 error/warning，双视口
+- C4 文档：README 脚本/目录更新、TEST_REPORT 真实数字、DEFENSE 局限与问答修正、DESIGN_PATTERNS 补 expandDeletion/mergeWithPrevious 钩子说明

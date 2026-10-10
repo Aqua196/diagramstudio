@@ -18,7 +18,7 @@
 - **自动布局**：dagre（流程/ER）、d3-hierarchy（思维导图），一条命令可撤销，300ms 过渡
 - **导入导出**：JSON（zod 校验中文报错）、PNG（1x/2x/3x）、SVG、可选工程制图「图框与标题栏」
 - **协作（可选）**：`pnpm dev:collab` + `?room=` 链接即房间，yjs CRDT 同步、协作者光标
-- **工程素质**：TS strict、core 层 ESLint 强制无 UI 依赖、32 个单测、明暗双主题、全键盘可达
+- **工程素质**：TS strict、core 层 ESLint 强制无 UI 依赖、96 个单测（core 行覆盖 98%）、SPEC §8 全 8 场景 e2e、明暗双主题、全键盘可达
 
 ## 技术栈
 
@@ -42,7 +42,9 @@ pnpm dev:collab     # 需要协作时：同时起协作服务 ws://127.0.0.1:123
 | --- | --- |
 | `pnpm dev` | Vite 开发服务（:5173） |
 | `pnpm dev:collab` | 协作服务（:1234）+ 前端 |
+| `pnpm collab:server` | 仅协作服务（:1234，e2e 协作用例用） |
 | `pnpm build` | `tsc -b` + `vite build` → `dist/` |
+| `pnpm build:e2e` | e2e 模式构建 → `dist-e2e/`（性能/无障碍用例预览源，含调试钩子） |
 | `pnpm preview` | 预览构建产物 |
 | `pnpm test` | Vitest 单测（jsdom） |
 | `pnpm test:coverage` | 单测 + core 覆盖率（阈值 80%） |
@@ -62,11 +64,12 @@ src/
     plugin.ts / events.ts / palette.ts
   plugins/     flowchart / mindmap / er 三个插件 + registry + shapekit + base
   store/       documentStore、uiStore、collabStore、selectors（zustand）
-  features/    canvas、topbar、palette、inspector、menus、shortcuts、home、io（界面）
+  io/          DOM 导出实现（PNG/SVG 合成、rasterize）
+  features/    canvas（画布交互）、shell（topbar/palette/inspector/menus/shortcuts/home/docs）
   components/  通用小组件
   i18n/zh.ts   全部界面文案
   styles/tokens.css  亮「描图纸」/暗「蓝图」设计令牌
-server/dev.mjs y-websocket 兼容协作服务（内存房间）
+server/dev.mjs y-websocket 兼容协作服务（内存房间）；dev-all.mjs 一键起 5173+1234
 e2e/           Playwright
 docs/          规格、实施契约、决策记录与课程文档
 ```
@@ -82,6 +85,7 @@ docs/          规格、实施契约、决策记录与课程文档
 | `docs/ARCHITECTURE.md` | 架构设计（分层、数据流、插件、协作，含 Mermaid 图） |
 | `docs/DESIGN_PATTERNS.md` | 设计模式对照文件说明 |
 | `docs/TEST_REPORT.md` | 测试报告（用例、覆盖率、质量门、已知缺陷） |
+|| `docs/PERFORMANCE.md` | 性能测试报告（500 节点拖拽帧耗时实测） |
 | `docs/USER_GUIDE.md` | 用户手册（操作、快捷键、FAQ） |
 | `docs/DEMO_SCRIPT.md` | 课堂演示脚本 |
 | `docs/DEFENSE.md` | 答辩手册（选型、链路、20+ 问答、局限） |
