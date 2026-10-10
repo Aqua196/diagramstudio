@@ -1,0 +1,103 @@
+// 导出事件监听（A1）：EV.EXPORT_PNG / EV.EXPORT_SVG → 计算覆盖全部节点的
+// 视口 transform 后交给 src/io/export.ts；成功/失败各吐一条 toast。
+import { useEffect, useRef } from 'react'
+import { getViewportForBounds, useReactFlow } from '@xyflow/react'
+import { EV } from '@/core/events'
+import type { DiagramDoc } from '@/core/model/types'
+import {
+  exportPngFile,
+  exportSvgFile,
+  type ExportBackground,
+  type ExportColors,
+  type FrameInfo,
+} from '@/io/export'
+import { useDocumentStore } from '@/store/documentStore'
+import { useUiStore } from '@/store/uiStore'
+import { zh } from '@/i18n/zh'
+
+const PAD = 40 // 内容四周留白（px）
+
+interface ExportDetail {
+  scale?: number
+  background?: ExportBackground
+  titleblock?: { author: string; version: string } | null
+}
+
+function themeColors(): ExportColors {
+  const cs = getComputedStyle(document.documentElement)
+  const v = (name: string) => cs.getPropertyValue(name).trim()
+  return {
+    line: v('--line'),
+    ink: v('--ink'),
+    ink3: v('--ink-3'),
+    panel: v('--panel'),
+    sheet: v('--sheet'),
+    gridFine: v('--grid-fine'),
+    gridCoarse: v('--grid-coarse'),
+  }
+}
+
+function frameInfo(doc: DiagramDoc, tb: ExportDetail['titleblock']): FrameInfo | null {
+  if (!tb) return null
+  const d = new Date()
+  const p = (n: number) => String(n).padStart(2, '0')
+  return {
+    title: doc.title,
+    author: tb.author,
+    version: tb.version,
+    date: `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`,
+  }
+}
+
+/** 挂一次：监听导出事件，用 RF 实例定位 .react-flow__viewport */
+export function useExportEvents(): void {
+  const rf = useReactFlow()
+  const rfRef = useRef(rf)
+  rfRef.current = rf
+
+  useEffect(() => {
+    const run = async (kind: 'png' | 'svg', e: Event) => {
+      const detail = (e as CustomEvent).detail as ExportDetail | undefined
+      const doc = useDocumentStore.getState().doc
+      const toast = useUiStore.getState().pushToast
+      try {
+        const nodes = rfRef.current.getNodes()
+        const vpEl = document.querySelector<HTMLElement>('.react-flow__viewport')
+        if (!vpEl || nodes.length === 0) {
+          toast('error', zh.io.exportFailed)
+          return
+        }
+        const bounds = rfRef.current.getNodesBounds(nodes)
+        const width = Math.round(bounds.width + PAD * 2)
+        const height = Math.round(bounds.height + PAD * 2)
+        const vp = getViewportForBounds(bounds, width, height, 0.1, 4, PAD / Math.max(bounds.width, bounds.height))
+        const opts = {
+          width,
+          height,
+          transform: `translate(${vp.x}px, ${vp.y}px) scale(${vp.zoom})`,
+          background: detail?.background ?? 'white',
+          frame: frameInfo(doc, detail?.titleblock),
+          colors: themeColors(),
+          scale: detail?.scale ?? 2,
+        }
+        if (kind === 'png') {
+          await exportPngFile(vpEl, doc, opts)
+          toast('success', zh.io.exportedPng)
+        } else {
+          await exportSvgFile(vpEl, doc, opts)
+          toast('success', zh.io.exportedSvg)
+        }
+      } catch (err) {
+        toast('error', `${zh.io.exportFailed}：${err instanceof Error ? err.message : String(err)}`)
+      }
+    }
+    const onPng = (e: Event) => void run('png', e)
+    const onSvg = (e: Event) => void run('svg', e)
+    window.addEventListener(EV.EXPORT_PNG, onPng)
+    window.addEventListener(EV.EXPORT_SVG, onSvg)
+    return () => {
+      window.removeEventListener(EV.EXPORT_PNG, onPng)
+      window.removeEventListener(EV.EXPORT_SVG, onSvg)
+    }
+  }, [])
+}

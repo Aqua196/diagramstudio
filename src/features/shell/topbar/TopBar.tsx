@@ -22,6 +22,8 @@ import { useUiStore } from '@/store/uiStore'
 import { zh } from '@/i18n/zh'
 import { IconButton } from '@/components/IconButton'
 import { setDocType } from '@/features/canvas/commands'
+import { ExportDialog, type ExportFormat } from './ExportDialog'
+import { PeerAvatars } from './PeerAvatars'
 
 const TYPES: DiagramType[] = ['flowchart', 'mindmap', 'er']
 
@@ -85,6 +87,7 @@ export function TopBar() {
   const zoom = useUiStore((s) => s.zoom)
   const [, force] = useState(0)
   useEffect(() => useUiStore.subscribe(() => force((n) => n + 1)), [])
+  const [exportDlg, setExportDlg] = useState<ExportFormat | null>(null)
 
   return (
     <header className="ds-topbar">
@@ -166,6 +169,7 @@ export function TopBar() {
       </div>
 
       <div className="ds-topbar-right">
+        <PeerAvatars />
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
             <button
@@ -205,15 +209,13 @@ export function TopBar() {
             <DropdownMenu.Content className="ds-menu" align="end" sideOffset={4}>
               <DropdownMenu.Item
                 className="ds-menu-item"
-                onSelect={() =>
-                  emit(EV.EXPORT_PNG, { scale: 2, background: 'sheet', titleblock: false })
-                }
+                onSelect={() => setExportDlg('png')}
               >
                 {zh.topbar.exportPng}
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 className="ds-menu-item"
-                onSelect={() => emit(EV.EXPORT_SVG, { titleblock: false })}
+                onSelect={() => setExportDlg('svg')}
               >
                 {zh.topbar.exportSvg}
               </DropdownMenu.Item>
@@ -304,6 +306,7 @@ export function TopBar() {
           </DropdownMenu.Portal>
         </DropdownMenu.Root>
       </div>
+      {exportDlg && <ExportDialog format={exportDlg} onClose={() => setExportDlg(null)} />}
     </header>
   )
 }
