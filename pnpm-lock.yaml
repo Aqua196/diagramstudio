@@ -117,6 +117,9 @@ importers:
       jsdom:
         specifier: ^25.0.1
         version: 25.0.1
+      lib0:
+        specifier: ^0.2.119
+        version: 0.2.119
       postcss:
         specifier: ^8.5.29
         version: 8.5.29
@@ -138,6 +141,12 @@ importers:
       vitest:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@20.19.43)(jsdom@25.0.1)
+      ws:
+        specifier: ^8.22.0
+        version: 8.22.0
+      y-protocols:
+        specifier: ^1.0.7
+        version: 1.0.7(yjs@13.6.33)
 
 packages:
 

@@ -24,8 +24,14 @@ export interface DocumentStore {
   execute: (cmd: Command) => void
   undo: () => void
   redo: () => void
-  /** 载入/导入/协作远端写入：不进历史；resetHistory=false 时保留本地历史（协作） */
-  setDoc: (doc: DiagramDoc, opts?: { resetHistory?: boolean }) => void
+  /** 载入/导入/协作远端写入：不进历史；resetHistory=false 时保留本地历史（协作）；remote=true 表示来自远端，不再回播 */
+  setDoc: (doc: DiagramDoc, opts?: { resetHistory?: boolean; remote?: boolean }) => void
+}
+
+/** 协作钩子（collabStore 注册）：本地文档变更后广播，避免循环依赖 */
+let collabBroadcast: ((doc: DiagramDoc) => void) | null = null
+export function setCollabBroadcast(fn: ((doc: DiagramDoc) => void) | null): void {
+  collabBroadcast = fn
 }
 
 function derive(history: HistoryState) {
@@ -51,6 +57,7 @@ export const useDocumentStore = create<DocumentStore>()((set, get) => ({
     const r = executeCommand(doc, history, cmd)
     if (r.doc === doc && r.history === history) return
     set({ doc: r.doc, ...derive(r.history) })
+    collabBroadcast?.(r.doc)
   },
 
   undo: () => {
@@ -58,6 +65,7 @@ export const useDocumentStore = create<DocumentStore>()((set, get) => ({
     const r = undoCommand(doc, history)
     if (r.doc === doc) return
     set({ doc: r.doc, ...derive(r.history) })
+    collabBroadcast?.(r.doc)
   },
 
   redo: () => {
@@ -65,10 +73,12 @@ export const useDocumentStore = create<DocumentStore>()((set, get) => ({
     const r = redoCommand(doc, history)
     if (r.doc === doc) return
     set({ doc: r.doc, ...derive(r.history) })
+    collabBroadcast?.(r.doc)
   },
 
   setDoc: (doc, opts) => {
     const history = opts?.resetHistory === false ? get().history : emptyHistory()
     set({ doc, ...derive(history) })
+    if (!opts?.remote) collabBroadcast?.(doc)
   },
 }))

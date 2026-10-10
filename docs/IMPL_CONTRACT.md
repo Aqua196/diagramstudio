@@ -150,3 +150,10 @@ window.dispatchEvent(new CustomEvent(EV.X, { detail }))
 - `DiagramPlugin`/`ShapeDef`/`getPlugin`/能力位与钩子 — src/core/plugin.ts、src/plugins/registry.ts
 - `EV.*` 事件名 — src/core/events.ts
 - `<EditorCanvas/>`、`<HomePage/>` — features/canvas、features/home
+
+## §8 协作挂接（阶段7 已实现，供画布/外壳调用）
+- `useCollabStore`（src/store/collabStore.ts）：`status/room/peers/join(room?)/leave()/share()/initFromUrl()/pushCursor(pos|null)`。
+- EditorPage 挂载时调用 `initFromUrl()`（识别 `?room=` 自动加入）；EV.SHARE → `share()` 拿链接 → `navigator.clipboard.writeText` + toast「链接已复制」。
+- 画布 `onPointerMove` → `pushCursor(screenToFlowPosition({x,y}))`（内部已节流 50ms）；peers 渲染成彩色光标+昵称角标。
+- 远端文档经 `setDoc(doc,{resetHistory:false,remote:true})` 合入，不进本地历史、不回播；本地 execute/undo/redo 自动广播。
+- 服务器：`pnpm dev:collab` → ws://127.0.0.1:1234（`VITE_COLLAB_WS` 可覆盖）。

@@ -29,3 +29,9 @@
 - 节点配色 7 对 + WCAG 对比度工具（全部 ≥4.5:1 经测试）、协作适配器接口、插件接口（含 hiddenNodeIds/autoLayoutOnChange 钩子）
 - zustand 文档/UI store、React Flow 选择器、基座插件 + 注册表
 - 门禁：lint/typecheck/build/29 单测全绿，core 覆盖率 93.7% 行
+
+## 阶段7 协作 ✅ 2026-10-10（提前于 UI 完成核心链路）
+- server/dev.mjs：y-websocket 兼容 ws 服务（sync+awareness，两客户端互同步已冒烟验证）
+- core/collab：adapter 接口 + yjs 实现（Y.Map 存 nodes/edges/meta，diff 事务写入，observeDeep 回填，awareness 光标/昵称/颜色，50ms 节流）
+- collabStore：join/leave/share/initFromUrl/pushCursor；documentStore 经 setCollabBroadcast 解耦广播
+- 单测 +3（diff）；门禁全绿。UI 接线（分享按钮/peers 光标/房间入口）待阶段4/6 完成。

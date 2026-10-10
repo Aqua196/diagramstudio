@@ -51,7 +51,12 @@ describe('ops 其余命令', () => {
 
   it('reconnectEdge 换端点并记录原端点', () => {
     const { doc, a, c, e } = setup()
-    const r = executeCommand(doc, emptyHistory(), reconnectEdge(e.id, { source: c.id }))
+    const r = executeCommand(doc, emptyHistory(), reconnectEdge(e.id, {
+      source: c.id,
+      target: e.target,
+      sourceHandle: undefined,
+      targetHandle: undefined,
+    }))
     expect(r.doc.edges[e.id].source).toBe(c.id)
     expect(r.doc.edges[e.id].target).toBe(e.target)
     void a
