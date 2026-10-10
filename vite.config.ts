@@ -13,4 +13,15 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // 拆出体积大的第三方库，保持应用 chunk 在警告阈值内
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          xyflow: ['@xyflow/react'],
+        },
+      },
+    },
+  },
 })

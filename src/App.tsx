@@ -1,10 +1,43 @@
-import { zh } from '@/i18n/zh'
+// 应用外壳：按 uiStore.route 在首页与编辑器之间切换（不做 react-router）。
+// AppEffects 挂载全局事件监听与快捷键总线。
+import { useEffect } from 'react'
+import HomePage from '@/pages/HomePage'
+import EditorPage from '@/pages/EditorPage'
+import { useDocEvents } from '@/features/shell/docs/useDocEvents'
+import { useGlobalShortcuts } from '@/features/shell/shortcuts/keys'
+import { Toasts } from '@/features/shell/toasts/Toasts'
+import { ShortcutsDialog } from '@/features/shell/shortcuts/ShortcutsDialog'
+import { useUiStore } from '@/store/uiStore'
+import { lastOpenedId, getStoredDoc } from '@/features/shell/docs/docsStore'
+import { useDocumentStore } from '@/store/documentStore'
 
-// 脚手架阶段的临时外壳：只验证字体/令牌/渲染链路，阶段4 整体重写为编辑器骨架
+function AppEffects() {
+  useDocEvents()
+  useGlobalShortcuts()
+  return null
+}
+
 export default function App() {
+  const route = useUiStore((s) => s.route)
+
+  // 启动路由：有最近打开的文档直接回编辑器，否则进首页
+  useEffect(() => {
+    const id = lastOpenedId()
+    const doc = id ? getStoredDoc(id) : null
+    if (doc) {
+      useDocumentStore.getState().setDoc(doc)
+      useUiStore.getState().setRoute('editor')
+    } else {
+      useUiStore.getState().setRoute('home')
+    }
+  }, [])
+
   return (
-    <div className="flex h-full items-center justify-center bg-sheet">
-      <h1 className="text-ui font-semibold text-ink">{zh.app.name}</h1>
-    </div>
+    <>
+      <AppEffects />
+      {route === 'editor' ? <EditorPage /> : <HomePage />}
+      <Toasts />
+      <ShortcutsDialog />
+    </>
   )
 }
