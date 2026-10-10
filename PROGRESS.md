@@ -39,3 +39,10 @@
 ## 阶段5 插件 ✅ / 阶段6 IO 层 ✅ 2026-10-10
 - flowchart：11 种 SVG 形状 + 登录流程模板 + dagre；mindmap：data.parentId 树、Tab/Enter 键位、折叠圆钮（dispatch）、拖放改父级（含防环）、autoLayoutOnChange；er：实体表头+字段行（行内增删改字段 dispatch patchNode）、edgeFields=cardinality、选课系统模板
 - persist/importer/export 全套本地 IO；frameSvg 支持嵌入内容；ShapeRenderContext 增加 doc
+
+## 阶段3/4 画布+外壳 ✅ 2026-10-10（子代理交付，patch 合入）
+- React Flow v12 画布：网格/吸附/fitView(maxZoom=1)/minimap；dsShape 节点（插件渲染、4向锚点 Loose、NodeResizer 8向 32×24 下限）；dsEdge（3 路由、箭头、双击改标签、reconnectEdge）
+- 交互全集：点选/框选、形状拖入（MIME）、C/X/V/D 克隆粘贴、方向键微调、删除、undo/redo、插件 keymap、onDropOnNode、autoLayoutOnChange(300ms)
+- 外壳：48px 顶栏、240px 形状+模板面板、280px 检查器（画布/节点/多选对齐/边属性+ER cardinality）、首页（3 类入口+localStorage 文档列表+模板缩略图）、uiStore 路由、toast、Radix Dialog/DropdownMenu、zh.ts 全文案
+- ConnectMenu：拖线落空弹形状菜单（insertElements 复合命令，单条历史）；edgeDefaults 贯穿连线创建
+- e2e/stage34.spec.ts（控制台零 error/warning 断言）+ 7 张双视口截图入 docs/screenshots/；单测 +16

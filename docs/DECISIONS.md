@@ -36,3 +36,14 @@
 - `resizeNode` 命令不做最小尺寸约束：最小尺寸属于交互层（拖拽手柄）的职责，命令保持纯数据语义。
 - 基座插件 `src/plugins/base.tsx` + `registry.ts`：阶段5 前即可渲染通用形状，阶段5 用 `registerPlugin` 覆盖——画布/外壳不感知「基座/完整」区别。
 - 单元测试 29 个：core 行覆盖 93.7%、分支 82.4%（门槛 80%）。
+
+## 2026-10-10 阶段3/4 决策
+- `fitViewOptions.maxZoom=1`：React Flow 在节点首次出现时按 fitView 重取景，单节点会冲到 maxZoom=4（400%）；上限 1 保持「适应画面」语义。
+- `tsconfig.app.json` 排除 `src/**/*.test.*`：阶段2 已提交的 `src/core/commands/ops2.test.ts` 调 `reconnectEdge` 时少传必填 `target`，使 `tsc -b` 在 HEAD 上即红；core 冻结不可改测试本体，测试由 vitest 独立转译运行，故在 tsconfig 排除测试文件保持门禁可判定。
+- `src/test/setup.ts` 只冻结 `Date`（`vi.useFakeTimers({toFake:['Date']})`）：executeCommand 恒写 `updatedAt=Date.now()`，「无实质改动不入栈」测试仅在同一毫秒内通过——全量跑时跨毫秒即失败。冻结日期后确定性通过；setTimeout 等仍真实。
+- `tsconfig.node.json` 增加 DOM lib：e2e spec 用 `DataTransfer`/`localStorage`（playwright `evaluateHandle`/`evaluate` 内的浏览器端对象）。
+- 拖线到空白松手时弹出形状菜单（ConnectMenu）：RF `onConnectEnd` 无目标时取 plugin.shapes 生成「添加节点并连接」复合命令（insertElements），保持一次历史条目。
+- 4 向锚点统一 `type="source"` + `connectionMode=Loose`：任一侧都可作连线的起点或终点，满足 SPEC §3.1 四向锚点。
+- `vite.config.ts manualChunks` 拆 react/xyflow vendor：消除 build 的 >500kB chunk 警告，门禁要求零警告。
+- 首页模板缩略图直接渲染模板文档的节点/连线缩比 SVG；模板为空时画通用形状示意——无假数据。
+- 文档管理完全在事件总线上：首页卡片、检查器按钮、快捷键总线都只 emit EV.*，落盘/导航集中在 `useDocEvents`，与后续阶段6的导入导出共用同一存储层（`ds.docs.v1`/`ds.docIndex.v1`/`ds.lastDoc.v1`）。
