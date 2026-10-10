@@ -279,3 +279,140 @@
 .dark .ds-minimap .react-flow__minimap-node {
   fill: #214a75;
 }
+
+/* —— 思维导图折叠按钮（B4）：真 button，可键盘聚焦 —— */
+.ds-mind-collapse {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--ink-2);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ds-mind-collapse:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* —— ER 字段行控件（B5） —— */
+.ds-er-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  color: var(--node-text);
+  outline: none;
+}
+.ds-er-input:focus-visible {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+.ds-er-type {
+  font-size: 11px;
+  color: var(--ink-2);
+  text-align: right;
+}
+.ds-er-key {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ds-er-key:focus-visible,
+.ds-er-grip:focus-visible,
+.ds-er-del:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+.ds-er-grip {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 9px;
+  letter-spacing: -2px;
+  cursor: grab;
+}
+.ds-er-del {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 12px;
+  cursor: pointer;
+}
+.ds-er-add {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 12px;
+  cursor: pointer;
+}
+.ds-er-add:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+.ds-er-key:hover,
+.ds-er-del:hover,
+.ds-er-add:hover,
+.ds-mind-collapse:hover {
+  color: var(--ink);
+}
+
+/* —— 协作光标与头像（A2） —— */
+.ds-peer-cursor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 40;
+}
+.ds-peer-name {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  line-height: 14px;
+  color: #fff;
+  white-space: nowrap;
+}
+.ds-peers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 6px;
+}
+.ds-peer-status {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.ds-peer-status.is-connected {
+  color: var(--accent);
+}
+.ds-peer-status.is-offline {
+  color: var(--danger);
+}
+.ds-peer-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #fff;
+}

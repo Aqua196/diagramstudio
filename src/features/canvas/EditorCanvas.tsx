@@ -29,6 +29,9 @@ import { useConnectFlow } from './useConnectFlow'
 import { useCanvasDrop } from './useCanvasDrop'
 import { useCanvasEvents } from './useCanvasEvents'
 import { useCanvasKeys } from './useCanvasKeys'
+import { useExportEvents } from './useExportEvents'
+import { PeerCursors } from './PeerCursors'
+import { useCollabStore } from '@/store/collabStore'
 import { CanvasContextMenu } from './CanvasContextMenu'
 import { EmptyState } from './EmptyState'
 import { AlignmentGuides } from './AlignmentGuides'
@@ -67,8 +70,13 @@ function FlowInner() {
 
   const drag = useDragGuards(doc, plugin, setNodes)
   const rf = useReactFlow()
+  useExportEvents()
   useEffect(() => {
-    ;(window as unknown as { __ds: { rf?: unknown } }).__ds.rf = rf
+    // 调试桥 __ds.rf 仅在 dev/显式 debug 包启用（A6，静态条件可 tree-shake）
+    if (import.meta.env.DEV || import.meta.env.VITE_DS_DEBUG === '1') {
+      const w = window as unknown as { __ds?: { rf?: unknown } }
+      ;(w.__ds ??= {}).rf = rf
+    }
   }, [rf])
   const conn = useConnectFlow(doc, plugin, wrapperRef)
   const drop = useCanvasDrop(doc, plugin)
@@ -154,6 +162,12 @@ function FlowInner() {
             fitView
             fitViewOptions={{ padding: 0.15, maxZoom: 1 }}
             onMove={(_e, vp) => setZoom(vp.zoom)}
+            onPointerMove={(e) => {
+              // 协作光标：屏幕坐标 → 画布坐标，节流在 adapter 内部
+              const pos = rf.screenToFlowPosition({ x: e.clientX, y: e.clientY })
+              useCollabStore.getState().pushCursor(pos)
+            }}
+            onPointerLeave={() => useCollabStore.getState().pushCursor(null)}
             deleteKeyCode={null}
             nodesFocusable
             edgesFocusable
@@ -177,6 +191,7 @@ function FlowInner() {
               />
             )}
             {minimapVisible && <MiniMap className="ds-minimap" pannable zoomable />}
+            <PeerCursors />
           </ReactFlow>
         </div>
       </CanvasContextMenu>

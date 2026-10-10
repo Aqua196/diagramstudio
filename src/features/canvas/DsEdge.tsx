@@ -15,6 +15,7 @@ import { useDocumentStore } from '@/store/documentStore'
 import { useCanvasStore } from './canvasStore'
 import { resolveEdgeStroke } from './color'
 import { zh } from '@/i18n/zh'
+import { CrowsFeet } from './CrowsFoot'
 
 function pathFor(
   routing: string,
@@ -116,6 +117,18 @@ function DsEdge({
         markerStart={arrowStart ? `url(#ds-m-start-${id})` : undefined}
         markerEnd={arrowEnd ? `url(#ds-m-end-${id})` : undefined}
       />
+      {edge.cardinality && (
+        <CrowsFeet
+          card={edge.cardinality}
+          sourceX={sourceX}
+          sourceY={sourceY}
+          targetX={targetX}
+          targetY={targetY}
+          sourcePosition={sourcePosition}
+          targetPosition={targetPosition}
+          stroke={stroke}
+        />
+      )}
       <EdgeLabelRenderer>
         <div
           className={`ds-edge-label${selected ? ' is-selected' : ''}`}

@@ -58,8 +58,11 @@ export function useCanvasEvents(doc: DiagramDoc, plugin: DiagramPlugin, deps: De
         EV.CUT,
         () => {
           const s = sel()
-          if (copySelection(docRef.current, s.nodeIds)) {
-            execute(deleteElements(s.nodeIds, s.edgeIds))
+          const d = docRef.current
+          const p = pluginRef.current
+          const nodeIds = p.expandDeletion ? p.expandDeletion(d, s.nodeIds) : s.nodeIds
+          if (copySelection(d, s.nodeIds)) {
+            execute(deleteElements(nodeIds, s.edgeIds))
             selectIds([], [])
           }
         },
@@ -93,8 +96,11 @@ export function useCanvasEvents(doc: DiagramDoc, plugin: DiagramPlugin, deps: De
         EV.DELETE,
         () => {
           const s = sel()
-          if (s.nodeIds.length + s.edgeIds.length === 0) return
-          execute(deleteElements(s.nodeIds, s.edgeIds))
+          const d = docRef.current
+          const p = pluginRef.current
+          const nodeIds = p.expandDeletion ? p.expandDeletion(d, s.nodeIds) : s.nodeIds
+          if (nodeIds.length + s.edgeIds.length === 0) return
+          execute(deleteElements(nodeIds, s.edgeIds))
           selectIds([], [])
         },
       ],
@@ -151,15 +157,36 @@ export function useCanvasEvents(doc: DiagramDoc, plugin: DiagramPlugin, deps: De
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // 思维导图等 autoLayoutOnChange 插件：文档每次变化后自动布局（一条命令，300ms 过渡）
+  // 思维导图等 autoLayoutOnChange 插件（B1）：
+  // execute（加子/改父级等）→ 布局命令 mergeWithPrevious 并入上一条历史；
+  // undo/redo/remote 跳过；'set'（打开/导入/模板）直接写回位置不进历史。
   useEffect(() => {
     const p = pluginRef.current
     if (!p?.autoLayoutOnChange) return
     const d = docRef.current
     if (Object.keys(d.nodes).length === 0) return
+    const change = useDocumentStore.getState().lastChange
+    if (change === 'undo' || change === 'redo' || change === 'remote') return
+    if (change === 'set') {
+      // 打开文档/模板时把布局位置直接写回（不进历史，触发的二次 'set' 不会再排）
+      const next = p.layout(d, { direction: d.settings.layoutDirection })
+      let moved = false
+      const nodes = { ...d.nodes }
+      for (const [id, pos] of Object.entries(next)) {
+        const n = nodes[id]
+        if (n && (Math.abs(n.position.x - pos.x) > 0.5 || Math.abs(n.position.y - pos.y) > 0.5)) {
+          nodes[id] = { ...n, position: { ...pos } }
+          moved = true
+        }
+      }
+      if (moved) {
+        useDocumentStore.getState().setDoc({ ...d, nodes }, { resetHistory: false })
+      }
+      return
+    }
     const cmd = buildLayoutCommand(d, p, d.settings.layoutDirection)
     if (cmd) {
-      useDocumentStore.getState().execute(cmd)
+      useDocumentStore.getState().execute({ ...cmd, mergeWithPrevious: true })
       animateLayout(deps.containerRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
