@@ -1,19 +1,26 @@
 // 左侧面板 240px：形状库（当前插件 shapes，可拖拽）+ 文档区（模板卡片）。
+import { useState } from 'react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { emit, EV } from '@/core/events'
 import { getPlugin } from '@/plugins/registry'
 import { useDocumentStore } from '@/store/documentStore'
 import { setShapeDragData } from '@/features/canvas/dnd'
 import { zh } from '@/i18n/zh'
 
+const COMMON_SHAPES = 6
+
 export function LeftPanel() {
   const doc = useDocumentStore((s) => s.doc)
   const plugin = getPlugin(doc.type)
+  const [expanded, setExpanded] = useState(false)
+  const hasMore = plugin.shapes.length > COMMON_SHAPES
+  const shapes = expanded ? plugin.shapes : plugin.shapes.slice(0, COMMON_SHAPES)
 
   return (
     <aside className="ds-panel ds-panel-left" aria-label={zh.topbar.leftPanel}>
       <div className="ds-panel-title">{zh.palettePanel.title}</div>
       <div className="ds-shapes">
-        {plugin.shapes.map((s) => (
+        {shapes.map((s) => (
           <button
             key={s.kind}
             type="button"
@@ -28,6 +35,16 @@ export function LeftPanel() {
           </button>
         ))}
       </div>
+      {hasMore && (
+        <button
+          type="button"
+          className="ds-shapes-toggle"
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          {expanded ? zh.palettePanel.fewerShapes : zh.palettePanel.moreShapes}
+        </button>
+      )}
       <div className="ds-panel-title">{zh.palettePanel.templates}</div>
       <div className="ds-tpl-list">
         {plugin.templates.map((t, i) => (

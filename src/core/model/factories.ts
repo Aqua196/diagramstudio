@@ -55,7 +55,7 @@ export function createEdge(
     label: defaults?.label,
     sourceHandle: defaults?.sourceHandle,
     targetHandle: defaults?.targetHandle,
-    style: defaults?.style ?? { stroke: 'ink', strokeWidth: 1.5, dash: 'solid' },
+    style: defaults?.style ?? { stroke: 'ink-2', strokeWidth: 1.5, dash: 'solid' },
     cardinality: defaults?.cardinality,
   }
 }

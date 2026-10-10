@@ -30,7 +30,7 @@ function loginTemplate(): DiagramDoc {
   const input = mk('io', '输入账号密码', 80, 140)
   const check = mk('decision', '校验通过？', 80, 260)
   const home = mk('process', '进入主页', 330, 272)
-  const err = mk('process', '提示错误', 80, 420)
+  const err = mk('process', '提示错误', -160, 330)
   const end = mk('terminator', '结束', 330, 420)
   const nodes = [start, input, check, home, err, end]
   for (const n of nodes) doc.nodes[n.id] = n
@@ -54,7 +54,7 @@ export const flowchartPlugin: DiagramPlugin<ReactNode> = {
     routing: 'bezier',
     arrowStart: 'none',
     arrowEnd: 'arrow',
-    style: { stroke: 'ink', strokeWidth: 1.5, dash: 'solid' },
+    style: { stroke: 'ink-2', strokeWidth: 1.5, dash: 'solid' },
   },
   layout: dagreLayout,
   templates: [loginTemplate()],

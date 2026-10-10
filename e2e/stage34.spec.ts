@@ -69,6 +69,7 @@ test('拖入形状 → 节点上画布 → 检查器显示节点面板 → 保�
   })
   await dropAt('process', cx - 120, cy - 40)
   await expect(page.locator('.react-flow__node')).toHaveCount(1, { timeout: 5000 })
+  await page.locator('.ds-group-head', { hasText: '节点' }).click()
   await expect(page.locator('.ds-panel-right')).toContainText('填充')
 
   // 再放一个 → 两个节点都出现在画布上

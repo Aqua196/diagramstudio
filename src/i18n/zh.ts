@@ -56,6 +56,11 @@ export const zh = {
     toolSelect: '选择工具',
     toolHand: '抓手',
     docType: '图类型',
+    more: '更多',
+    fitView: '适应画面',
+    zoomIn: '放大',
+    zoomOut: '缩小',
+    zoomReset: '重置缩放',
   },
   plugins: {
     shapes: {
@@ -81,6 +86,8 @@ export const zh = {
     title: '形状库',
     dragHint: '拖到画布',
     templates: '模板',
+    moreShapes: '更多形状',
+    fewerShapes: '收起',
   },
   inspector: {
     canvasSettings: '画布设置',
@@ -92,6 +99,8 @@ export const zh = {
     dirLR: '左右',
     autoLayout: '自动布局',
     nodeSection: '节点',
+    geomSection: '位置与尺寸',
+    arrangeSection: '叠放与对齐',
     edgeSection: '连线',
     multiSection: '多选',
     selectedElements: '个元素',

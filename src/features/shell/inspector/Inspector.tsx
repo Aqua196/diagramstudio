@@ -1,7 +1,9 @@
 // 右侧检查器 280px：随 selection 切换画布设置 / 节点 / 连线 / 多选面板。
+import { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { emit, EV } from '@/core/events'
 import { patchEdge, patchNode, patchNodeStyle, setSettings } from '@/core/commands/ops'
-import { NODE_COLORS, type NodeColorKey } from '@/core/palette'
+import { isNodeColorKey, NODE_COLORS, type NodeColorKey } from '@/core/palette'
 import type { AlignMode } from '@/core/commands/ops'
 import type { Cardinality } from '@/core/model/types'
 import { getPlugin } from '@/plugins/registry'
@@ -39,15 +41,44 @@ function Toggle({
   )
 }
 
+function Section({
+  title,
+  summary,
+  children,
+}: {
+  title: string
+  summary?: string
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <section className="ds-group">
+      <button
+        type="button"
+        className="ds-group-head"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="ds-group-title">{title}</span>
+        {summary && <span className="ds-group-sum">{summary}</span>}
+        <ChevronDown size={13} className={`ds-group-chevron${open ? ' is-open' : ''}`} />
+      </button>
+      {open && <div className="ds-panel-body">{children}</div>}
+    </section>
+  )
+}
+
 function CanvasSettings() {
   const settings = useDocumentStore((s) => s.doc.settings)
   const execute = useDocumentStore((s) => s.execute)
   const minimapVisible = useUiStore((s) => s.minimapVisible)
   const setMinimapVisible = useUiStore((s) => s.setMinimapVisible)
+  const onoff = (v: boolean) => (v ? '开' : '关')
   return (
-    <>
-      <div className="ds-panel-title">{t.canvasSettings}</div>
-      <div className="ds-panel-body">
+    <Section
+      title={t.canvasSettings}
+      summary={`${t.grid}${onoff(settings.grid)}·${t.snap}${onoff(settings.snap)}`}
+    >
         <Toggle
           label={t.grid}
           checked={settings.grid}
@@ -80,8 +111,7 @@ function CanvasSettings() {
         >
           {t.autoLayout}
         </button>
-      </div>
-    </>
+    </Section>
   )
 }
 
@@ -96,8 +126,16 @@ function NodeInspector({ ids }: { ids: string[] }) {
     execute(patchNodeStyle(node.id, p, label))
   return (
     <>
-      <div className="ds-panel-title">{t.nodeSection}</div>
-      <div className="ds-panel-body">
+      <Section
+        title={t.nodeSection}
+        summary={
+          node.text
+            ? node.text.slice(0, 8)
+            : isNodeColorKey(node.style.fill)
+              ? NODE_COLORS[node.style.fill].name
+              : undefined
+        }
+      >
         <Row label={t.text}>
           <input
             className="ds-input"
@@ -143,6 +181,11 @@ function NodeInspector({ ids }: { ids: string[] }) {
           checked={node.style.bold}
           onChange={(v) => patchStyle({ bold: v }, '修改样式')}
         />
+      </Section>
+      <Section
+        title={t.geomSection}
+        summary={`${Math.round(node.size.w)}×${Math.round(node.size.h)} · ${Math.round(node.position.x)},${Math.round(node.position.y)}`}
+      >
         <div className="ds-grid-2">
           <NumberField
             label={t.posX}
@@ -167,8 +210,10 @@ function NodeInspector({ ids }: { ids: string[] }) {
             onCommit={(v) => patch({ size: { ...node.size, h: v } }, '调整大小')}
           />
         </div>
+      </Section>
+      <Section title={t.arrangeSection}>
         <ArrangeSection nodeCount={ids.length} />
-      </div>
+      </Section>
     </>
   )
 }
@@ -247,15 +292,9 @@ function ArrangeSection({ nodeCount }: { nodeCount: number }) {
 
 function MultiInspector({ count }: { count: number }) {
   return (
-    <>
-      <div className="ds-panel-title">{t.multiSection}</div>
-      <div className="ds-panel-body">
-        <p className="ds-muted">
-          {count} {t.selectedElements}
-        </p>
-        <ArrangeSection nodeCount={count} />
-      </div>
-    </>
+    <Section title={t.multiSection} summary={`${count} ${t.selectedElements}`}>
+      <ArrangeSection nodeCount={count} />
+    </Section>
   )
 }
 
@@ -270,10 +309,10 @@ function EdgeInspector({ ids }: { ids: string[] }) {
   const patch = (p: Parameters<typeof patchEdge>[1]) => execute(patchEdge(edge.id, p))
   const card = (side: 'source' | 'target', v: Cardinality) =>
     patch({ cardinality: { source: '1', target: '1', ...edge.cardinality, [side]: v } })
+  const routingName =
+    edge.routing === 'bezier' ? t.routingBezier : edge.routing === 'step' ? t.routingStep : t.routingStraight
   return (
-    <>
-      <div className="ds-panel-title">{t.edgeSection}</div>
-      <div className="ds-panel-body">
+    <Section title={t.edgeSection} summary={routingName}>
         <Row label={t.routing}>
           <div className="ds-segment">
             {(
@@ -345,8 +384,7 @@ function EdgeInspector({ ids }: { ids: string[] }) {
             </Row>
           </>
         )}
-      </div>
-    </>
+    </Section>
   )
 }
 

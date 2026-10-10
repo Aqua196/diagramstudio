@@ -1,6 +1,7 @@
 // 编辑器骨架：顶栏 48px + 左 240px 形状库 + 画布 + 右 280px 检查器。
 // 窗口宽 <1024 时整屏提示（SPEC §6 最小 1280×720 桌面优先）。
 import { useEffect, useState } from 'react'
+import { ReactFlowProvider } from '@xyflow/react'
 import EditorCanvas from '@/features/canvas/EditorCanvas'
 import { TopBar } from '@/features/shell/topbar/TopBar'
 import { LeftPanel } from '@/features/shell/palette/LeftPanel'
@@ -32,16 +33,18 @@ export default function EditorPage() {
   }
 
   return (
-    <div className="ds-editor">
-      <TopBar />
-      <div className="ds-editor-body">
-        {leftPanelOpen && <LeftPanel />}
-        <main className="ds-editor-canvas">
-          <h1 className="sr-only">{doc.title}</h1>
-          <EditorCanvas />
-        </main>
-        {rightPanelOpen && <Inspector />}
+    <ReactFlowProvider>
+      <div className="ds-editor">
+        <TopBar />
+        <div className="ds-editor-body">
+          {leftPanelOpen && <LeftPanel />}
+          <main className="ds-editor-canvas">
+            <h1 className="sr-only">{doc.title}</h1>
+            <EditorCanvas />
+          </main>
+          {rightPanelOpen && <Inspector />}
+        </div>
       </div>
-    </div>
+    </ReactFlowProvider>
   )
 }

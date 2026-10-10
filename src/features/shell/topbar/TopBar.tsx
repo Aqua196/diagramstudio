@@ -3,20 +3,16 @@
 import { useEffect, useState } from 'react'
 import {
   Download,
-  Hand,
-  Home,
-  Keyboard,
-  Map as MapIcon,
-  MousePointer2,
+  Maximize,
+  Minus,
   Moon,
-  PanelLeft,
-  PanelRight,
-  Play,
+  MoreHorizontal,
+  Plus,
   Redo2,
-  Share2,
   Sun,
   Undo2,
 } from 'lucide-react'
+import { useReactFlow } from '@xyflow/react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { emit, EV } from '@/core/events'
 import { setDocTitle } from '@/core/commands/ops'
@@ -85,6 +81,8 @@ export function TopBar() {
   const undo = useDocumentStore((s) => s.undo)
   const redo = useDocumentStore((s) => s.redo)
   const ui = useUiStore()
+  const rf = useReactFlow()
+  const zoom = useUiStore((s) => s.zoom)
   const [, force] = useState(0)
   useEffect(() => useUiStore.subscribe(() => force((n) => n + 1)), [])
 
@@ -129,51 +127,45 @@ export function TopBar() {
           disabled={!canRedo}
           onClick={redo}
         />
-        <IconButton
-          icon={<MousePointer2 size={15} />}
-          aria-label={zh.topbar.toolSelect}
-          title={zh.topbar.toolSelect}
-          active={ui.tool === 'select'}
-          onClick={() => ui.setTool('select')}
-        />
-        <IconButton
-          icon={<Hand size={15} />}
-          aria-label={zh.topbar.toolHand}
-          title={zh.topbar.toolHand}
-          active={ui.tool === 'hand'}
-          onClick={() => ui.setTool('hand')}
-        />
-        <IconButton
-          icon={<Play size={15} />}
-          aria-label={zh.topbar.autoLayout}
-          title={zh.topbar.autoLayout}
-          onClick={() => emit(EV.AUTO_LAYOUT, doc.settings.layoutDirection)}
-        />
+        <div className="ds-zoom-group" role="group" aria-label={zh.topbar.zoomReset}>
+          <button
+            type="button"
+            className="ds-icon-btn"
+            aria-label={zh.topbar.zoomOut}
+            onClick={() => rf.zoomOut({ duration: 120 })}
+          >
+            <Minus size={14} />
+          </button>
+          <button
+            type="button"
+            className="ds-zoom-val"
+            aria-label={zh.topbar.zoomReset}
+            title={zh.topbar.zoomReset}
+            onClick={() => rf.zoomTo(1, { duration: 120 })}
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button
+            type="button"
+            className="ds-icon-btn"
+            aria-label={zh.topbar.zoomIn}
+            onClick={() => rf.zoomIn({ duration: 120 })}
+          >
+            <Plus size={14} />
+          </button>
+          <button
+            type="button"
+            className="ds-icon-btn"
+            aria-label={zh.topbar.fitView}
+            title={zh.topbar.fitView}
+            onClick={() => rf.fitView({ duration: 200, padding: 0.15 })}
+          >
+            <Maximize size={14} />
+          </button>
+        </div>
       </div>
 
       <div className="ds-topbar-right">
-        <SaveStatus />
-        <IconButton
-          icon={<PanelLeft size={15} />}
-          aria-label={zh.topbar.leftPanel}
-          title={zh.topbar.leftPanel}
-          active={ui.leftPanelOpen}
-          onClick={ui.toggleLeftPanel}
-        />
-        <IconButton
-          icon={<PanelRight size={15} />}
-          aria-label={zh.topbar.rightPanel}
-          title={zh.topbar.rightPanel}
-          active={ui.rightPanelOpen}
-          onClick={ui.toggleRightPanel}
-        />
-        <IconButton
-          icon={<MapIcon size={15} />}
-          aria-label={zh.topbar.minimap}
-          title={zh.topbar.minimap}
-          active={ui.minimapVisible}
-          onClick={() => ui.setMinimapVisible(!ui.minimapVisible)}
-        />
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
             <button
@@ -241,24 +233,76 @@ export function TopBar() {
             </DropdownMenu.Content>
           </DropdownMenu.Portal>
         </DropdownMenu.Root>
-        <IconButton
-          icon={<Share2 size={15} />}
-          aria-label={zh.topbar.share}
-          title={zh.topbar.share}
-          onClick={() => emit(EV.SHARE)}
-        />
-        <IconButton
-          icon={<Keyboard size={15} />}
-          aria-label={zh.shortcuts.title}
-          title={zh.shortcuts.title}
-          onClick={() => ui.setShortcutsHelpOpen(true)}
-        />
-        <IconButton
-          icon={<Home size={15} />}
-          aria-label={zh.topbar.home}
-          title={zh.topbar.home}
-          onClick={() => ui.setRoute('home')}
-        />
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <button
+              type="button"
+              className="ds-icon-btn"
+              aria-label={zh.topbar.more}
+              title={zh.topbar.more}
+            >
+              <MoreHorizontal size={15} />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content className="ds-menu" align="end" sideOffset={4}>
+              <DropdownMenu.Label className="ds-menu-label">
+                <SaveStatus />
+              </DropdownMenu.Label>
+              <DropdownMenu.Separator className="ds-menu-sep" />
+              <DropdownMenu.Item
+                className={`ds-menu-item${ui.tool === 'select' ? ' is-active' : ''}`}
+                onSelect={() => ui.setTool('select')}
+              >
+                {zh.topbar.toolSelect}
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                className={`ds-menu-item${ui.tool === 'hand' ? ' is-active' : ''}`}
+                onSelect={() => ui.setTool('hand')}
+              >
+                {zh.topbar.toolHand}
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                className="ds-menu-item"
+                onSelect={() => emit(EV.AUTO_LAYOUT, doc.settings.layoutDirection)}
+              >
+                {zh.topbar.autoLayout}
+              </DropdownMenu.Item>
+              <DropdownMenu.Separator className="ds-menu-sep" />
+              <DropdownMenu.Item
+                className={`ds-menu-item${ui.leftPanelOpen ? ' is-active' : ''}`}
+                onSelect={ui.toggleLeftPanel}
+              >
+                {zh.topbar.leftPanel}
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                className={`ds-menu-item${ui.rightPanelOpen ? ' is-active' : ''}`}
+                onSelect={ui.toggleRightPanel}
+              >
+                {zh.topbar.rightPanel}
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                className={`ds-menu-item${ui.minimapVisible ? ' is-active' : ''}`}
+                onSelect={() => ui.setMinimapVisible(!ui.minimapVisible)}
+              >
+                {zh.topbar.minimap}
+              </DropdownMenu.Item>
+              <DropdownMenu.Separator className="ds-menu-sep" />
+              <DropdownMenu.Item className="ds-menu-item" onSelect={() => emit(EV.SHARE)}>
+                {zh.topbar.share}
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                className="ds-menu-item"
+                onSelect={() => ui.setShortcutsHelpOpen(true)}
+              >
+                {zh.shortcuts.title}
+              </DropdownMenu.Item>
+              <DropdownMenu.Item className="ds-menu-item" onSelect={() => ui.setRoute('home')}>
+                {zh.topbar.home}
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       </div>
     </header>
   )

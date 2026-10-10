@@ -9,9 +9,9 @@ export function resolveNodeColor(key: string, theme: ThemeName): string {
   return key
 }
 
-/** 边线颜色：默认 'ink'，选中态由组件覆盖为 var(--accent) */
+/** 边线颜色：默认 'ink-2' 灰线，选中态由组件覆盖为 var(--accent) */
 export function resolveEdgeStroke(key: string): string {
-  if (key === 'ink') return 'var(--ink)'
+  if (key === 'ink' || key.startsWith('ink-')) return `var(--${key})`
   if (isNodeColorKey(key)) return 'var(--node-stroke)'
   return key
 }

@@ -118,42 +118,6 @@
   border: 1px solid var(--accent);
 }
 
-/* —— 浮层 —— */
-.ds-zoom-controls {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pop);
-  box-shadow: var(--shadow-pop);
-  padding: 2px;
-}
-.ds-zoom-btn,
-.ds-zoom-value {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 26px;
-  min-width: 28px;
-  border: none;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--ink-2);
-  cursor: pointer;
-}
-.ds-zoom-value {
-  font-family: 'Barlow Semi Condensed', Barlow, sans-serif;
-  font-variant-numeric: tabular-nums;
-  font-size: 12px;
-  padding: 0 4px;
-}
-.ds-zoom-btn:hover,
-.ds-zoom-value:hover {
-  background: var(--accent-wash);
-  color: var(--ink);
-}
-
 /* 对齐参考线 */
 .ds-guides {
   position: absolute;
@@ -302,4 +266,16 @@
 }
 .react-flow__attribution a {
   color: var(--ink-3);
+}
+
+/* MiniMap 主题适配（覆盖 RF 默认白底节点与浅色遮罩） */
+.ds-minimap .react-flow__minimap-node {
+  fill: var(--line);
+}
+.ds-minimap .react-flow__minimap-mask-rect {
+  fill: var(--sheet);
+  fill-opacity: 0.6;
+}
+.dark .ds-minimap .react-flow__minimap-node {
+  fill: #214a75;
 }

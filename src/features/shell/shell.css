@@ -28,9 +28,9 @@
 .ds-topbar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   height: 48px;
-  padding: 0 10px;
+  padding: 0 12px;
   background: var(--panel);
   border-bottom: 1px solid var(--line);
 }
@@ -46,7 +46,7 @@
   min-width: 0;
 }
 .ds-topbar-center {
-  gap: 4px;
+  gap: 8px;
 }
 .ds-topbar-right {
   margin-left: auto;
@@ -124,8 +124,9 @@
 .ds-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
+  height: 28px;
+  gap: 4px;
+  padding: 0 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
   background: var(--panel);
@@ -165,23 +166,26 @@
 }
 .ds-btn-row {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 .ds-btn-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: 4px;
 }
 .ds-segment {
   display: inline-flex;
+  height: 28px;
   padding: 2px;
   gap: 2px;
+  align-items: center;
   background: var(--panel-sunken);
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
 }
 .ds-segment-btn {
-  padding: 3px 8px;
+  height: 22px;
+  padding: 0 8px;
   border: none;
   border-radius: 3px;
   background: transparent;
@@ -200,7 +204,8 @@
 }
 .ds-input {
   width: 100%;
-  padding: 5px 8px;
+  height: 28px;
+  padding: 0 8px;
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
   background: var(--panel);
@@ -214,7 +219,7 @@
 .ds-check {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   font-size: 13px;
   color: var(--ink);
   cursor: pointer;
@@ -246,7 +251,7 @@
   border-left: 1px solid var(--line);
 }
 .ds-panel-title {
-  padding: 10px 12px 6px;
+  padding: 8px 12px 4px;
   font-size: 12px;
   font-weight: 600;
   color: var(--ink-3);
@@ -254,8 +259,8 @@
 .ds-panel-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 4px 12px 14px;
+  gap: 8px;
+  padding: 8px 12px 12px;
 }
 .ds-field-row {
   display: flex;
@@ -276,7 +281,7 @@
 .ds-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  gap: 8px;
 }
 .ds-num-field {
   display: flex;
@@ -294,16 +299,16 @@
 .ds-shapes {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  padding: 4px 12px 12px;
+  gap: 8px;
+  padding: 4px 12px 8px;
 }
 .ds-shape {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 8px 4px 6px;
-  border: 1px solid var(--line);
+  gap: 4px;
+  padding: 8px 4px;
+  border: none;
   border-radius: var(--radius-control);
   background: var(--panel);
   color: var(--ink-2);
@@ -311,7 +316,7 @@
 }
 .ds-shape:hover {
   background: var(--accent-wash);
-  border-color: var(--accent);
+  color: var(--ink);
 }
 .ds-shape:active {
   cursor: grabbing;
@@ -322,16 +327,16 @@
 .ds-tpl-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   padding: 4px 12px 12px;
 }
 .ds-tpl-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
-  border: 1px solid var(--line);
+  gap: 8px;
+  padding: 8px 12px;
+  border: none;
   border-radius: var(--radius-control);
   background: var(--panel);
   color: var(--ink);
@@ -356,7 +361,7 @@
 .ds-chip {
   width: 22px;
   height: 22px;
-  border: 1px solid var(--line);
+  border: none;
   border-radius: var(--radius-control);
   cursor: pointer;
   padding: 0;
@@ -593,4 +598,90 @@
 }
 .ds-menu-item.is-active {
   color: var(--accent);
+}
+
+/* —— 顶栏缩放组 —— */
+.ds-zoom-group {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 2px;
+  gap: 0;
+  background: var(--panel-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+.ds-zoom-group .ds-icon-btn {
+  width: 24px;
+  height: 22px;
+  border-radius: 3px;
+}
+.ds-zoom-val {
+  min-width: 44px;
+  padding: 0 2px;
+  text-align: center;
+  font-family: 'Barlow Semi Condensed', Barlow, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--ink);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* —— 检查器折叠组 —— */
+.ds-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  padding: 0 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+.ds-group-head:hover {
+  background: var(--accent-wash);
+}
+.ds-group-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.ds-group-sum {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--ink-3);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ds-group-chevron {
+  color: var(--ink-3);
+  transition: transform 0.15s;
+}
+.ds-group-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+/* —— 形状库展开按钮 —— */
+.ds-shapes-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 12px 8px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--ink-3);
+  font-size: 12px;
+  cursor: pointer;
+}
+.ds-shapes-toggle:hover {
+  background: var(--accent-wash);
+  color: var(--ink);
 }

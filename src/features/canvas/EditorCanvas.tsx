@@ -7,7 +7,6 @@ import {
   ConnectionMode,
   MiniMap,
   ReactFlow,
-  ReactFlowProvider,
   useReactFlow,
   type Edge,
   type Node,
@@ -31,7 +30,6 @@ import { useCanvasDrop } from './useCanvasDrop'
 import { useCanvasEvents } from './useCanvasEvents'
 import { useCanvasKeys } from './useCanvasKeys'
 import { CanvasContextMenu } from './CanvasContextMenu'
-import { ZoomControls } from './ZoomControls'
 import { EmptyState } from './EmptyState'
 import { AlignmentGuides } from './AlignmentGuides'
 import { NodeTextEditor } from './NodeTextEditor'
@@ -179,7 +177,6 @@ function FlowInner() {
               />
             )}
             {minimapVisible && <MiniMap className="ds-minimap" pannable zoomable />}
-            <ZoomControls />
           </ReactFlow>
         </div>
       </CanvasContextMenu>
@@ -194,9 +191,5 @@ function FlowInner() {
 }
 
 export default function EditorCanvas() {
-  return (
-    <ReactFlowProvider>
-      <FlowInner />
-    </ReactFlowProvider>
-  )
+  return <FlowInner />
 }
