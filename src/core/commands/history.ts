@@ -50,9 +50,10 @@ export function executeCommand(
   const top = past[past.length - 1]
   if (
     top &&
-    cmd.coalesceKey !== undefined &&
-    top.coalesceKey === cmd.coalesceKey &&
-    now - top.at < COALESCE_WINDOW_MS
+    (cmd.mergeWithPrevious === true ||
+      (cmd.coalesceKey !== undefined &&
+        top.coalesceKey === cmd.coalesceKey &&
+        now - top.at < COALESCE_WINDOW_MS))
   ) {
     // 合并：正补丁追加在后，逆补丁前插（撤销时先还原后发生的改动），label 保留首条
     past[past.length - 1] = {

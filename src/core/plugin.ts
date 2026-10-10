@@ -45,6 +45,8 @@ export interface DiagramPlugin<R = unknown> {
   autoLayoutOnChange?: boolean
   /** 需要隐藏的节点 id（思维导图折叠的子树）；不实现则全部可见 */
   hiddenNodeIds?(doc: DiagramDoc): Set<string>
+  /** 删除前把所选节点扩展为应一并删除的 id（思维导图=整个子树；不可删的节点由实现过滤） */
+  expandDeletion?(doc: DiagramDoc, nodeIds: string[]): string[]
   /** 声明连线有 ER 基数字段，检查器据此渲染基数下拉（禁止判断 type） */
   edgeFields?: 'cardinality'
   templates: DiagramDoc[]

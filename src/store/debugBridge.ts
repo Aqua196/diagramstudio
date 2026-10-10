@@ -48,5 +48,7 @@ export function installDebugBridge(): void {
         requestAnimationFrame(() => resolve(performance.now() - t0))
       }),
   }
-  ;(window as unknown as { __ds: DsDebug }).__ds = dbg
+  const w = window as unknown as { __ds?: Partial<DsDebug> & Record<string, unknown> }
+  // 合并而非覆盖：EditorCanvas 可能先一步写入 __ds.rf
+  w.__ds = { ...(w.__ds ?? {}), ...dbg }
 }

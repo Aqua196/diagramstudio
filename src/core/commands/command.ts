@@ -7,5 +7,7 @@ export interface Command {
   label: string
   /** 相同 key 且间隔 <600ms 的连续命令合并为一条历史（拖动、连续打字） */
   coalesceKey?: string
+  /** true 且历史栈非空时无条件并入栈顶（如自动布局跟随上一条命令） */
+  mergeWithPrevious?: boolean
   apply: (draft: DiagramDoc) => void
 }

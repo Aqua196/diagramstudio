@@ -87,8 +87,14 @@ function semanticCheck(doc: DiagramDoc): string[] {
     if (!doc.nodes[edge.source]) errors.push(`连线 ${edge.id} 的起点 ${edge.source} 不存在`)
     if (!doc.nodes[edge.target]) errors.push(`连线 ${edge.id} 的终点 ${edge.target} 不存在`)
   }
+  const seen = new Set<string>()
   for (const id of doc.zOrder) {
+    if (seen.has(id)) errors.push(`叠放顺序中的节点 ${id} 重复`)
+    seen.add(id)
     if (!doc.nodes[id]) errors.push(`叠放顺序中的节点 ${id} 不存在`)
+  }
+  for (const id of Object.keys(doc.nodes)) {
+    if (!seen.has(id)) errors.push(`节点 ${id} 缺失于叠放顺序`)
   }
   return errors
 }

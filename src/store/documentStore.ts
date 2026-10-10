@@ -21,6 +21,8 @@ export interface DocumentStore {
   canRedo: boolean
   undoLabel: string | null
   redoLabel: string | null
+  /** 最近一次文档变更的来源：自动布局据此决定是否跟随合并（B1） */
+  lastChange: 'execute' | 'undo' | 'redo' | 'set' | 'remote'
   execute: (cmd: Command) => void
   undo: () => void
   redo: () => void
@@ -51,12 +53,13 @@ export const useDocumentStore = create<DocumentStore>()((set, get) => ({
   canRedo: false,
   undoLabel: null,
   redoLabel: null,
+  lastChange: 'set',
 
   execute: (cmd) => {
     const { doc, history } = get()
     const r = executeCommand(doc, history, cmd)
     if (r.doc === doc && r.history === history) return
-    set({ doc: r.doc, ...derive(r.history) })
+    set({ doc: r.doc, lastChange: 'execute', ...derive(r.history) })
     collabBroadcast?.(r.doc)
   },
 
@@ -64,7 +67,7 @@ export const useDocumentStore = create<DocumentStore>()((set, get) => ({
     const { doc, history } = get()
     const r = undoCommand(doc, history)
     if (r.doc === doc) return
-    set({ doc: r.doc, ...derive(r.history) })
+    set({ doc: r.doc, lastChange: 'undo', ...derive(r.history) })
     collabBroadcast?.(r.doc)
   },
 
@@ -72,17 +75,19 @@ export const useDocumentStore = create<DocumentStore>()((set, get) => ({
     const { doc, history } = get()
     const r = redoCommand(doc, history)
     if (r.doc === doc) return
-    set({ doc: r.doc, ...derive(r.history) })
+    set({ doc: r.doc, lastChange: 'redo', ...derive(r.history) })
     collabBroadcast?.(r.doc)
   },
 
   setDoc: (doc, opts) => {
     const history = opts?.resetHistory === false ? get().history : emptyHistory()
-    set({ doc, ...derive(history) })
+    set({ doc, lastChange: opts?.remote ? 'remote' : 'set', ...derive(history) })
     if (!opts?.remote) collabBroadcast?.(doc)
   },
 }))
 
-// 调试桥（性能/e2e 测试用 window.__ds）：随 store 安装一次
-import { installDebugBridge } from './debugBridge'
-installDebugBridge()
+// 调试桥（性能/e2e 测试用 window.__ds）：仅开发或显式 VITE_DS_DEBUG=1 时安装，
+// 静态条件保证生产构建被 tree-shake（A6）
+if (import.meta.env.DEV || import.meta.env.VITE_DS_DEBUG === '1') {
+  void import('./debugBridge').then((m) => m.installDebugBridge())
+}

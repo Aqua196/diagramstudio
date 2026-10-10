@@ -94,9 +94,15 @@ export function updateNodeText(id: string, text: string): Command {
   }
 }
 
-export function patchNode(id: string, patch: Partial<DiagramNode>, label = '修改节点'): Command {
+export function patchNode(
+  id: string,
+  patch: Partial<DiagramNode>,
+  label = '修改节点',
+  coalesceKey?: string,
+): Command {
   return {
     label,
+    coalesceKey,
     apply(draft) {
       const node = draft.nodes[id]
       if (node) Object.assign(node, patch)
