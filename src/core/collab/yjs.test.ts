@@ -46,6 +46,7 @@ vi.mock('y-websocket', async () => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type FakeProvider = any
 
+import * as Y from 'yjs'
 import { createCollabAdapter } from './yjs'
 import { createDoc, createNode } from '../model/factories'
 
@@ -105,9 +106,10 @@ describe('YjsCollabAdapter', () => {
     adapter.leave()
   })
 
-  it('pushLocal 把增量写入 nodes/edges/meta', () => {
-    const { adapter, provider, doc } = setup()
+  it('pushLocal 把增量写入 nodes/edges/meta，且不回灌 onRemoteDoc（无回声）', () => {
+    const { adapter, provider, doc, callbacks } = setup()
     provider.fire('sync', true)
+    callbacks.onRemoteDoc.mockClear()
     const next = { ...doc, title: '改名' }
     const add = createNode('decision', { x: 5, y: 5 })
     next.nodes = { ...doc.nodes, [add.id]: add }
@@ -115,21 +117,28 @@ describe('YjsCollabAdapter', () => {
     adapter.pushLocal(next)
     const ydoc = provider.ydoc
     expect(ydoc.getMap('nodes').get(add.id)).toBeDefined()
+    // F2：本地写入（LOCAL_ORIGIN 事务）不得触发回灌
+    expect(callbacks.onRemoteDoc).not.toHaveBeenCalled()
     // 删除节点同样下沉
     const gone = { ...next, nodes: { [add.id]: add }, zOrder: [add.id] }
     adapter.pushLocal(gone)
     expect(ydoc.getMap('nodes').get(Object.keys(doc.nodes)[0])).toBeUndefined()
+    expect(callbacks.onRemoteDoc).not.toHaveBeenCalled()
   })
 
-  it('远端 map 变更经 observeDeep 回调 onRemoteDoc', () => {
+  it('远端更新（Y.applyUpdate）经 observeDeep 回调 onRemoteDoc', () => {
     const { provider, callbacks } = setup()
     provider.fire('sync', true)
     callbacks.onRemoteDoc.mockClear()
+    // 模拟另一个客户端的 Y.Doc 写入后把 update 应用到本端
     const rn = createNode('process', { x: 0, y: 0 })
-    provider.ydoc.getMap('nodes').set(rn.id, rn)
+    const remote = new Y.Doc()
+    remote.getMap('nodes').set(rn.id, rn)
+    Y.applyUpdate(provider.ydoc, Y.encodeStateAsUpdate(remote), 'remote-peer')
     expect(callbacks.onRemoteDoc).toHaveBeenCalled()
     const received = callbacks.onRemoteDoc.mock.calls.at(-1)![0]
     expect(Object.keys(received.nodes)).toContain(rn.id)
+    remote.destroy()
   })
 
   it('pushCursor 20fps 节流，null 总可通过', () => {

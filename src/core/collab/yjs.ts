@@ -11,6 +11,8 @@ const SERVER_URL = () =>
   (import.meta.env.VITE_COLLAB_WS as string | undefined) ?? 'ws://127.0.0.1:1234'
 
 const PEER_COLORS = ['#E05D44', '#2E9E8F', '#3D7BE0', '#B8860B', '#8C5BBE', '#C94F7C', '#4C9F70']
+/** 本地写入的事务 origin：observe 回调据此过滤回声（本地 push 不再回灌 onRemoteDoc） */
+const LOCAL_ORIGIN = 'ds-local'
 
 interface PeerState {
   name?: string
@@ -65,8 +67,8 @@ class YjsCollabAdapter implements CollabAdapter {
     })
 
     // 远端变更 → 合并回本地（observer 粒度到 key）
-    const onChange = () => {
-      if (this.applyingRemote) return
+    const onChange = (_events: unknown, txn: Y.Transaction) => {
+      if (txn.local || this.applyingRemote) return
       const remote = this.readDoc(ydoc)
       if (remote) {
         this.applyingRemote = true
@@ -137,7 +139,7 @@ class YjsCollabAdapter implements CollabAdapter {
       for (const [id, n] of diff.setNodes) nodes.set(id, n)
       for (const id of diff.delEdges) edges.delete(id)
       for (const [id, e] of diff.setEdges) edges.set(id, e)
-    })
+    }, LOCAL_ORIGIN)
   }
 
   pushCursor(pos: { x: number; y: number } | null): void {
