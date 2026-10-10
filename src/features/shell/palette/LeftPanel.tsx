@@ -9,15 +9,14 @@ import { zh } from '@/i18n/zh'
 
 const COMMON_SHAPES = 6
 
-export function LeftPanel() {
-  const doc = useDocumentStore((s) => s.doc)
-  const plugin = getPlugin(doc.type)
+function ShapeList() {
+  const type = useDocumentStore((s) => s.doc.type)
+  const plugin = getPlugin(type)
   const [expanded, setExpanded] = useState(false)
   const hasMore = plugin.shapes.length > COMMON_SHAPES
   const shapes = expanded ? plugin.shapes : plugin.shapes.slice(0, COMMON_SHAPES)
-
   return (
-    <aside className="ds-panel ds-panel-left" aria-label={zh.topbar.leftPanel}>
+    <>
       <div className="ds-panel-title">{zh.palettePanel.title}</div>
       <div className="ds-shapes">
         {shapes.map((s) => (
@@ -36,15 +35,20 @@ export function LeftPanel() {
         ))}
       </div>
       {hasMore && (
-        <button
-          type="button"
-          className="ds-shapes-toggle"
-          onClick={() => setExpanded((v) => !v)}
-        >
+        <button type="button" className="ds-shapes-toggle" onClick={() => setExpanded((v) => !v)}>
           {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           {expanded ? zh.palettePanel.fewerShapes : zh.palettePanel.moreShapes}
         </button>
       )}
+    </>
+  )
+}
+
+function TemplateList() {
+  const type = useDocumentStore((s) => s.doc.type)
+  const plugin = getPlugin(type)
+  return (
+    <>
       <div className="ds-panel-title">{zh.palettePanel.templates}</div>
       <div className="ds-tpl-list">
         {plugin.templates.map((t, i) => (
@@ -52,13 +56,22 @@ export function LeftPanel() {
             key={t.id}
             type="button"
             className="ds-tpl-card"
-            onClick={() => emit(EV.NEW_DOC, { type: doc.type, templateId: String(i) })}
+            onClick={() => emit(EV.NEW_DOC, { type, templateId: String(i) })}
           >
             <span className="ds-tpl-name">{t.title}</span>
-            <span className="ds-tpl-meta">{zh.plugins.typeNames[doc.type]}</span>
+            <span className="ds-tpl-meta">{zh.plugins.typeNames[type]}</span>
           </button>
         ))}
       </div>
+    </>
+  )
+}
+
+export function LeftPanel() {
+  return (
+    <aside className="ds-panel ds-panel-left" aria-label={zh.topbar.leftPanel}>
+      <ShapeList />
+      <TemplateList />
     </aside>
   )
 }

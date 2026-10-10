@@ -30,8 +30,6 @@ export function NodeTextEditor({ node, onDone }: { node: DiagramNode; onDone: ()
     onDone()
   }
 
-  const left = node.position.x * zoom + x
-  const top = node.position.y * zoom + y
   return (
     <textarea
       ref={ref}
@@ -40,8 +38,8 @@ export function NodeTextEditor({ node, onDone }: { node: DiagramNode; onDone: ()
       aria-label={zh.inspector.text}
       placeholder={zh.canvas.textPlaceholder}
       style={{
-        left,
-        top,
+        left: node.position.x * zoom + x,
+        top: node.position.y * zoom + y,
         width: node.size.w * zoom,
         height: node.size.h * zoom,
         fontSize: node.style.fontSize * zoom,
@@ -50,17 +48,19 @@ export function NodeTextEditor({ node, onDone }: { node: DiagramNode; onDone: ()
       }}
       onChange={(e) => setValue(e.target.value)}
       onBlur={commit}
-      onKeyDown={(e) => {
-        e.stopPropagation()
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault()
-          commit()
-        }
-        if (e.key === 'Escape') {
-          e.preventDefault()
-          cancel()
-        }
-      }}
+      onKeyDown={(e) => editorKey(e, commit, cancel)}
     />
   )
+}
+
+function editorKey(e: React.KeyboardEvent, commit: () => void, cancel: () => void): void {
+  e.stopPropagation()
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault()
+    commit()
+  }
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    cancel()
+  }
 }

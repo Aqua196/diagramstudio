@@ -17,17 +17,16 @@ import { ShapeHandles } from './ShapeHandles'
 const MIN_W = 32
 const MIN_H = 24
 
-function DsShapeNode({ id, data, selected, width, height, dragging }: NodeProps) {
-  const { node, plugin } = data as FlowNodeData as unknown as {
-    node: DiagramNode
-    plugin: ReactPlugin
-  }
-  const theme = useUiStore((s) => s.resolvedTheme)
+function useShapeCtx(
+  id: string,
+  node: DiagramNode,
+  plugin: ReactPlugin,
+  width: number | undefined,
+  height: number | undefined,
+) {
   const editing = useCanvasStore((s) => s.editingNodeId === id)
-  const isDropTarget = useCanvasStore((s) => s.dropTargetId === id)
   const execute = useDocumentStore((s) => s.execute)
   const doc = useDocumentStore((s) => s.doc)
-
   // 渲染期尺寸以 RF 实测为准（resize 拖动中即时反馈），文档尺寸是兜底
   const liveNode: DiagramNode = useMemo(
     () =>
@@ -36,20 +35,28 @@ function DsShapeNode({ id, data, selected, width, height, dragging }: NodeProps)
         : node,
     [node, width, height],
   )
-
   const ctx: ShapeRenderContext = useMemo(
     () => ({ editing, dispatch: execute, doc }),
     [editing, execute, doc],
   )
+  return { editing, liveNode, ctx, shape: plugin.shapes.find((s) => s.kind === node.kind) }
+}
 
-  const shape = plugin.shapes.find((s) => s.kind === node.kind)
+function DsShapeNode({ id, data, selected, width, height, dragging }: NodeProps) {
+  const { node, plugin } = data as FlowNodeData as unknown as {
+    node: DiagramNode
+    plugin: ReactPlugin
+  }
+  const theme = useUiStore((s) => s.resolvedTheme)
+  const isDropTarget = useCanvasStore((s) => s.dropTargetId === id)
+  const execute = useDocumentStore((s) => s.execute)
+  const { editing, liveNode, ctx, shape } = useShapeCtx(id, node, plugin, width, height)
 
   const vars = {
     '--node-fill': resolveNodeColor(node.style.fill, theme),
     '--node-stroke': resolveNodeColor(node.style.stroke, theme),
     '--node-text': nodeTextColor(theme),
   } as CSSProperties
-
   const cls = [
     'ds-node',
     selected ? 'is-selected' : '',

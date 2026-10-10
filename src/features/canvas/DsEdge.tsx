@@ -69,39 +69,72 @@ function ArrowDefs({
   )
 }
 
-function DsEdge({
+function EdgeLabel({
   id,
-  data,
+  edge,
+  labelX,
+  labelY,
   selected,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  interactionWidth,
-}: EdgeProps) {
-  const { edge } = data as FlowEdgeData
+}: {
+  id: string
+  edge: FlowEdgeData['edge']
+  labelX: number
+  labelY: number
+  selected: boolean
+}) {
   const editing = useCanvasStore((s) => s.editingEdgeId === id)
   const setEditingEdge = useCanvasStore((s) => s.setEditingEdge)
   const execute = useDocumentStore((s) => s.execute)
   const [draft, setDraft] = useState('')
+  const commitLabel = () => {
+    execute(patchEdge(id, { label: draft.trim() || undefined }, '编辑标注'))
+    setEditingEdge(null)
+  }
+  return (
+    <div
+      className={`ds-edge-label${selected ? ' is-selected' : ''}`}
+      style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
+      onDoubleClick={(e) => {
+        e.stopPropagation()
+        setDraft(edge.label ?? '')
+        setEditingEdge(id)
+      }}
+    >
+      {editing ? (
+        <input
+          className="ds-edge-label-input"
+          value={draft}
+          autoFocus
+          placeholder={zh.canvas.textPlaceholder}
+          aria-label={zh.inspector.edgeLabel}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commitLabel}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commitLabel()
+            if (e.key === 'Escape') setEditingEdge(null)
+            e.stopPropagation()
+          }}
+        />
+      ) : (edge.label ?? '')}
+    </div>
+  )
+}
 
+function DsEdge(p: EdgeProps) {
+  const {
+    id, data, selected,
+    sourceX, sourceY, targetX, targetY,
+    sourcePosition, targetPosition, interactionWidth,
+  } = p
+  const { edge } = data as FlowEdgeData
   const [path, labelX, labelY] = useMemo(
     () =>
       pathFor(edge.routing, { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition }),
     [edge.routing, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition],
   )
-
   const stroke = selected ? 'var(--accent)' : resolveEdgeStroke(edge.style.stroke)
   const arrowStart = edge.arrowStart === 'arrow'
   const arrowEnd = edge.arrowEnd === 'arrow'
-
-  const commitLabel = () => {
-    execute(patchEdge(id, { label: draft.trim() || undefined }, '编辑标注'))
-    setEditingEdge(null)
-  }
-
   return (
     <>
       <ArrowDefs id={id} stroke={stroke} start={arrowStart} end={arrowEnd} />
@@ -130,34 +163,7 @@ function DsEdge({
         />
       )}
       <EdgeLabelRenderer>
-        <div
-          className={`ds-edge-label${selected ? ' is-selected' : ''}`}
-          style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
-          onDoubleClick={(e) => {
-            e.stopPropagation()
-            setDraft(edge.label ?? '')
-            setEditingEdge(id)
-          }}
-        >
-          {editing ? (
-            <input
-              className="ds-edge-label-input"
-              value={draft}
-              autoFocus
-              placeholder={zh.canvas.textPlaceholder}
-              aria-label={zh.inspector.edgeLabel}
-              onChange={(e) => setDraft(e.target.value)}
-              onBlur={commitLabel}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') commitLabel()
-                if (e.key === 'Escape') setEditingEdge(null)
-                e.stopPropagation()
-              }}
-            />
-          ) : (
-            (edge.label ?? '')
-          )}
-        </div>
+        <EdgeLabel id={id} edge={edge} labelX={labelX} labelY={labelY} selected={!!selected} />
       </EdgeLabelRenderer>
     </>
   )

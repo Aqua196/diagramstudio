@@ -10,116 +10,191 @@ export type ExportFormat = 'png' | 'svg'
 export type BgChoice = 'white' | 'transparent' | 'grid'
 
 const d = zh.exportDialog
+const BG_LABELS: Record<BgChoice, string> = {
+  white: d.bgWhite,
+  transparent: d.bgTransparent,
+  grid: d.bgGrid,
+}
 
-export function ExportDialog({
-  format,
-  onClose,
+function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="ds-field-row">
+      <span className="ds-field-label">{label}</span>
+      <span className="ds-field-body">{children}</span>
+    </div>
+  )
+}
+
+function Segment<T extends string | number>({
+  label,
+  options,
+  value,
+  names,
+  onChange,
 }: {
-  format: ExportFormat
-  onClose: () => void
+  label: string
+  options: readonly T[]
+  value: T
+  names: (v: T) => string
+  onChange: (v: T) => void
 }) {
-  const docTitle = useDocumentStore((s) => s.doc.title)
-  const [scale, setScale] = useState(2)
-  const [bg, setBg] = useState<BgChoice>('white')
-  const [frame, setFrame] = useState(false)
-  const [author, setAuthor] = useState('')
-  const [version, setVersion] = useState('V1.0')
+  return (
+    <FieldRow label={label}>
+      <div className="ds-segment" role="group" aria-label={label}>
+        {options.map((o) => (
+          <button
+            key={String(o)}
+            type="button"
+            className={`ds-segment-btn${value === o ? ' is-active' : ''}`}
+            onClick={() => onChange(o)}
+          >
+            {names(o)}
+          </button>
+        ))}
+      </div>
+    </FieldRow>
+  )
+}
 
-  const confirm = () => {
-    const titleblock = frame ? { author, version } : null
-    if (format === 'png') emit(EV.EXPORT_PNG, { scale, background: bg, titleblock })
-    else emit(EV.EXPORT_SVG, { background: bg, titleblock })
-    onClose()
-  }
+function FrameFields({
+  author,
+  version,
+  onAuthor,
+  onVersion,
+}: {
+  author: string
+  version: string
+  onAuthor: (v: string) => void
+  onVersion: (v: string) => void
+}) {
+  return (
+    <>
+      <FieldRow label={d.author}>
+        <input
+          className="ds-input ds-field-body"
+          value={author}
+          aria-label={d.author}
+          onChange={(e) => onAuthor(e.target.value)}
+          onKeyDown={(e) => e.stopPropagation()}
+        />
+      </FieldRow>
+      <FieldRow label={d.version}>
+        <input
+          className="ds-input ds-field-body"
+          value={version}
+          aria-label={d.version}
+          onChange={(e) => onVersion(e.target.value)}
+          onKeyDown={(e) => e.stopPropagation()}
+        />
+      </FieldRow>
+    </>
+  )
+}
 
+function DialogFrame({
+  title,
+  onClose,
+  onConfirm,
+  children,
+}: {
+  title: string
+  onClose: () => void
+  onConfirm: () => void
+  children: React.ReactNode
+}) {
   return (
     <Dialog.Root open onOpenChange={(o) => !o && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="ds-overlay" />
         <Dialog.Content className="ds-dialog" aria-describedby={undefined}>
-          <Dialog.Title className="ds-dialog-title">
-            {format === 'png' ? d.titlePng : d.titleSvg}
-          </Dialog.Title>
-          <div className="ds-field-row">
-            <span className="ds-field-label">{d.diagram}</span>
-            <span className="ds-field-body">{docTitle}</span>
-          </div>
-          {format === 'png' && (
-            <div className="ds-field-row">
-              <span className="ds-field-label">{d.scale}</span>
-              <div className="ds-field-body ds-segment" role="group" aria-label={d.scale}>
-                {[1, 2, 3].map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    className={`ds-segment-btn${scale === s ? ' is-active' : ''}`}
-                    onClick={() => setScale(s)}
-                  >
-                    {s}x
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          <div className="ds-field-row">
-            <span className="ds-field-label">{d.background}</span>
-            <div className="ds-field-body ds-segment" role="group" aria-label={d.background}>
-              {(['white', 'transparent', 'grid'] as const).map((b) => (
-                <button
-                  key={b}
-                  type="button"
-                  className={`ds-segment-btn${bg === b ? ' is-active' : ''}`}
-                  onClick={() => setBg(b)}
-                >
-                  {b === 'white' ? d.bgWhite : b === 'transparent' ? d.bgTransparent : d.bgGrid}
-                </button>
-              ))}
-            </div>
-          </div>
-          <label className="ds-check">
-            <input
-              type="checkbox"
-              checked={frame}
-              onChange={(e) => setFrame(e.target.checked)}
-            />
-            {d.frame}
-          </label>
-          {frame && (
-            <>
-              <div className="ds-field-row">
-                <span className="ds-field-label">{d.author}</span>
-                <input
-                  className="ds-input ds-field-body"
-                  value={author}
-                  aria-label={d.author}
-                  onChange={(e) => setAuthor(e.target.value)}
-                  onKeyDown={(e) => e.stopPropagation()}
-                />
-              </div>
-              <div className="ds-field-row">
-                <span className="ds-field-label">{d.version}</span>
-                <input
-                  className="ds-input ds-field-body"
-                  value={version}
-                  aria-label={d.version}
-                  onChange={(e) => setVersion(e.target.value)}
-                  onKeyDown={(e) => e.stopPropagation()}
-                />
-              </div>
-            </>
-          )}
+          <Dialog.Title className="ds-dialog-title">{title}</Dialog.Title>
+          {children}
           <div className="ds-dialog-actions">
             <Dialog.Close asChild>
               <button type="button" className="ds-btn">
                 {zh.common.cancel}
               </button>
             </Dialog.Close>
-            <button type="button" className="ds-btn ds-btn-primary" onClick={confirm}>
+            <button type="button" className="ds-btn ds-btn-primary" onClick={onConfirm}>
               {d.confirm}
             </button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+  )
+}
+
+interface FormState {
+  scale: number
+  setScale: (v: number) => void
+  bg: BgChoice
+  setBg: (v: BgChoice) => void
+  frame: boolean
+  setFrame: (v: boolean) => void
+  author: string
+  setAuthor: (v: string) => void
+  version: string
+  setVersion: (v: string) => void
+}
+
+function useExportForm(format: ExportFormat, onClose: () => void): { form: FormState; confirm: () => void } {
+  const [scale, setScale] = useState(2)
+  const [bg, setBg] = useState<BgChoice>('white')
+  const [frame, setFrame] = useState(false)
+  const [author, setAuthor] = useState('')
+  const [version, setVersion] = useState('V1.0')
+  const confirm = () => {
+    const titleblock = frame ? { author, version } : null
+    if (format === 'png') emit(EV.EXPORT_PNG, { scale, background: bg, titleblock })
+    else emit(EV.EXPORT_SVG, { background: bg, titleblock })
+    onClose()
+  }
+  return { form: { scale, setScale, bg, setBg, frame, setFrame, author, setAuthor, version, setVersion }, confirm }
+}
+
+export function ExportDialog({ format, onClose }: { format: ExportFormat; onClose: () => void }) {
+  const docTitle = useDocumentStore((s) => s.doc.title)
+  const { form, confirm } = useExportForm(format, onClose)
+  return (
+    <DialogFrame
+      title={format === 'png' ? d.titlePng : d.titleSvg}
+      onClose={onClose}
+      onConfirm={confirm}
+    >
+      <FieldRow label={d.diagram}>{docTitle}</FieldRow>
+      {format === 'png' && (
+        <Segment
+          label={d.scale}
+          options={[1, 2, 3] as const}
+          value={form.scale}
+          names={(s) => `${s}x`}
+          onChange={form.setScale}
+        />
+      )}
+      <Segment
+        label={d.background}
+        options={['white', 'transparent', 'grid'] as const}
+        value={form.bg}
+        names={(b) => BG_LABELS[b]}
+        onChange={form.setBg}
+      />
+      <label className="ds-check">
+        <input
+          type="checkbox"
+          checked={form.frame}
+          onChange={(e) => form.setFrame(e.target.checked)}
+        />
+        {d.frame}
+      </label>
+      {form.frame && (
+        <FrameFields
+          author={form.author}
+          version={form.version}
+          onAuthor={form.setAuthor}
+          onVersion={form.setVersion}
+        />
+      )}
+    </DialogFrame>
   )
 }

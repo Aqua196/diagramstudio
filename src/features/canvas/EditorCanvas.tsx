@@ -1,37 +1,25 @@
 // 画布（IMPL_CONTRACT §6）：默认导出 <EditorCanvas/>，无 props。
 // 文档→元素经 store 选择器派生；拖动/框选等瞬态在 RF 内部，松手才提交命令。
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+// hook 接线在 useCanvasWiring（C1），这里只做 JSX 布局。
+import { useMemo } from 'react'
 import {
   Background,
   BackgroundVariant,
-  ConnectionMode,
   MiniMap,
   ReactFlow,
-  useReactFlow,
-  type Edge,
-  type Node,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import './canvas.css'
 
-import { reconnectEdge } from '@/core/commands/ops'
 import { getPlugin } from '@/plugins/registry'
 import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
-import type { FlowEdgeData, FlowNodeData } from '@/store/selectors'
 
 import DsShapeNode from './DsShapeNode'
 import DsEdge from './DsEdge'
 import { useCanvasStore } from './canvasStore'
-import { useFlowSync } from './useFlowSync'
-import { useDragGuards } from './useDragGuards'
-import { useConnectFlow } from './useConnectFlow'
-import { useCanvasDrop } from './useCanvasDrop'
-import { useCanvasEvents } from './useCanvasEvents'
-import { useCanvasKeys } from './useCanvasKeys'
-import { useExportEvents } from './useExportEvents'
+import { useCanvasWiring } from './useCanvasWiring'
 import { PeerCursors } from './PeerCursors'
-import { useCollabStore } from '@/store/collabStore'
 import { CanvasContextMenu } from './CanvasContextMenu'
 import { EmptyState } from './EmptyState'
 import { AlignmentGuides } from './AlignmentGuides'
@@ -42,80 +30,44 @@ import { ConnectMenu } from './ConnectMenu'
 const nodeTypes = { dsShape: DsShapeNode }
 const edgeTypes = { dsEdge: DsEdge }
 
-type FNode = Node<FlowNodeData>
-type FEdge = Edge<FlowEdgeData>
+function GridLayers() {
+  const grid = useDocumentStore((s) => s.doc.settings.grid)
+  if (!grid) return null
+  return (
+    <>
+      <Background id="fine" variant={BackgroundVariant.Lines} gap={24} color="var(--grid-fine)" />
+      <Background id="coarse" variant={BackgroundVariant.Lines} gap={120} color="var(--grid-coarse)" />
+    </>
+  )
+}
+
+function Overlays() {
+  const doc = useDocumentStore((s) => s.doc)
+  const plugin = useMemo(() => getPlugin(doc.type), [doc.type])
+  const editingNodeId = useCanvasStore((s) => s.editingNodeId)
+  const setEditingNode = useCanvasStore((s) => s.setEditingNode)
+  const connectMenu = useCanvasStore((s) => s.connectMenu)
+  const setConnectMenu = useCanvasStore((s) => s.setConnectMenu)
+  const empty = Object.keys(doc.nodes).length === 0
+  const editingNode = editingNodeId ? (doc.nodes[editingNodeId] ?? null) : null
+  return (
+    <>
+      <AlignmentGuides />
+      {empty && <EmptyState />}
+      {editingNode && <NodeTextEditor node={editingNode} onDone={() => setEditingNode(null)} />}
+      {connectMenu && (
+        <ConnectMenu menu={connectMenu} plugin={plugin} onClose={() => setConnectMenu(null)} />
+      )}
+    </>
+  )
+}
 
 function FlowInner() {
   const doc = useDocumentStore((s) => s.doc)
-  const execute = useDocumentStore((s) => s.execute)
   const plugin = useMemo(() => getPlugin(doc.type), [doc.type])
-  const theme = useUiStore((s) => s.resolvedTheme)
   const tool = useUiStore((s) => s.tool)
   const minimapVisible = useUiStore((s) => s.minimapVisible)
-  const setZoom = useUiStore((s) => s.setZoom)
-  const setTextEditing = useUiStore((s) => s.setTextEditing)
-
-  const wrapperRef = useRef<HTMLDivElement>(null)
-  const { nodes, edges, setNodes, onNodesChange, onEdgesChange, onSelectionChange, selectIds } =
-    useFlowSync(doc, plugin)
-  const nodesRef = useRef<FNode[]>(nodes)
-  nodesRef.current = nodes
-  const visibleNodeIds = useCallback(() => nodesRef.current.map((n) => n.id), [])
-
-  const editingNodeId = useCanvasStore((s) => s.editingNodeId)
-  const setEditingNode = useCanvasStore((s) => s.setEditingNode)
-  const setEditingEdge = useCanvasStore((s) => s.setEditingEdge)
-  const connectMenu = useCanvasStore((s) => s.connectMenu)
-  const setConnectMenu = useCanvasStore((s) => s.setConnectMenu)
-
-  const drag = useDragGuards(doc, plugin, setNodes)
-  const rf = useReactFlow()
-  useExportEvents()
-  useEffect(() => {
-    // 调试桥 __ds.rf 仅在 dev/显式 debug 包启用（A6，静态条件可 tree-shake）
-    if (import.meta.env.DEV || import.meta.env.VITE_DS_DEBUG === '1') {
-      const w = window as unknown as { __ds?: { rf?: unknown } }
-      ;(w.__ds ??= {}).rf = rf
-    }
-  }, [rf])
-  const conn = useConnectFlow(doc, plugin, wrapperRef)
-  const drop = useCanvasDrop(doc, plugin)
-  useCanvasEvents(doc, plugin, { containerRef: wrapperRef, selectIds, visibleNodeIds })
-  useCanvasKeys(doc, plugin, { selectIds })
-
-  const editingNode = editingNodeId ? (doc.nodes[editingNodeId] ?? null) : null
-
-  const startNodeEdit = useCallback(
-    (id: string) => {
-      setEditingNode(id)
-      setTextEditing(true)
-    },
-    [setEditingNode, setTextEditing],
-  )
-
-  const onReconnect = useCallback(
-    (
-      oldEdge: FEdge,
-      c: {
-        source: string
-        target: string
-        sourceHandle: string | null
-        targetHandle: string | null
-      },
-    ) => {
-      execute(
-        reconnectEdge(oldEdge.id, {
-          source: c.source,
-          target: c.target,
-          sourceHandle: c.sourceHandle ?? undefined,
-          targetHandle: c.targetHandle ?? undefined,
-        }),
-      )
-    },
-    [execute],
-  )
-
-  const empty = Object.keys(doc.nodes).length === 0
+  const { rfProps, wrapperRef, drop } = useCanvasWiring(doc, plugin)
 
   return (
     <div
@@ -128,79 +80,14 @@ function FlowInner() {
     >
       <CanvasContextMenu>
         <div className="ds-canvas-flow">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onSelectionChange={onSelectionChange}
-            onConnect={conn.onConnect}
-            onConnectEnd={conn.onConnectEnd}
-            onNodeDragStart={drag.onNodeDragStart}
-            onNodeDrag={drag.onNodeDrag}
-            onNodeDragStop={drag.onNodeDragStop}
-            onNodeDoubleClick={(_e, n: FNode) => startNodeEdit(n.id)}
-            onEdgeDoubleClick={(_e, e2: FEdge) => setEditingEdge(e2.id)}
-            onReconnect={onReconnect}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            colorMode={theme}
-            connectionMode={ConnectionMode.Loose}
-            isValidConnection={conn.isValidConnection}
-            edgesReconnectable
-            reconnectRadius={10}
-            snapToGrid={doc.settings.snap}
-            snapGrid={[12, 12]}
-            selectionOnDrag={tool === 'select'}
-            panOnDrag={tool === 'hand' ? [0, 1, 2] : [1, 2]}
-            panActivationKeyCode="Space"
-            panOnScroll
-            zoomOnPinch
-            zoomOnScroll={false}
-            minZoom={0.1}
-            maxZoom={4}
-            fitView
-            fitViewOptions={{ padding: 0.15, maxZoom: 1 }}
-            onMove={(_e, vp) => setZoom(vp.zoom)}
-            onPointerMove={(e) => {
-              // 协作光标：屏幕坐标 → 画布坐标，节流在 adapter 内部
-              const pos = rf.screenToFlowPosition({ x: e.clientX, y: e.clientY })
-              useCollabStore.getState().pushCursor(pos)
-            }}
-            onPointerLeave={() => useCollabStore.getState().pushCursor(null)}
-            deleteKeyCode={null}
-            nodesFocusable
-            edgesFocusable
-            onlyRenderVisibleElements
-            disableKeyboardA11y
-          >
-            {doc.settings.grid && (
-              <Background
-                id="fine"
-                variant={BackgroundVariant.Lines}
-                gap={24}
-                color="var(--grid-fine)"
-              />
-            )}
-            {doc.settings.grid && (
-              <Background
-                id="coarse"
-                variant={BackgroundVariant.Lines}
-                gap={120}
-                color="var(--grid-coarse)"
-              />
-            )}
+          <ReactFlow {...rfProps} nodeTypes={nodeTypes} edgeTypes={edgeTypes}>
+            <GridLayers />
             {minimapVisible && <MiniMap className="ds-minimap" pannable zoomable />}
             <PeerCursors />
           </ReactFlow>
         </div>
       </CanvasContextMenu>
-      <AlignmentGuides />
-      {empty && <EmptyState />}
-      {editingNode && <NodeTextEditor node={editingNode} onDone={() => setEditingNode(null)} />}
-      {connectMenu && (
-        <ConnectMenu menu={connectMenu} plugin={plugin} onClose={() => setConnectMenu(null)} />
-      )}
+      <Overlays />
     </div>
   )
 }
