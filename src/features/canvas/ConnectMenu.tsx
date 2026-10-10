@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { createEdge, createNode } from '@/core/model/factories'
 import { insertElements } from '@/core/commands/ops'
-import type { ShapeDef } from '@/core/plugin'
+import type { DiagramPlugin } from '@/core/plugin'
 import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
 import { zh } from '@/i18n/zh'
@@ -11,11 +11,12 @@ import type { ConnectMenuState } from './canvasStore'
 
 interface Props {
   menu: ConnectMenuState
-  shapes: ShapeDef<React.ReactNode>[]
+  plugin: DiagramPlugin<React.ReactNode>
   onClose: () => void
 }
 
-export function ConnectMenu({ menu, shapes, onClose }: Props) {
+export function ConnectMenu({ menu, plugin, onClose }: Props) {
+  const shapes = plugin.shapes
   const execute = useDocumentStore((s) => s.execute)
   const setSelection = useUiStore((s) => s.setSelection)
   const ref = useRef<HTMLDivElement>(null)
@@ -57,6 +58,10 @@ export function ConnectMenu({ menu, shapes, onClose }: Props) {
     const edge = createEdge(source, target, {
       sourceHandle: sourceHandle ?? undefined,
       targetHandle: targetHandle ?? undefined,
+      routing: plugin.edgeDefaults.routing,
+      arrowStart: plugin.edgeDefaults.arrowStart,
+      arrowEnd: plugin.edgeDefaults.arrowEnd,
+      style: { ...plugin.edgeDefaults.style },
     })
     execute(insertElements([node], [edge], '添加节点并连接'))
     setSelection({ nodeIds: [node.id], edgeIds: [] })

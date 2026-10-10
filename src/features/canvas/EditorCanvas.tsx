@@ -182,11 +182,7 @@ function FlowInner() {
       {empty && <EmptyState />}
       {editingNode && <NodeTextEditor node={editingNode} onDone={() => setEditingNode(null)} />}
       {connectMenu && (
-        <ConnectMenu
-          menu={connectMenu}
-          shapes={plugin.shapes}
-          onClose={() => setConnectMenu(null)}
-        />
+        <ConnectMenu menu={connectMenu} plugin={plugin} onClose={() => setConnectMenu(null)} />
       )}
     </div>
   )
