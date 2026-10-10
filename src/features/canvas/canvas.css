@@ -1,0 +1,305 @@
+/* 画布样式：方格纸、节点、连线、浮层。颜色一律走 tokens.css 变量。 */
+
+.ds-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.ds-canvas-flow,
+.ds-canvas .react-flow {
+  width: 100%;
+  height: 100%;
+}
+.ds-canvas .react-flow {
+  background: var(--sheet);
+}
+
+/* —— 节点 —— */
+.react-flow__node {
+  animation: ds-node-in var(--dur-fast) ease-out;
+}
+@keyframes ds-node-in {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.ds-node {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.ds-node-body {
+  width: 100%;
+  height: 100%;
+}
+.ds-node.is-selected {
+  outline: 1.5px solid var(--accent);
+  outline-offset: 2px;
+}
+.ds-node.is-drop-target {
+  outline: 1.5px dashed var(--accent);
+  outline-offset: 4px;
+}
+/* 自动布局 300ms 过渡：只作用于 RF 的 translate */
+.ds-layout-animating .react-flow__node {
+  transition: transform var(--dur-layout) ease-out;
+}
+
+/* CAD 夹点：8px 白底方块 + 1.5px accent 边 */
+.ds-grip {
+  width: 8px !important;
+  height: 8px !important;
+  background: var(--panel) !important;
+  border: 1.5px solid var(--accent) !important;
+  border-radius: 0 !important;
+}
+.ds-resize-line {
+  border-color: var(--accent) !important;
+}
+
+/* 连接点：8px 圆点，悬停节点出现 */
+.react-flow__handle.ds-handle {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  min-height: 8px;
+  background: var(--accent);
+  border: 1px solid var(--panel);
+  opacity: 0;
+  transition: opacity var(--dur-fast);
+}
+.react-flow__node:hover .ds-handle,
+.ds-handle.connectingto,
+.ds-handle.valid {
+  opacity: 1;
+}
+
+/* —— 连线 —— */
+.react-flow__connection-path {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+.ds-edge-label {
+  position: absolute;
+  pointer-events: all;
+  padding: 1px 6px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ink-2);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  max-width: 220px;
+}
+.ds-edge-label:empty {
+  display: none;
+}
+.ds-edge-label.is-selected {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.ds-edge-label-input {
+  width: 120px;
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+/* 框选与多选框 */
+.react-flow__selection,
+.react-flow__nodesselection-rect {
+  background: var(--accent-wash);
+  border: 1px solid var(--accent);
+}
+
+/* —— 浮层 —— */
+.ds-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pop);
+  box-shadow: var(--shadow-pop);
+  padding: 2px;
+}
+.ds-zoom-btn,
+.ds-zoom-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  min-width: 28px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.ds-zoom-value {
+  font-family: 'Barlow Semi Condensed', Barlow, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  padding: 0 4px;
+}
+.ds-zoom-btn:hover,
+.ds-zoom-value:hover {
+  background: var(--accent-wash);
+  color: var(--ink);
+}
+
+/* 对齐参考线 */
+.ds-guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+.ds-guide {
+  position: absolute;
+  background: var(--accent);
+}
+.ds-guide-v {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+.ds-guide-h {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+/* 文字行内编辑 */
+.ds-text-editor {
+  position: absolute;
+  z-index: 30;
+  resize: none;
+  padding: 4px;
+  font-family: inherit;
+  line-height: 1.3;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-control);
+  outline: none;
+  overflow: hidden;
+}
+
+/* 拖线到空白的形状菜单 + 右键菜单共用 */
+.ds-menu,
+.ds-connect-menu {
+  min-width: 150px;
+  padding: 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pop);
+  box-shadow: var(--shadow-pop);
+  z-index: 50;
+}
+.ds-connect-menu {
+  position: absolute;
+}
+.ds-menu-title {
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.ds-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 6px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 20px;
+  cursor: pointer;
+  text-align: left;
+}
+.ds-menu-item:hover,
+.ds-menu-item[data-highlighted] {
+  background: var(--accent-wash);
+  outline: none;
+}
+.ds-menu-item[data-disabled] {
+  color: var(--ink-3);
+}
+.ds-menu-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--line);
+}
+
+/* 空画布提示 */
+.ds-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+}
+.ds-empty-inner {
+  text-align: center;
+}
+.ds-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+.ds-empty-hint {
+  color: var(--ink-2);
+  margin: 0 0 16px;
+}
+.ds-empty-sub {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin: 0 0 8px;
+}
+.ds-empty-templates {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.ds-empty-tpl {
+  pointer-events: auto;
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+.ds-empty-tpl:hover {
+  background: var(--accent-wash);
+  border-color: var(--accent);
+}
+
+/* 小地图与署名 */
+.react-flow__minimap {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pop);
+  overflow: hidden;
+}
+.react-flow__attribution {
+  background: transparent;
+  color: var(--ink-3);
+}
+.react-flow__attribution a {
+  color: var(--ink-3);
+}
