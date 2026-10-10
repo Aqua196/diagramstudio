@@ -27,7 +27,7 @@ export interface FrameOptions {
 }
 
 export const TITLE_BLOCK_W = 200
-export const TITLE_BLOCK_H = 64
+export const TITLE_BLOCK_H = 96
 
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -46,7 +46,7 @@ export function frameSvg({ width, height, margin, info, colors, content }: Frame
   const ty = by + bh - TITLE_BLOCK_H
   const rowH = TITLE_BLOCK_H / 3
   const labelSize = 10
-  const valueSize = 12
+  const valueSize = 13
 
   const cell = (
     x: number,
@@ -58,8 +58,8 @@ export function frameSvg({ width, height, margin, info, colors, content }: Frame
     span = 1,
   ) => `
     <rect x="${x}" y="${y}" width="${w * span}" height="${h}" fill="none" stroke="${colors.line}" stroke-width="0.8"/>
-    <text x="${x + 6}" y="${y + h / 2 - 2}" font-size="${labelSize}" fill="${colors.ink3}" font-family="Barlow, 'PingFang SC', 'Microsoft YaHei', sans-serif">${esc(label)}</text>
-    <text x="${x + 6}" y="${y + h / 2 + 11}" font-size="${valueSize}" font-weight="600" fill="${colors.ink}" font-family="'Barlow Semi Condensed', Barlow, 'PingFang SC', 'Microsoft YaHei', sans-serif">${esc(value)}</text>`
+    <text x="${x + 6}" y="${y + 12}" font-size="${labelSize}" fill="${colors.ink3}" font-family="Barlow, 'PingFang SC', 'Microsoft YaHei', sans-serif">${esc(label)}</text>
+    <text x="${x + 6}" y="${y + 27}" font-size="${valueSize}" font-weight="600" fill="${colors.ink}" font-family="'Barlow Semi Condensed', Barlow, 'PingFang SC', 'Microsoft YaHei', sans-serif">${esc(value)}</text>`
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   ${content ? `<g transform="translate(${bx},${by})">${content}</g>` : ''}

@@ -34,6 +34,7 @@ export function useCanvasDrop(doc: DiagramDoc, plugin: DiagramPlugin) {
           y: Math.round((pos.y - h / 2) / snap) * snap,
         },
         { w, h },
+        shape.defaultText ?? '',
       )
       useDocumentStore.getState().execute(addNode(node))
       useUiStore.getState().setSelection({ nodeIds: [node.id], edgeIds: [] })

@@ -98,7 +98,7 @@ function mindShape(accent: boolean) {
         )}
         <MindText node={node} ctx={ctx} accent={accent} />
         {hasChildren && (
-          <foreignObject x={w + 1} y={h / 2 - 8} width={16} height={16}>
+          <foreignObject x={w + 1} y={h - 4} width={16} height={16}>
             <CollapseBtn node={node} ctx={ctx} />
           </foreignObject>
         )}
@@ -128,6 +128,7 @@ export const mindmapPlugin: DiagramPlugin<ReactNode> = {
   },
   layout: mindmapLayout,
   autoLayoutOnChange: true,
+  edgeAxis: 'horizontal',
   hiddenNodeIds: (doc) => collapsedDescendants(doc),
   expandDeletion: expandMindmapDeletion,
   onDropOnNode: (doc, draggedId, targetId) => reparentCommand(doc, draggedId, targetId),

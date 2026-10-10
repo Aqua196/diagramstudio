@@ -14,12 +14,14 @@ export const erShapes: ShapeDef<ReactNode>[] = [
     kind: 'entity',
     name: sh.entity,
     defaultSize: { w: 210, h: 108 },
+    defaultText: sh.entity,
     render: (n, ctx) => entityRender(n, ctx),
   },
   {
     kind: 'weakEntity',
     name: sh.weakEntity,
     defaultSize: { w: 210, h: 108 },
+    defaultText: sh.weakEntity,
     render: (n, ctx) => entityRender(n, ctx, { weak: true }),
   },
 ]
