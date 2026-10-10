@@ -15,7 +15,7 @@ import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
 import { zh } from '@/i18n/zh'
 
-const PAD = 40 // 内容四周留白（px）
+const PAD = 72 // 内容四周留白（px）；需容纳越出节点包围盒的回环曲线
 
 interface ExportDetail {
   scale?: number
