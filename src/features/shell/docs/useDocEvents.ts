@@ -3,10 +3,12 @@
 import { useEffect } from 'react'
 import { EV, type EvName } from '@/core/events'
 import { docToJson, jsonToDoc } from '@/core/io/serialize'
-import { docToMermaid, parseMermaid } from '@/core/io/mermaid'
+import { docToMermaid } from '@/core/io/mermaid'
+import { importMermaidText } from '@/core/io/importer'
 import { createDoc, createId } from '@/core/model/factories'
 import type { DiagramDoc, DiagramType } from '@/core/model/types'
 import { useDocumentStore } from '@/store/documentStore'
+import { useCollabStore } from '@/store/collabStore'
 import { useUiStore } from '@/store/uiStore'
 import { zh } from '@/i18n/zh'
 import {
@@ -125,31 +127,38 @@ export function useDocEvents(): void {
       openDocInEditor(imported.doc)
       toast('success', zh.io.importDone)
     }
+    // Mermaid 导入（A3）：走 importer.ts 统一拼 doc（dagre 摆位），这里只管文件与提示
     const importMermaid = async () => {
       const text = await readFile('.mmd,.mermaid,text/plain')
       if (text === null) return
-      const r = parseMermaid(text)
-      if (Object.keys(r.nodes).length === 0) {
-        toast('error', `${zh.io.importFailed}：${zh.errors.importInvalid}`)
+      const r = importMermaidText(text, {
+        title: zh.io.importedDocTitle,
+        emptyError: zh.errors.importInvalid,
+      })
+      if (!r.ok || !r.doc) {
+        toast('error', `${zh.io.importFailed}：${r.errors[0] ?? zh.errors.importInvalid}`)
         return
       }
-      const doc = createDoc('flowchart', zh.io.fileDiagram)
-      doc.nodes = r.nodes
-      doc.edges = r.edges
-      doc.zOrder = Object.keys(r.nodes)
-      doc.settings.layoutDirection = r.direction
-      saveDoc(doc)
-      openDocInEditor(doc)
+      saveDoc(r.doc)
+      openDocInEditor(r.doc)
       toast(
         'success',
-        r.skipped > 0
+        r.skipped
           ? `${zh.io.importDone}（${r.skipped} ${zh.io.skippedLines}）`
           : zh.io.importDone,
       )
     }
-    const pngSoon = () => toast('info', zh.io.pngSoon)
-    const svgSoon = () => toast('info', zh.io.svgSoon)
-    const shareSoon = () => toast('info', zh.io.shareSoon)
+    // 分享（A2）：share() 建房并把 ?room= 写进地址栏，链接进剪贴板
+    const share = async () => {
+      const link = useCollabStore.getState().share()
+      window.history.replaceState(null, '', link)
+      try {
+        await navigator.clipboard.writeText(link)
+        toast('success', zh.collab.linkCopied)
+      } catch {
+        toast('info', link)
+      }
+    }
     const showShortcuts = () => ui().setShortcutsHelpOpen(true)
     const setTool = (e: Event) => {
       const t = (e as CustomEvent).detail as 'select' | 'hand'
@@ -167,9 +176,7 @@ export function useDocEvents(): void {
       [EV.EXPORT_MERMAID, exportMermaid],
       [EV.IMPORT_JSON, () => void importJson()],
       [EV.IMPORT_MERMAID, () => void importMermaid()],
-      [EV.EXPORT_PNG, pngSoon],
-      [EV.EXPORT_SVG, svgSoon],
-      [EV.SHARE, shareSoon],
+      [EV.SHARE, () => void share()],
       [EV.SHOW_SHORTCUTS, showShortcuts],
       [EV.SET_TOOL, setTool],
     ]

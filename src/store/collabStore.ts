@@ -32,6 +32,8 @@ export const useCollabStore = create<CollabStore>()((set, get) => ({
 
   join: (room) => {
     const r = room && room.length > 0 ? room : `r-${createId().slice(0, 10)}`
+    // StrictMode 双挂载/重复调用不重复建连（避免握手被前一个 provider 销毁打断）
+    if (get().room === r && adapter) return r
     if (!adapter) adapter = createCollabAdapter()
     adapter.join({
       room: r,
@@ -42,7 +44,10 @@ export const useCollabStore = create<CollabStore>()((set, get) => ({
         },
         onPeers: (peers) => set({ peers }),
         onStatus: (status) =>
-          set({ status: status === 'connected' ? 'connected' : 'connecting' }),
+          set({
+            status:
+              status === 'connected' ? 'connected' : status === 'offline' ? 'offline' : 'connecting',
+          }),
       },
     })
     set({ room: r, status: 'connecting' })

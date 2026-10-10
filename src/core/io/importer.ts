@@ -21,14 +21,24 @@ export function importJsonText(text: string): ImportResult {
 
 export function importMermaidText(
   text: string,
-  layout: (doc: DiagramDoc, opts: { direction: 'TB' | 'LR' }) => Record<string, { x: number; y: number }> = dagreLayout,
+  opts: {
+    /** 文档标题与空内容错误文案由调用方注入（i18n 归外壳层） */
+    title?: string
+    emptyError?: string
+    layout?: (doc: DiagramDoc, o: { direction: 'TB' | 'LR' }) => Record<string, { x: number; y: number }>
+  } = {},
 ): ImportResult {
+  const layout = opts.layout ?? dagreLayout
   const parsed = parseMermaid(text)
   const nodeCount = Object.keys(parsed.nodes).length
   if (nodeCount === 0) {
-    return { ok: false, errors: ['没有可识别的 Mermaid 图形内容'], skipped: parsed.skipped }
+    return {
+      ok: false,
+      errors: [opts.emptyError ?? 'mermaid: no recognizable diagram content'],
+      skipped: parsed.skipped,
+    }
   }
-  const doc = createDoc('flowchart', '导入的图表')
+  const doc = createDoc('flowchart', opts.title ?? 'imported diagram')
   doc.settings.layoutDirection = parsed.direction
   const nodes: Record<string, DiagramNode> = {}
   const pos = layout(

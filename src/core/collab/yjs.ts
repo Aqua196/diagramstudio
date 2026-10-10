@@ -58,7 +58,10 @@ class YjsCollabAdapter implements CollabAdapter {
     })
 
     provider.on('status', ({ status }: { status: string }) => {
-      this.callbacks?.onStatus(status === 'connected' ? 'connected' : 'connecting')
+      // disconnected → 顶栏显示「离线」，重连中回到 connecting
+      this.callbacks?.onStatus(
+        status === 'connected' ? 'connected' : status === 'disconnected' ? 'offline' : 'connecting',
+      )
     })
 
     // 远端变更 → 合并回本地（observer 粒度到 key）

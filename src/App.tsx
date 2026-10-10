@@ -20,8 +20,13 @@ function AppEffects() {
 export default function App() {
   const route = useUiStore((s) => s.route)
 
-  // 启动路由：有最近打开的文档直接回编辑器，否则进首页
+  // 启动路由：?room= 直接进编辑器（空白文档占位等远端同步，A2）；
+  // 有最近打开的文档直接回编辑器，否则进首页
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).has('room')) {
+      useUiStore.getState().setRoute('editor')
+      return
+    }
     const id = lastOpenedId()
     const doc = id ? getStoredDoc(id) : null
     if (doc) {

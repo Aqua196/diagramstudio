@@ -8,6 +8,7 @@ import { LeftPanel } from '@/features/shell/palette/LeftPanel'
 import { Inspector } from '@/features/shell/inspector/Inspector'
 import { useUiStore } from '@/store/uiStore'
 import { useDocumentStore } from '@/store/documentStore'
+import { useCollabStore } from '@/store/collabStore'
 import { zh } from '@/i18n/zh'
 
 const MIN_WIDTH = 1024
@@ -22,6 +23,11 @@ export default function EditorPage() {
     const onResize = () => setNarrow(window.innerWidth < MIN_WIDTH)
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  // ?room= 参数自动加入协作（A2）
+  useEffect(() => {
+    useCollabStore.getState().initFromUrl()
   }, [])
 
   if (narrow) {
