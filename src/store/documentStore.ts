@@ -82,3 +82,7 @@ export const useDocumentStore = create<DocumentStore>()((set, get) => ({
     if (!opts?.remote) collabBroadcast?.(doc)
   },
 }))
+
+// 调试桥（性能/e2e 测试用 window.__ds）：随 store 安装一次
+import { installDebugBridge } from './debugBridge'
+installDebugBridge()
