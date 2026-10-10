@@ -144,7 +144,7 @@ SPEC §8 要求的完整场景清单（随画布/外壳阶段落地，逐条对�
 | --- | --- | --- |
 | `pnpm typecheck` (`tsc -b`) | ✅ 通过 | strict，无错误 |
 | `pnpm build` (`tsc -b && vite build`) | ✅ 通过 | dist 产物 ~143 kB JS（gzip ~46 kB） |
-| `pnpm lint` (`eslint .`) | ❌ 1 error | `src/io/export.ts` 引入 `html-to-image`，违反 core 边界规则（见 §7 缺陷 D-01） |
+| `pnpm lint` (`eslint .`) | ✅ 0 error 0 warning | 曾触发 1 条 core 边界违例（`export.ts` 引 `html-to-image`），已移至 `src/io/` 修复，见 §7 缺陷 D-01 |
 | `pnpm test` | ⚠️ 31/32 | `history.test.ts`「无实质改动的命令不入栈」**计时敏感偶发失败**（见 §7 D-02） |
 | `pnpm test:coverage` | ❌ 行覆盖 71.49% < 80% | 见 §4 与 §7 D-03 |
 
@@ -167,7 +167,7 @@ SPEC §8 要求的完整场景清单（随画布/外壳阶段落地，逐条对�
 
 | 编号 | 严重度 | 描述 | 位置/复现 |
 | --- | --- | --- | --- |
-| D-01 | lint error | `src/io/export.ts` 直接 import `html-to-image`，违反「DOM 截图只允许出现在 features/io」的边界规则；`pnpm lint` 1 error | `eslint.config.js` no-restricted-imports；修法：截图调用上移到 `features/io`，core 只保留文本导出 |
+| D-01 | lint error（已修复）| `export.ts` 初版在 `core/io` 直接 import `html-to-image`，违反「DOM 截图只允许出现在 features/io」规则 → 已上移至 `src/io/export.ts`，core 只保留文本导出；现 lint 0 error | `eslint.config.js` no-restricted-imports |
 | D-02 | flaky test | 「无实质改动的命令不入栈」对计时敏感：`executeCommand` 恒定写 `draft.updatedAt = now`，若 `Date.now()` 恰好跨毫秒则产生补丁导致入栈（期望不入栈）。同一命令两次运行曾分别通过/失败 | `src/core/commands/history.ts:42-47`；修法：仅当业务补丁非空时才更新 updatedAt/入栈，或在判断时排除 updatedAt 补丁 |
 | D-03 | coverage | core 行覆盖 71.49% 低于 80% 门禁（阶段 5–7 新增文件未配测试） | 见 §4 |
 | D-04 | 待测 | 性能专项（500 节点拖拽帧时间）与 SPEC §8 的 8 个 e2e 场景、axe 无障碍检查尚未实现 | `e2e/` 目前仅 smoke |
