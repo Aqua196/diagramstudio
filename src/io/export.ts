@@ -1,10 +1,10 @@
 // 导出（SPEC §5）：JSON/Mermaid 纯文本；PNG/SVG 用 html-to-image 截图画布节点。
 // 画布侧把 .react-flow__viewport 元素传进来；图框标题栏可选叠加（frameSvg）。
 import { toPng, toSvg } from 'html-to-image'
-import { docToJson } from './serialize'
-import { docToMermaid } from './mermaid'
-import { frameSvg } from './titleblock'
-import type { DiagramDoc } from '../model/types'
+import { docToJson } from '@/core/io/serialize'
+import { docToMermaid } from '@/core/io/mermaid'
+import { frameSvg } from '@/core/io/titleblock'
+import type { DiagramDoc } from '@/core/model/types'
 
 function download(name: string, url: string): void {
   const a = document.createElement('a')

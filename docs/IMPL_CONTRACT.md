@@ -161,5 +161,5 @@ window.dispatchEvent(new CustomEvent(EV.X, { detail }))
 ## §9 持久化与导入导出（阶段6 已实现，供外壳调用）
 - `src/core/io/persist.ts`：listDocs/loadDoc/saveDoc/deleteDoc/renameDoc/duplicateDoc/newDoc（localStorage `ds.docs.v1` + `ds.docIndex.v1`）。
 - `src/core/io/importer.ts`：importJsonText / importMermaidText（自动 dagre 摆位，返回 {ok,doc,errors,skipped}）。
-- `src/core/io/export.ts`：exportJsonFile / exportMermaidFile / exportPngFile / exportSvgFile（element=画布容器；PNG 背景按主题；SVG 可带 frame 标题栏）。
+- `src/io/export.ts`：exportJsonFile / exportMermaidFile / exportPngFile / exportSvgFile（element=画布容器；PNG 背景按主题；SVG 可带 frame 标题栏）。
 - 编辑器进入/变更时应 saveDoc(doc)（建议 debounce 500ms）；首页用 listDocs 渲染列表。
