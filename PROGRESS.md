@@ -46,3 +46,8 @@
 - 外壳：48px 顶栏、240px 形状+模板面板、280px 检查器（画布/节点/多选对齐/边属性+ER cardinality）、首页（3 类入口+localStorage 文档列表+模板缩略图）、uiStore 路由、toast、Radix Dialog/DropdownMenu、zh.ts 全文案
 - ConnectMenu：拖线落空弹形状菜单（insertElements 复合命令，单条历史）；edgeDefaults 贯穿连线创建
 - e2e/stage34.spec.ts（控制台零 error/warning 断言）+ 7 张双视口截图入 docs/screenshots/；单测 +16
+
+## 阶段8 质量与打磨 ✅ 2026-10-10
+- 无障碍修复：--ink-3 #6b7684→#5d6875（WCAG ≥4.5）、形状按钮去掉非法 role=listitem、首页/编辑器补 main/h1 landmark——axe 扫描首页+编辑器×亮暗×双视口 0 violation
+- 性能（pnpm preview 生产构建）：500n/800e 局部视口静态 p95≈17.8ms、拖拽合成事件 p95<1ms、全览 p95≈19ms——断言 <20ms 通过；headless 帧率节流以 launch arg 解除；详见 docs/PERFORMANCE.md
+- measureFrame 改单 rAF 口径；EditorCanvas 暴露 __ds.rf 测试钩子；setGuides 等值守卫减少拖拽重渲染

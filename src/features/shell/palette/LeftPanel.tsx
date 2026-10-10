@@ -12,12 +12,11 @@ export function LeftPanel() {
   return (
     <aside className="ds-panel ds-panel-left" aria-label={zh.topbar.leftPanel}>
       <div className="ds-panel-title">{zh.palettePanel.title}</div>
-      <div className="ds-shapes" role="list">
+      <div className="ds-shapes">
         {plugin.shapes.map((s) => (
           <button
             key={s.kind}
             type="button"
-            role="listitem"
             className="ds-shape"
             draggable
             title={`${s.name} — ${zh.palettePanel.dragHint}`}

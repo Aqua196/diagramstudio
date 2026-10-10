@@ -6,6 +6,7 @@ import { TopBar } from '@/features/shell/topbar/TopBar'
 import { LeftPanel } from '@/features/shell/palette/LeftPanel'
 import { Inspector } from '@/features/shell/inspector/Inspector'
 import { useUiStore } from '@/store/uiStore'
+import { useDocumentStore } from '@/store/documentStore'
 import { zh } from '@/i18n/zh'
 
 const MIN_WIDTH = 1024
@@ -14,6 +15,7 @@ export default function EditorPage() {
   const leftPanelOpen = useUiStore((s) => s.leftPanelOpen)
   const rightPanelOpen = useUiStore((s) => s.rightPanelOpen)
   const [narrow, setNarrow] = useState(() => window.innerWidth < MIN_WIDTH)
+  const doc = useDocumentStore((s) => s.doc)
 
   useEffect(() => {
     const onResize = () => setNarrow(window.innerWidth < MIN_WIDTH)
@@ -35,6 +37,7 @@ export default function EditorPage() {
       <div className="ds-editor-body">
         {leftPanelOpen && <LeftPanel />}
         <main className="ds-editor-canvas">
+          <h1 className="sr-only">{doc.title}</h1>
           <EditorCanvas />
         </main>
         {rightPanelOpen && <Inspector />}

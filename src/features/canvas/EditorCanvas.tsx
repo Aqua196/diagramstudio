@@ -1,6 +1,6 @@
 // 画布（IMPL_CONTRACT §6）：默认导出 <EditorCanvas/>，无 props。
 // 文档→元素经 store 选择器派生；拖动/框选等瞬态在 RF 内部，松手才提交命令。
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import {
   Background,
   BackgroundVariant,
@@ -8,6 +8,7 @@ import {
   MiniMap,
   ReactFlow,
   ReactFlowProvider,
+  useReactFlow,
   type Edge,
   type Node,
 } from '@xyflow/react'
@@ -67,6 +68,10 @@ function FlowInner() {
   const setConnectMenu = useCanvasStore((s) => s.setConnectMenu)
 
   const drag = useDragGuards(doc, plugin, setNodes)
+  const rf = useReactFlow()
+  useEffect(() => {
+    ;(window as unknown as { __ds: { rf?: unknown } }).__ds.rf = rf
+  }, [rf])
   const conn = useConnectFlow(doc, plugin, wrapperRef)
   const drop = useCanvasDrop(doc, plugin)
   useCanvasEvents(doc, plugin, { containerRef: wrapperRef, selectIds, visibleNodeIds })

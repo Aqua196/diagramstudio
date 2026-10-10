@@ -42,6 +42,14 @@ export const useCanvasStore = create<CanvasStore>()((set) => ({
   setEditingNode: (editingNodeId) => set({ editingNodeId }),
   setEditingEdge: (editingEdgeId) => set({ editingEdgeId }),
   setDropTarget: (dropTargetId) => set({ dropTargetId }),
-  setGuides: (guides) => set({ guides }),
+  setGuides: (guides) =>
+    set((s) =>
+      s.guides.v.length === guides.v.length &&
+      s.guides.h.length === guides.h.length &&
+      s.guides.v.every((x, i) => x === guides.v[i]) &&
+      s.guides.h.every((x, i) => x === guides.h[i])
+        ? s
+        : { guides },
+    ),
   setConnectMenu: (connectMenu) => set({ connectMenu }),
 }))

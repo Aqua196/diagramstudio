@@ -9,6 +9,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5173',
     // 默认用自带 chromium；若系统库缺失跑不起来，加 channel: 'chrome' 改用系统 Chrome
+    // 解除 headless 帧率节流：性能用例要测真实帧耗，而非 30fps vsync 间隔
+    launchOptions: { args: ['--disable-frame-rate-limit', '--disable-gpu-vsync'] },
     trace: 'retain-on-failure',
   },
   projects: [

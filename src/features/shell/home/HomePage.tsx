@@ -214,7 +214,7 @@ export default function HomePage() {
   const setTheme = useUiStore((s) => s.setTheme)
 
   return (
-    <div className="ds-home">
+    <main className="ds-home">
       <header className="ds-home-head">
         <h1 className="ds-home-logo">{zh.app.name}</h1>
         <div className="ds-home-actions">
@@ -264,6 +264,6 @@ export default function HomePage() {
           </div>
         )}
       </section>
-    </div>
+    </main>
   )
 }

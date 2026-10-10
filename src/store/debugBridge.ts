@@ -45,9 +45,7 @@ export function installDebugBridge(): void {
     measureFrame: () =>
       new Promise((resolve) => {
         const t0 = performance.now()
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => resolve(performance.now() - t0))
-        })
+        requestAnimationFrame(() => resolve(performance.now() - t0))
       }),
   }
   ;(window as unknown as { __ds: DsDebug }).__ds = dbg
