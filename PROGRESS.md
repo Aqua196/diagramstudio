@@ -35,3 +35,7 @@
 - core/collab：adapter 接口 + yjs 实现（Y.Map 存 nodes/edges/meta，diff 事务写入，observeDeep 回填，awareness 光标/昵称/颜色，50ms 节流）
 - collabStore：join/leave/share/initFromUrl/pushCursor；documentStore 经 setCollabBroadcast 解耦广播
 - 单测 +3（diff）；门禁全绿。UI 接线（分享按钮/peers 光标/房间入口）待阶段4/6 完成。
+
+## 阶段5 插件 ✅ / 阶段6 IO 层 ✅ 2026-10-10
+- flowchart：11 种 SVG 形状 + 登录流程模板 + dagre；mindmap：data.parentId 树、Tab/Enter 键位、折叠圆钮（dispatch）、拖放改父级（含防环）、autoLayoutOnChange；er：实体表头+字段行（行内增删改字段 dispatch patchNode）、edgeFields=cardinality、选课系统模板
+- persist/importer/export 全套本地 IO；frameSvg 支持嵌入内容；ShapeRenderContext 增加 doc

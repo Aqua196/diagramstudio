@@ -157,3 +157,9 @@ window.dispatchEvent(new CustomEvent(EV.X, { detail }))
 - 画布 `onPointerMove` → `pushCursor(screenToFlowPosition({x,y}))`（内部已节流 50ms）；peers 渲染成彩色光标+昵称角标。
 - 远端文档经 `setDoc(doc,{resetHistory:false,remote:true})` 合入，不进本地历史、不回播；本地 execute/undo/redo 自动广播。
 - 服务器：`pnpm dev:collab` → ws://127.0.0.1:1234（`VITE_COLLAB_WS` 可覆盖）。
+
+## §9 持久化与导入导出（阶段6 已实现，供外壳调用）
+- `src/core/io/persist.ts`：listDocs/loadDoc/saveDoc/deleteDoc/renameDoc/duplicateDoc/newDoc（localStorage `ds.docs.v1` + `ds.docIndex.v1`）。
+- `src/core/io/importer.ts`：importJsonText / importMermaidText（自动 dagre 摆位，返回 {ok,doc,errors,skipped}）。
+- `src/core/io/export.ts`：exportJsonFile / exportMermaidFile / exportPngFile / exportSvgFile（element=画布容器；PNG 背景按主题；SVG 可带 frame 标题栏）。
+- 编辑器进入/变更时应 saveDoc(doc)（建议 debounce 500ms）；首页用 listDocs 渲染列表。
