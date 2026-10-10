@@ -17,6 +17,34 @@ describe('pickEdgeSides：未指定锚点时按节点中心连线选边', () => 
   it('完全重叠（dx=dy=0）按水平规则取右/左', () => {
     expect(pickEdgeSides(box(0, 0), box(0, 0))).toEqual({ source: 'right', target: 'left' })
   })
+  it('axis=horizontal：垂直占优也恒取左右（F3 思维导图）', () => {
+    expect(pickEdgeSides(box(0, 0), box(60, 400), 'horizontal')).toEqual({
+      source: 'right',
+      target: 'left',
+    })
+    expect(pickEdgeSides(box(0, 0), box(-220, 400), 'horizontal')).toEqual({
+      source: 'left',
+      target: 'right',
+    })
+    // dx=0 默认取右
+    expect(pickEdgeSides(box(0, 0), box(0, 200), 'horizontal')).toEqual({
+      source: 'right',
+      target: 'left',
+    })
+  })
+  it('插件 edgeAxis=horizontal 时 selectFlowEdges 对父子边取左右', () => {
+    const doc = createDoc('mindmap', 't')
+    const root = createNode('topic', { x: 0, y: 0 }, { w: 100, h: 60 }, 'root')
+    const child = createNode('topic', { x: 40, y: 200 }, { w: 100, h: 60 }, 'child')
+    child.data = { parentId: root.id }
+    doc.nodes[root.id] = root
+    doc.nodes[child.id] = child
+    doc.zOrder = [root.id, child.id]
+    const edges = selectFlowEdges(doc, { ...flowchartPlugin, edgeAxis: 'horizontal' })
+    const parentEdge = edges.find((e) => e.id === `__parent_${child.id}`)
+    expect(parentEdge?.sourceHandle).toBe('right')
+    expect(parentEdge?.targetHandle).toBe('left')
+  })
 })
 
 describe('selectFlowEdges：缺省锚点自动选边，显式锚点不覆盖', () => {

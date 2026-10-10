@@ -83,9 +83,9 @@ selectSelectedEdges(doc, sel): DiagramEdge[]
 
 SPEC §4 的 `DiagramPlugin` 接口不变，补充：
 
-- `ShapeDef = { kind: string; name: string; icon?: string; defaultSize: {w,h}; render(node, ctx): ReactNode }`——render 只许用 SVG/div + tokens 变量；kind 是 `DiagramNode.kind` 的取值。`ctx = { editing: boolean; dispatch(cmd: Command): void }`：ER 表格节点的行内编辑经 `ctx.dispatch` 提交命令。
+- `ShapeDef = { kind: string; name: string; icon?: string; defaultSize: {w,h}; defaultText?: string; render(node, ctx): ReactNode }`——render 只许用 SVG/div + tokens 变量；kind 是 `DiagramNode.kind` 的取值。`ctx = { editing: boolean; dispatch(cmd: Command): void }`：ER 表格节点的行内编辑经 `ctx.dispatch` 提交命令。`defaultText` 是拖入/双击创建时的初始文字（ER 实体/弱实体默认名）。
 - `plugin.keymap` 上下文 `EditorContext = { doc, selection, dispatchEvent(e) }`，返回 `Command | null`。
-- 可选钩子：`plugin.onDropOnNode?(doc, draggedNodeId, targetNodeId): Command | null`（思维导图拖动改父级用）；`plugin.autoLayoutOnChange?: boolean`（思维导图 true：文档变动后画布自动调 plugin.layout，300ms 过渡，是一条命令）；`plugin.edgeFields?: 'cardinality'`（ER true：检查器据此渲染两端基数下拉，不判断 type）。
+- 可选钩子：`plugin.onDropOnNode?(doc, draggedNodeId, targetNodeId): Command | null`（思维导图拖动改父级用）；`plugin.autoLayoutOnChange?: boolean`（思维导图 true：文档变动后画布自动调 plugin.layout，300ms 过渡，是一条命令）；`plugin.edgeFields?: 'cardinality'`（ER true：检查器据此渲染两端基数下拉，不判断 type）；`plugin.hiddenNodeIds?(doc): Set<string>`（思维导图折叠子树）；`plugin.expandDeletion?(doc, nodeIds): string[]`（思维导图整支删除/剪切）；`plugin.edgeAxis?: 'auto' | 'horizontal'`（无显式锚点边的默认出线方向，思维导图 horizontal 恒取左右）。
 - registry：`registerPlugin(p)`、`getPlugin(type): DiagramPlugin`、`getAllPlugins(): DiagramPlugin[]`。
 - 阶段2 在 registry 预置一个「基座插件」：对三种 type 返回同一套通用形状（矩形、圆角、菱形、圆柱）+ dagre 布局 + 一个简单模板，使阶段3/4 有可渲染的真实接口；阶段5 用完整实现替换各 type 的注册项。
 - 禁止在 canvas/inspector/io 里写 `type === 'mindmap'` 分支；差异全在插件。

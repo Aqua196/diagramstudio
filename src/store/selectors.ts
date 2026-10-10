@@ -33,14 +33,16 @@ export function selectFlowNodes(doc: DiagramDoc, plugin: DiagramPlugin): Node<Fl
 
 export type EdgeSide = 'top' | 'right' | 'bottom' | 'left'
 
-/** 未显式记录锚点时按两节点中心连线选边：水平占优→左右，否则上下（R1，通用不分图类型） */
+/** 未显式记录锚点时按两节点中心连线选边：水平占优→左右，否则上下（R1，通用不分图类型）。
+ *  axis='horizontal' 时恒按 dx 取左右（思维导图横向树，F3） */
 export function pickEdgeSides(
   s: { x: number; y: number; w: number; h: number },
   t: { x: number; y: number; w: number; h: number },
+  axis: 'auto' | 'horizontal' = 'auto',
 ): { source: EdgeSide; target: EdgeSide } {
   const dx = t.x + t.w / 2 - (s.x + s.w / 2)
   const dy = t.y + t.h / 2 - (s.y + s.h / 2)
-  if (Math.abs(dx) >= Math.abs(dy)) {
+  if (axis === 'horizontal' || Math.abs(dx) >= Math.abs(dy)) {
     return dx >= 0 ? { source: 'right', target: 'left' } : { source: 'left', target: 'right' }
   }
   return dy >= 0 ? { source: 'bottom', target: 'top' } : { source: 'top', target: 'bottom' }
@@ -50,6 +52,7 @@ export function pickEdgeSides(
 function edgeHandles(
   doc: DiagramDoc,
   edge: DiagramEdge,
+  axis: 'auto' | 'horizontal' = 'auto',
 ): { sourceHandle?: string; targetHandle?: string } {
   if (edge.sourceHandle && edge.targetHandle) {
     return { sourceHandle: edge.sourceHandle, targetHandle: edge.targetHandle }
@@ -60,6 +63,7 @@ function edgeHandles(
   const sides = pickEdgeSides(
     { x: s.position.x, y: s.position.y, w: s.size.w, h: s.size.h },
     { x: t.position.x, y: t.position.y, w: t.size.w, h: t.size.h },
+    axis,
   )
   return {
     sourceHandle: edge.sourceHandle ?? sides.source,
@@ -77,7 +81,7 @@ export function selectFlowEdges(doc: DiagramDoc, plugin: DiagramPlugin): Edge<Fl
       type: 'dsEdge',
       source: edge.source,
       target: edge.target,
-      ...edgeHandles(doc, edge),
+      ...edgeHandles(doc, edge, plugin.edgeAxis),
       data: { edge },
       zIndex: 1000,
     })
@@ -103,7 +107,7 @@ export function selectFlowEdges(doc: DiagramDoc, plugin: DiagramPlugin): Edge<Fl
       type: 'dsEdge',
       source: edge.source,
       target: edge.target,
-      ...edgeHandles(doc, edge),
+      ...edgeHandles(doc, edge, plugin.edgeAxis),
       data: { edge },
       selectable: false,
       focusable: false,
