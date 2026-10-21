@@ -54,7 +54,9 @@ function DsEdge(p: EdgeProps) {
     <>
       <ArrowDefs id={id} stroke={stroke} start={arrowStart} end={arrowEnd} />
       {/* 选中光晕：一条更宽的半透明底线（比 CSS drop-shadow 便宜，全选几百条也不卡） */}
-      {selected && <path d={path} className="ds-edge-halo" style={{ strokeWidth: w + 7 }} aria-hidden />}
+      {selected && !drawing && (
+        <path d={path} className="ds-edge-halo" style={{ strokeWidth: w + 7 }} aria-hidden />
+      )}
       <BaseEdge
         id={id}
         path={path}

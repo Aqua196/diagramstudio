@@ -43,6 +43,8 @@ export class Tweener {
   private handle = 0
   private last = 0
   private janks = 0
+  /** 本轮补间开始后的帧数：头两帧里包含触发它的那次大提交（如布局计算），不算卡顿 */
+  private frames = 0
 
   constructor(
     private apply: (frame: Map<string, Pt>) => void,
@@ -81,6 +83,7 @@ export class Tweener {
     if (!this.handle) {
       this.last = this.clock.now()
       this.janks = 0
+      this.frames = 0
       this.handle = this.clock.request(this.frame)
     }
   }
@@ -107,7 +110,8 @@ export class Tweener {
   private frame = (): void => {
     this.handle = 0
     const now = this.clock.now()
-    this.janks = now - this.last > JANK_MS ? this.janks + 1 : 0
+    this.frames++
+    this.janks = this.frames > 2 && now - this.last > JANK_MS ? this.janks + 1 : 0
     this.last = now
     if (this.janks >= 2) {
       this.apply(this.finishAll())

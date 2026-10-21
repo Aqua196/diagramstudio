@@ -78,19 +78,33 @@ test.describe('性能（开启动效）', () => {
     expect(s.tasks).toBeGreaterThan(0)
   })
 
-  test('性能：180 节点自动布局的滑动补间（动效上限内）帧任务 p95 < 50ms', async ({ page }) => {
+  test('性能：110 节点自动布局的滑动补间（单次位移上限 120 以内）帧任务 p95 < 50ms', async ({
+    page,
+  }) => {
     await openWithoutTransition(page, () => openEditor(page))
     await page.evaluate(() => {
       const ds = (window as unknown as { __ds: Ds }).__ds
-      ds.setDoc(ds.genDoc(180, 240))
+      ds.setDoc(ds.genDoc(110, 140))
     })
     await page.waitForTimeout(1200)
     await page.locator('.react-flow__pane').click({ position: { x: 600, y: 400 } })
+    // 页面内记录补间是否真的跑过（位移超过上限时会直接到位，那就测不到补间了）
+    await page.evaluate(() => {
+      const w = window as unknown as { __tweened: boolean }
+      w.__tweened = false
+      new MutationObserver(() => {
+        if (document.documentElement.dataset.motion === 'busy') w.__tweened = true
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-motion'] })
+    })
     const s = await traceMainThread(page, async () => {
       await page.keyboard.press('Shift+L')
       await page.waitForTimeout(500)
     })
-    console.log(`PERF layout tween 180: ${fmtStats(s)}`)
+    console.log(`PERF layout tween 110: ${fmtStats(s)}`)
+    const tweening = await page.evaluate(
+      () => (window as unknown as { __tweened: boolean }).__tweened,
+    )
+    expect(tweening).toBe(true)
     expect(s.p95).toBeLessThan(LONG_TASK_MS)
   })
 })

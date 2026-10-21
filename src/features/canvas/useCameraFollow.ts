@@ -39,12 +39,20 @@ const overflow = (b: Rect, v: Rect, slack: number) =>
 
 const duration = (ms: number) => (motionAllowed() ? ms : 0)
 
-/** 自动布局之后调用：新布局溢出视野时缩放到全图（与 320ms 的节点滑动同时进行） */
+/** 自动布局之后调用：新布局溢出视野时把全图放进浮动条之间的安全区（与节点滑动同时进行）。
+ *  只缩小或平移，不放大：小图布局后不该突然被放大到几倍 */
 export function followLayout(rf: ReactFlowInstance, doc: DiagramDoc): void {
   const b = docBounds(doc)
   const v = safeView(rf)
-  if (!b || !v || !overflow(b, v, 24)) return
-  void rf.fitBounds({ x: b.x, y: b.y, width: b.w, height: b.h }, { padding: 0.15, duration: duration(360) })
+  const el = document.querySelector<HTMLElement>('.ds-canvas .react-flow')
+  if (!b || !v || !el || !overflow(b, v, 24)) return
+  const pad = 24
+  const availW = el.clientWidth - SAFE.left - SAFE.right - pad * 2
+  const availH = el.clientHeight - SAFE.top - SAFE.bottom - pad * 2
+  const zoom = Math.max(0.1, Math.min(rf.getZoom(), availW / b.w, availH / b.h))
+  const x = SAFE.left + pad + (availW - b.w * zoom) / 2 - b.x * zoom
+  const y = SAFE.top + pad + (availH - b.h * zoom) / 2 - b.y * zoom
+  void rf.setViewport({ x, y, zoom }, { duration: duration(360) })
 }
 
 /** 把 rect 平移进安全区所需的最小位移（流程坐标；放不下时对齐左上） */

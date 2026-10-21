@@ -76,6 +76,10 @@ describe('Tweener', () => {
     const frames: Array<Map<string, Pt>> = []
     const tw = new Tweener((f) => frames.push(f), clock)
     tw.start('a', { x: 0, y: 0 }, { x: 100, y: 0 }, 1000, linear)
+    // 头两帧慢（触发补间的那次大提交）不算
+    tick(120)
+    tick(120)
+    expect(tw.size).toBe(1)
     tick(60)
     tick(60)
     expect(frames.at(-1)!.get('a')).toEqual({ x: 100, y: 0 })

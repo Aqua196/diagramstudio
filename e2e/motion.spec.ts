@@ -1,7 +1,15 @@
 // 动效验收（开启动效）：页面形变 + 画布自绘、节点从父节点飞出且连线全程贴着节点、
 // 删除残影、动效不进历史、工具条不因改样式重建；以及「减少动态效果」下一帧都不播。
 import { expect, test, type Page } from '@playwright/test'
-import { freshHome, NODE, openExample, openWithoutTransition, selectEdge, settle, watchConsole } from './helpers'
+import {
+  freshHome,
+  NODE,
+  openExample,
+  openWithoutTransition,
+  selectEdge,
+  settle,
+  watchConsole,
+} from './helpers'
 
 test.use({ reducedMotion: 'no-preference' })
 
@@ -31,18 +39,28 @@ async function installProbes(page: Page): Promise<void> {
         const el = m.target as Element
         if (typeof el.className === 'string' && el.className.includes('ds-fx-')) w.__fx++
       }
-    }).observe(document, { subtree: true, attributes: true, attributeFilter: ['class'], childList: true })
+    }).observe(document, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class'],
+      childList: true,
+    })
   })
 }
 
 const positions = (page: Page) =>
   page.evaluate(() =>
     Object.fromEntries(
-      Object.entries((window as unknown as Win).__ds.getDoc().nodes).map(([id, n]) => [id, n.position]),
+      Object.entries((window as unknown as Win).__ds.getDoc().nodes).map(([id, n]) => [
+        id,
+        n.position,
+      ]),
     ),
   )
 
-test('m1 看示例：卡片形变进编辑器，画布依次自绘；播完不留类名、转场命名，焦点落在画布', async ({ page }) => {
+test('m1 看示例：卡片形变进编辑器，画布依次自绘；播完不留类名、转场命名，焦点落在画布', async ({
+  page,
+}) => {
   const problems = watchConsole(page)
   await installProbes(page)
   await freshHome(page)
@@ -77,7 +95,13 @@ test('m2 Tab 加子主题：新节点从父节点飞出，连线终点每一帧�
           `.react-flow__edge[data-id="__parent_${n.dataset.id}"] path.react-flow__edge-path`,
         )
         const nums = (path?.getAttribute('d') ?? '').match(/-?\d+(\.\d+)?/g)?.map(Number) ?? []
-        w.__samples.push({ x: +m[1], y: +m[2], h: n.offsetHeight, ex: nums.at(-2), ey: nums.at(-1) })
+        w.__samples.push({
+          x: +m[1],
+          y: +m[2],
+          h: n.offsetHeight,
+          ex: nums.at(-2),
+          ey: nums.at(-1),
+        })
       }
       if (performance.now() - t0 < 1500) requestAnimationFrame(tick)
     }
@@ -100,7 +124,9 @@ test('m2 Tab 加子主题：新节点从父节点飞出，连线终点每一帧�
   expect(problems).toEqual([])
 })
 
-test('m3 删除：残影立刻出现且不可达，真实节点数立即减一；播完残影移除，撤销恢复', async ({ page }) => {
+test('m3 删除：残影立刻出现且不可达，真实节点数立即减一；播完残影移除，撤销恢复', async ({
+  page,
+}) => {
   const problems = watchConsole(page)
   await freshHome(page)
   await openWithoutTransition(page, () => openExample(page, 'flowchart'))
@@ -109,7 +135,8 @@ test('m3 删除：残影立刻出现且不可达，真实节点数立即减一�
   await page.locator(NODE).nth(4).click()
   await page.keyboard.press('Delete')
   const snap = await page.evaluate(() => ({
-    ghosts: document.querySelectorAll('.react-flow__node.ds-fx-ghost[aria-hidden="true"][inert]').length,
+    ghosts: document.querySelectorAll('.react-flow__node.ds-fx-ghost[aria-hidden="true"][inert]')
+      .length,
     real: document.querySelectorAll('.react-flow__node:not(.ds-fx-ghost)').length,
   }))
   expect(snap).toEqual({ ghosts: 1, real: before - 1 })
@@ -153,7 +180,9 @@ test('m5 连线工具条改样式：工具条不重建、焦点不丢', async ({
 test.describe('减少动态效果', () => {
   test.use({ reducedMotion: 'reduce' })
 
-  test('m6 打开示例、加子主题、折叠、删除：不起转场、不挂任何动效类名、没有在播的动画', async ({ page }) => {
+  test('m6 打开示例、加子主题、折叠、删除：不起转场、不挂任何动效类名、没有在播的动画', async ({
+    page,
+  }) => {
     await installProbes(page)
     await freshHome(page)
     await openExample(page, 'mindmap')
@@ -162,16 +191,19 @@ test.describe('减少动态效果', () => {
     await page.keyboard.press('Escape')
     await page.locator(NODE).filter({ hasText: '软件设计' }).first().click()
     await page.keyboard.press('Delete')
-    // 刚创建的 CSS 动画要到下一帧才结束（减少动态效果下时长 0.01ms），等两帧再看
-    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))))
-    const state = await page.evaluate(() => ({
-      vt: (window as unknown as Win).__vt,
-      fx: (window as unknown as Win).__fx,
-      running: document
-        .getAnimations()
-        .filter((a) => a.playState === 'running' && a.effect?.getComputedTiming().iterations !== Infinity).length,
-      busy: document.documentElement.dataset.motion ?? null,
-    }))
-    expect(state).toEqual({ vt: 0, fx: 0, running: 0, busy: null })
+    // 减少动态效果下动画时长 0.01ms，刚创建的要过一两帧才结束：短暂轮询，超过 1s 还在播才算失败
+    const read = () =>
+      page.evaluate(() => ({
+        vt: (window as unknown as Win).__vt,
+        fx: (window as unknown as Win).__fx,
+        running: document
+          .getAnimations()
+          .filter(
+            (a) =>
+              a.playState === 'running' && a.effect?.getComputedTiming().iterations !== Infinity,
+          ).length,
+        busy: document.documentElement.dataset.motion ?? null,
+      }))
+    await expect.poll(read, { timeout: 1000 }).toEqual({ vt: 0, fx: 0, running: 0, busy: null })
   })
 })
