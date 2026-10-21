@@ -17,6 +17,10 @@
 
 ## 1. 安装与运行
 
+**不想安装**：直接打开在线版 <https://aqua196.github.io/diagramstudio/>。除实时协作外功能完全一致；图表保存在你当前浏览器的本地存储里，换浏览器或清除网站数据会丢失，重要的图请「导出 → JSON 工程文件」备份。
+
+**本地运行**：
+
 要求：Node 20+、pnpm 10+（`packageManager` 已锁定 `pnpm@10.34.6`，可用 `corepack enable` 自动对齐）。
 
 ```bash

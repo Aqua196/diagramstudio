@@ -2,6 +2,8 @@
 
 纯前端、可离线的在线图表编辑器：一套「命令化 + 插件化」引擎同时支持**流程图、思维导图、ER 图**。软件工程课程大作业。
 
+**在线试用：<https://aqua196.github.io/diagramstudio/>**（无需安装；作品存在你自己浏览器的本地存储里。实时协作需要本机协作服务，在线版不含）
+
 ![首页：三类新建卡与最近的图表](docs/screenshots/guide/01-home.png)
 ![编辑器：画布铺满全屏，选中节点后出现上下文工具条与四周「+」](docs/screenshots/guide/02-flowchart-template.png)
 
@@ -49,6 +51,7 @@ pnpm dev:collab     # 需要协作时：同时起协作服务 ws://127.0.0.1:123
 | `pnpm collab:server` | 仅协作服务（:1234，e2e 协作用例用） |
 | `pnpm build` | `tsc -b` + `vite build` → `dist/` |
 | `pnpm build:e2e` | e2e 模式构建 → `dist-e2e/`（性能/无障碍用例预览源，含调试钩子） |
+| `pnpm build:pages` | 按 `/diagramstudio/` 子路径构建 → `dist/`（GitHub Pages 用；推送 main 后由 `.github/workflows/pages.yml` 自动执行并发布） |
 | `pnpm preview` | 预览构建产物 |
 | `pnpm test` | Vitest 单测（jsdom） |
 | `pnpm test:coverage` | 单测 + core 覆盖率（阈值 80%） |

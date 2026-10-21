@@ -3,6 +3,8 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  // GitHub Pages 部署在 /<仓库名>/ 子路径下，由 DS_BASE 注入；本地开发与 e2e 保持根路径
+  base: process.env.DS_BASE ?? '/',
   plugins: [react()],
   resolve: {
     alias: {

@@ -70,3 +70,9 @@
 - **性能测量改用 CDP Trace 主线程任务**：旧 rAF 间隔在空白页上也是 17.8ms，测的是无头浏览器帧时钟；合成 pointermove 也不会触发 d3-drag。详见 docs/PERFORMANCE.md §1–2。
 - **只给有标注的连线挂 `EdgeLabelRenderer`**：其 store 选择器每次更新都会 `querySelector`，800 条边即每帧 800 次 DOM 查询（CPU profile 第一热点）。节点不使用 transform 入场动画与 CSS filter（两者都会让拖动时整图重绘）。
 - **手册配图改由 `e2e/guide.spec.ts` 生成**：界面改了配图就能一键重生成，避免手册与界面脱节。
+
+## 2026-10-21 在线部署：GitHub Pages
+- 仓库公开，Pages 免费且不过期，适合让老师/同学点链接即用。
+- 子路径由 `DS_BASE` 环境变量注入 `vite.config.ts` 的 `base`，只在 `build:pages` 时设为 `/diagramstudio/`；开发、e2e、`pnpm build` 仍是根路径，互不影响。
+- 发布方式选「工作流构建后推 `gh-pages` 分支」：只需仓库内容写权限（`GITHUB_TOKEN`），发布前先跑 lint/typecheck/单测，门禁不过不发布；没用第三方发布 action，减少供应链依赖。
+- 协作依赖本机 ws 服务，不随静态站部署；在线版分享弹层会提示需在本机运行 `pnpm dev:collab`。

@@ -24,7 +24,8 @@
     "e2e": "playwright test",
     "dev:collab": "node server/dev-all.mjs",
     "collab:server": "node server/dev.mjs",
-    "build:e2e": "vite build --mode e2e --outDir dist-e2e"
+    "build:e2e": "vite build --mode e2e --outDir dist-e2e",
+    "build:pages": "tsc -b && DS_BASE=/diagramstudio/ vite build"
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.1.1",

@@ -293,3 +293,4 @@ flowchart LR
 - **单机（默认）**：`pnpm install && pnpm dev` → Vite :5173。全部资源本地打包（字体 @fontsource-variable/inter、图标 lucide），离线可用；文档存 localStorage（`ds.docs.v1` + `ds.docIndex.v1`）。
 - **协作**：`pnpm dev:collab` 起 `server/dev.mjs`（ws :1234，`DS_COLLAB_PORT`/`VITE_COLLAB_WS` 可覆盖）+ Vite。房间存内存、无鉴权，定位为同机/内网演示。
 - **构建**：`pnpm build`（tsc -b + vite build）→ `dist/` 静态站。
+- **在线部署**：GitHub Pages（<https://aqua196.github.io/diagramstudio/>）。推送 main 触发 `.github/workflows/pages.yml`：lint → typecheck → 单测 → `pnpm build:pages`（`DS_BASE=/diagramstudio/` 子路径）→ 把 `dist/` 推到 `gh-pages` 分支。纯静态，无后端；协作服务不随站点部署。
