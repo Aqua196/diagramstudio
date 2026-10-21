@@ -3,6 +3,7 @@
 import type { Edge, Node } from '@xyflow/react'
 import type { DiagramPlugin } from '@/core/plugin'
 import type { DiagramDoc, DiagramEdge, DiagramNode } from '@/core/model/types'
+import { isNodeColorKey } from '@/core/palette'
 import type { Selection } from './uiStore'
 
 export type FlowNodeData = { node: DiagramNode; plugin: DiagramPlugin }
@@ -86,8 +87,10 @@ export function selectFlowEdges(doc: DiagramDoc, plugin: DiagramPlugin): Edge<Fl
       zIndex: 1000,
     })
   }
-  // 思维导图等以 node.data.parentId 表达父子关系的插件：派生只读连接线
+  // 思维导图等以 node.data.parentId 表达父子关系的插件：派生只读连接线，
+  // 线色取子节点底色（分支色），整支一眼可辨
   const d = plugin.edgeDefaults
+  const base = d?.style ?? { stroke: 'ink-2', strokeWidth: 1.5, dash: 'solid' as const }
   for (const id of doc.zOrder) {
     const node = doc.nodes[id]
     const parentId = node?.data?.parentId
@@ -100,7 +103,9 @@ export function selectFlowEdges(doc: DiagramDoc, plugin: DiagramPlugin): Edge<Fl
       routing: d?.routing ?? 'bezier',
       arrowStart: 'none',
       arrowEnd: 'none',
-      style: d?.style ?? { stroke: 'ink-2', strokeWidth: 1.5, dash: 'solid' },
+      style: isNodeColorKey(node.style.fill) && node.style.fill !== 'white'
+        ? { ...base, stroke: node.style.fill, strokeWidth: 2 }
+        : base,
     }
     out.push({
       id: edge.id,
@@ -111,7 +116,9 @@ export function selectFlowEdges(doc: DiagramDoc, plugin: DiagramPlugin): Edge<Fl
       data: { edge },
       selectable: false,
       focusable: false,
-      zIndex: 999,
+      // 派生的父子连线不可重连、垫在节点下方：节点外侧的折叠钮不会被线的热区挡住
+      reconnectable: false,
+      zIndex: 0,
     })
   }
   return out

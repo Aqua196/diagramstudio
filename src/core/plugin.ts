@@ -17,11 +17,34 @@ export interface ShapeDef<R = unknown> {
   kind: string
   /** 形状库里的显示名（来自 i18n） */
   name: string
-  icon?: string
+  /** 形状坞图标（插件提供的 20×20 线框图） */
+  icon?: R
   defaultSize: { w: number; h: number }
   /** 拖入/双击创建时的初始文字（如 ER 实体默认名）；未设则为空 */
   defaultText?: string
+  /** 新建时的插件私有数据（如 ER 实体预置 id 主键）；每次调用返回新对象 */
+  defaultData?: () => Record<string, unknown>
+  /** 不在形状坞中显示（如思维导图中心主题：空白文档已自带） */
+  paletteHidden?: boolean
   render: (node: DiagramNode, ctx: ShapeRenderContext) => R
+}
+
+export type NodeSide = 'top' | 'right' | 'bottom' | 'left'
+
+/** 上下文工具条上的插件专属动作（思维导图「加子主题」、ER「加字段」） */
+export interface NodeAction<R = unknown> {
+  id: string
+  label: string
+  /** 快捷键提示（仅展示用） */
+  kbd?: string
+  icon?: R
+  run: (ctx: EditorContext) => Command | null
+}
+
+/** 上手提示：无选择时 / 选中节点时各一组（提示条展示） */
+export interface PluginTips {
+  idle: readonly string[]
+  selected: readonly string[]
 }
 
 export interface LayoutOptions {
@@ -37,7 +60,10 @@ export interface EditorContext {
 export interface DiagramPlugin<R = unknown> {
   type: DiagramType
   shapes: ShapeDef<R>[]
-  edgeDefaults: Pick<DiagramEdge, 'routing' | 'arrowStart' | 'arrowEnd'> & { style: EdgeStyle }
+  /** 新连线默认值；cardinality 仅 ER（新关系默认 1 对 0..N） */
+  edgeDefaults: Pick<DiagramEdge, 'routing' | 'arrowStart' | 'arrowEnd' | 'cardinality'> & {
+    style: EdgeStyle
+  }
   layout(doc: DiagramDoc, opts: LayoutOptions): Record<string, { x: number; y: number }>
   /** 图类型专属按键（如思维导图 Tab/Enter），返回待执行命令或 null 表示不处理 */
   keymap?: Record<string, (ctx: EditorContext) => Command | null>
@@ -51,7 +77,19 @@ export interface DiagramPlugin<R = unknown> {
   edgeAxis?: 'auto' | 'horizontal'
   /** 删除前把所选节点扩展为应一并删除的 id（思维导图=整个子树；不可删的节点由实现过滤） */
   expandDeletion?(doc: DiagramDoc, nodeIds: string[]): string[]
-  /** 声明连线有 ER 基数字段，检查器据此渲染基数下拉（禁止判断 type） */
+  /** 声明连线有 ER 基数字段，工具条据此渲染基数选择（禁止判断 type） */
   edgeFields?: 'cardinality'
+  /** 选中单节点时上下文工具条的额外动作 */
+  nodeActions?: NodeAction<R>[]
+  /** 形状坞点击创建：返回命令（思维导图=挂到所选/根下）；null=交给画布放到视口中心 */
+  placeFromPalette?(doc: DiagramDoc, kind: string, selection: { nodeIds: string[] }): Command | null
+  /** 选中单节点时四周「+」快捷添加的方向；不实现=四向，[]=关闭 */
+  quickAddSides?: NodeSide[]
+  /** 快捷添加时新节点的形状（流程图：起止/判断之后接「处理」）；不实现=同形状 */
+  nextKind?(fromKind: string): string
+  /** 新建空白文档的初始内容（思维导图预置中心主题）；不实现=空文档 */
+  createBlank?(title: string): DiagramDoc
+  /** 上手提示 */
+  tips?: PluginTips
   templates: DiagramDoc[]
 }

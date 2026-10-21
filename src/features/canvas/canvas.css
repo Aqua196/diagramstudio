@@ -1,4 +1,4 @@
-/* 画布样式：方格纸、节点、连线、浮层。颜色一律走 tokens.css 变量。 */
+/* 画布样式：点阵、节点、连线、上下文工具条、快捷加号、浮层。颜色一律走 tokens.css 变量。 */
 
 .ds-canvas {
   position: relative;
@@ -12,21 +12,16 @@
   height: 100%;
 }
 .ds-canvas .react-flow {
-  background: var(--sheet);
+  background: var(--canvas);
+  --xy-background-color: var(--canvas);
+}
+.ds-canvas[data-tool='hand'] .react-flow__pane {
+  cursor: grab;
 }
 
 /* —— 节点 —— */
-.react-flow__node {
-  animation: ds-node-in var(--dur-fast) ease-out;
-}
-@keyframes ds-node-in {
-  from {
-    opacity: 0.3;
-  }
-  to {
-    opacity: 1;
-  }
-}
+/* 性能约束（500 节点拖拽实测）：不给 .react-flow__node 加 transform 动画、不给节点加 CSS filter，
+   二者都会让整张图在拖动时反复重绘。入场只做内层 opacity 渐显。 */
 .ds-node {
   position: relative;
   width: 100%;
@@ -35,80 +30,183 @@
 .ds-node-body {
   width: 100%;
   height: 100%;
+  animation: ds-node-in var(--dur-med) ease-out;
+}
+@keyframes ds-node-in {
+  from {
+    opacity: 0;
+  }
 }
 .ds-node.is-selected {
   outline: 1.5px solid var(--accent);
   outline-offset: 2px;
+  border-radius: 4px;
 }
 .ds-node.is-drop-target {
-  outline: 1.5px dashed var(--accent);
-  outline-offset: 4px;
+  outline: 2px dashed var(--accent);
+  outline-offset: 6px;
+  border-radius: 8px;
 }
 /* 自动布局 300ms 过渡：只作用于 RF 的 translate */
 .ds-layout-animating .react-flow__node {
-  transition: transform var(--dur-layout) ease-out;
+  transition: transform var(--dur-layout) var(--ease-out);
 }
 
-/* CAD 夹点：8px 白底方块 + 1.5px accent 边 */
+/* 缩放夹点 */
 .ds-grip {
-  width: 8px !important;
-  height: 8px !important;
-  background: var(--panel) !important;
+  width: 9px !important;
+  height: 9px !important;
+  background: var(--surface) !important;
   border: 1.5px solid var(--accent) !important;
-  border-radius: 0 !important;
+  border-radius: 2px !important;
 }
 .ds-resize-line {
-  border-color: var(--accent) !important;
+  border-color: transparent !important;
 }
 
-/* 连接点：8px 圆点，悬停节点出现 */
+/* 连接点：悬停节点时出现的小圆点 */
 .react-flow__handle.ds-handle {
-  width: 8px;
-  height: 8px;
-  min-width: 8px;
-  min-height: 8px;
-  background: var(--accent);
-  border: 1px solid var(--panel);
+  width: 10px;
+  height: 10px;
+  min-width: 10px;
+  min-height: 10px;
+  background: var(--surface);
+  border: 2px solid var(--accent);
   opacity: 0;
-  transition: opacity var(--dur-fast);
+  transition:
+    opacity var(--dur-fast),
+    transform var(--dur-fast);
 }
 .react-flow__node:hover .ds-handle,
+.react-flow__node.selected .ds-handle,
 .ds-handle.connectingto,
 .ds-handle.valid {
   opacity: 1;
 }
+.react-flow__handle.ds-handle:hover {
+  background: var(--accent);
+}
+.react-flow__handle-top.ds-handle:hover,
+.react-flow__handle-left.ds-handle:hover {
+  transform: translate(-50%, -50%) scale(1.35);
+}
+.react-flow__handle-bottom.ds-handle:hover {
+  transform: translate(-50%, 50%) scale(1.35);
+}
+.react-flow__handle-right.ds-handle:hover {
+  transform: translate(50%, -50%) scale(1.35);
+}
+
+/* 快捷加号：节点四周 28px 外的小圆钮 */
+.ds-quick {
+  position: absolute;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow:
+    0 0 0 1.5px var(--accent-wash-2),
+    0 2px 6px rgba(20, 20, 18, 0.12);
+  cursor: pointer;
+  animation: ds-quick-in var(--dur-med) var(--ease-out);
+  transition:
+    background var(--dur-fast),
+    color var(--dur-fast),
+    transform var(--dur-fast) var(--ease-out);
+}
+.ds-quick:hover {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.ds-quick-top {
+  left: 50%;
+  top: -34px;
+  transform: translateX(-50%);
+}
+.ds-quick-bottom {
+  left: 50%;
+  bottom: -34px;
+  transform: translateX(-50%);
+}
+.ds-quick-left {
+  top: 50%;
+  left: -34px;
+  transform: translateY(-50%);
+}
+.ds-quick-right {
+  top: 50%;
+  right: -34px;
+  transform: translateY(-50%);
+}
+.ds-quick-top:hover,
+.ds-quick-bottom:hover {
+  transform: translateX(-50%) scale(1.15);
+}
+.ds-quick-left:hover,
+.ds-quick-right:hover {
+  transform: translateY(-50%) scale(1.15);
+}
+@keyframes ds-quick-in {
+  from {
+    opacity: 0;
+  }
+}
 
 /* —— 连线 —— */
+/* 标注层压在连线（zIndex 1000）之上，线不会穿过文字 */
+.react-flow__edgelabel-renderer {
+  z-index: 1001;
+}
 .react-flow__connection-path {
   stroke: var(--accent);
-  stroke-width: 1.5;
+  stroke-width: 1.75;
+  stroke-dasharray: 5 4;
+}
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:focus .react-flow__edge-path {
+  filter: drop-shadow(0 0 3px var(--accent-wash-2));
 }
 .ds-edge-label {
   position: absolute;
   pointer-events: all;
-  padding: 1px 6px;
-  font-size: 12px;
-  line-height: 18px;
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  background: var(--label-bg);
   color: var(--ink-2);
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
   max-width: 220px;
-}
-.ds-edge-label:empty {
-  display: none;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px var(--line);
 }
 .ds-edge-label.is-selected {
-  border-color: var(--accent);
-  color: var(--ink);
+  color: var(--accent);
+  box-shadow: 0 0 0 1.5px var(--accent);
+}
+.ds-edge-label.is-editing {
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1.5px var(--accent),
+    0 0 0 4px var(--accent-wash);
 }
 .ds-edge-label-input {
   width: 120px;
-  font: inherit;
-  color: var(--ink);
-  background: transparent;
   border: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
   outline: none;
+}
+.ds-edge-label-input:focus-visible {
+  box-shadow: none;
 }
 
 /* 框选与多选框 */
@@ -116,6 +214,7 @@
 .react-flow__nodesselection-rect {
   background: var(--accent-wash);
   border: 1px solid var(--accent);
+  border-radius: 4px;
 }
 
 /* 对齐参考线 */
@@ -128,6 +227,7 @@
 .ds-guide {
   position: absolute;
   background: var(--accent);
+  opacity: 0.8;
 }
 .ds-guide-v {
   top: 0;
@@ -145,67 +245,140 @@
   position: absolute;
   z-index: 30;
   resize: none;
-  padding: 4px;
+  padding: 6px 8px;
   font-family: inherit;
-  line-height: 1.3;
+  line-height: 1.35;
   color: var(--ink);
-  background: var(--panel);
-  border: 1.5px solid var(--accent);
-  border-radius: var(--radius-control);
+  background: var(--surface);
+  border: none;
+  border-radius: var(--r-md);
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 0 6px var(--accent-wash);
   outline: none;
   overflow: hidden;
 }
 
-/* 拖线到空白的形状菜单 + 右键菜单共用 */
-.ds-menu,
-.ds-connect-menu {
-  min-width: 150px;
-  padding: 4px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pop);
-  box-shadow: var(--shadow-pop);
-  z-index: 50;
+/* —— 上下文工具条 —— */
+.ds-toolbar {
+  gap: 2px;
 }
-.ds-connect-menu {
-  position: absolute;
-}
-.ds-menu-title {
-  padding: 4px 8px;
+.ds-toolbar-count {
+  padding: 0 6px 0 8px;
   font-size: 12px;
-  font-weight: 600;
-  color: var(--ink-3);
+  font-weight: 500;
+  color: var(--ink-2);
+  white-space: nowrap;
 }
-.ds-menu-item {
-  display: flex;
-  align-items: center;
-  width: 100%;
+.ds-color-dot {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid;
+  border-radius: 50%;
+}
+.ds-swatches {
+  display: grid;
+  grid-template-columns: repeat(7, 28px);
   gap: 6px;
-  padding: 6px 8px;
-  border: none;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--ink);
-  font-size: 13px;
-  line-height: 20px;
+}
+.ds-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1.5px solid;
+  border-radius: 50%;
   cursor: pointer;
-  text-align: left;
+  transition: transform var(--dur-fast) var(--ease-out);
 }
-.ds-menu-item:hover,
-.ds-menu-item[data-highlighted] {
-  background: var(--accent-wash);
-  outline: none;
+.ds-swatch:hover {
+  transform: scale(1.1);
 }
-.ds-menu-item[data-disabled] {
-  color: var(--ink-3);
+.ds-swatch.is-active {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--accent);
 }
-.ds-menu-sep {
-  height: 1px;
-  margin: 4px 6px;
-  background: var(--line);
+.ds-pop-body {
+  width: 236px;
+}
+.ds-pop-title-gap {
+  margin-top: 14px;
+}
+.ds-pop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.ds-card-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: var(--surface-2);
+  font-size: 11px;
+  font-weight: 600;
+  font-feature-settings: 'tnum';
+}
+.ds-card-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+}
+.ds-menu-item.is-current {
+  color: var(--accent);
+  font-weight: 600;
+}
+.ds-dash-icon {
+  display: block;
+  width: 16px;
+  height: 0;
+  border-top: 2px dashed currentColor;
 }
 
-/* 空画布提示 */
+/* —— 拖线落空弹出的形状菜单 —— */
+.ds-connect-menu {
+  position: absolute;
+  z-index: 50;
+  padding: 4px 6px 8px;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop);
+  animation: ds-pop-in var(--dur-med) var(--ease-out);
+}
+.ds-connect-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 72px);
+  gap: 2px;
+}
+.ds-connect-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 2px 6px;
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 11px;
+  cursor: pointer;
+}
+.ds-connect-item:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* —— 空画布引导 —— */
 .ds-empty {
   position: absolute;
   inset: 0;
@@ -215,92 +388,100 @@
   pointer-events: none;
   z-index: 10;
 }
-.ds-empty-inner {
+.ds-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 420px;
+  padding: 28px 32px;
   text-align: center;
 }
+.ds-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  background: var(--accent-wash);
+  color: var(--accent);
+}
 .ds-empty-title {
-  font-size: 16px;
+  margin: 0;
+  font-size: 17px;
   font-weight: 600;
   color: var(--ink);
-  margin: 0 0 4px;
 }
 .ds-empty-hint {
-  color: var(--ink-2);
-  margin: 0 0 16px;
-}
-.ds-empty-sub {
-  font-size: 12px;
-  color: var(--ink-3);
-  margin: 0 0 8px;
-}
-.ds-empty-templates {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
-.ds-empty-tpl {
-  pointer-events: auto;
-  padding: 6px 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  background: var(--panel);
-  color: var(--ink);
+  margin: 6px 0 18px;
   font-size: 13px;
-  cursor: pointer;
+  line-height: 20px;
+  color: var(--ink-3);
 }
-.ds-empty-tpl:hover {
-  background: var(--accent-wash);
-  border-color: var(--accent);
+.ds-empty-example {
+  pointer-events: auto;
 }
 
-/* 小地图与署名 */
-.react-flow__minimap {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pop);
+/* —— React Flow 署名：左下浮动条上方，弱化 —— */
+.ds-canvas .react-flow__attribution {
+  margin: 0 0 58px 14px;
+  padding: 0;
+  background: transparent;
+  font-size: 10px;
+  opacity: 0.5;
+}
+.ds-canvas .react-flow__attribution a {
+  color: var(--ink-3);
+}
+
+/* —— 小地图 —— */
+.react-flow__minimap.ds-minimap {
+  margin: 0 12px 64px 0;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-float);
   overflow: hidden;
 }
-.react-flow__attribution {
-  background: transparent;
-  color: var(--ink-3);
-}
-.react-flow__attribution a {
-  color: var(--ink-3);
-}
-
-/* MiniMap 主题适配（覆盖 RF 默认白底节点与浅色遮罩） */
 .ds-minimap .react-flow__minimap-node {
-  fill: var(--line);
+  fill: var(--surface-3);
 }
-.ds-minimap .react-flow__minimap-mask-rect {
-  fill: var(--sheet);
-  fill-opacity: 0.6;
-}
-.dark .ds-minimap .react-flow__minimap-node {
-  fill: #214a75;
+.ds-minimap .react-flow__minimap-mask {
+  fill: var(--canvas);
+  fill-opacity: 0.55;
 }
 
 /* —— 思维导图折叠按钮（B4）：真 button，可键盘聚焦 —— */
 .ds-mind-collapse {
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: var(--panel);
-  color: var(--ink-2);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1.5px solid var(--node-stroke);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--node-stroke);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  font-feature-settings: 'tnum';
+  cursor: pointer;
 }
 .ds-mind-collapse:hover {
-  background: var(--panel-sunken);
-  color: var(--ink);
+  background: var(--node-stroke);
+  color: var(--surface);
+}
+/* 展开态的「−」只在悬停/选中时出现，收起态的子节点数常显 */
+.ds-mind-collapse[data-collapsed='false'] {
+  opacity: 0;
+  transition: opacity var(--dur-fast);
+}
+.react-flow__node:hover .ds-mind-collapse,
+.react-flow__node.selected .ds-mind-collapse,
+.ds-mind-collapse:focus-visible {
+  opacity: 1;
 }
 .ds-mind-collapse:focus-visible {
   outline: none;
@@ -311,6 +492,7 @@
 .ds-er-input {
   width: 100%;
   height: 100%;
+  padding: 0 2px;
   border: none;
   background: transparent;
   font-size: 12px;
@@ -319,25 +501,38 @@
 }
 .ds-er-input:focus-visible {
   box-shadow: inset 0 0 0 1.5px var(--accent);
+  border-radius: 3px;
 }
 .ds-er-type {
-  font-size: 11px;
-  color: var(--ink-2);
+  color: var(--ink-3);
   text-align: right;
+  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-size: 11px;
 }
 .ds-er-key {
   width: 100%;
   height: 100%;
   border: none;
+  border-radius: 3px;
   background: transparent;
-  color: var(--accent);
-  font-size: 11px;
+  color: var(--node-stroke);
+  font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.02em;
   cursor: pointer;
+}
+.ds-er-key:empty::before {
+  content: '·';
+  color: var(--ink-3);
+  opacity: 0;
+}
+.ds-er-key:hover:empty::before {
+  opacity: 1;
 }
 .ds-er-key:focus-visible,
 .ds-er-grip:focus-visible,
-.ds-er-del:focus-visible {
+.ds-er-del:focus-visible,
+.ds-er-add:focus-visible {
   outline: none;
   box-shadow: inset 0 0 0 1.5px var(--accent);
 }
@@ -350,6 +545,8 @@
   font-size: 9px;
   letter-spacing: -2px;
   cursor: grab;
+  opacity: 0;
+  transition: opacity var(--dur-fast);
 }
 .ds-er-del {
   width: 100%;
@@ -357,8 +554,19 @@
   border: none;
   background: transparent;
   color: var(--ink-3);
-  font-size: 12px;
+  font-size: 13px;
   cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-fast);
+}
+.react-flow__node:hover .ds-er-grip,
+.react-flow__node:hover .ds-er-del,
+.ds-er-grip:focus-visible,
+.ds-er-del:focus-visible {
+  opacity: 1;
+}
+.ds-er-del:hover {
+  color: var(--danger);
 }
 .ds-er-add {
   width: 100%;
@@ -369,18 +577,11 @@
   font-size: 12px;
   cursor: pointer;
 }
-.ds-er-add:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 1.5px var(--accent);
-}
-.ds-er-key:hover,
-.ds-er-del:hover,
-.ds-er-add:hover,
-.ds-mind-collapse:hover {
-  color: var(--ink);
+.ds-er-add:hover {
+  color: var(--accent);
 }
 
-/* —— 协作光标与头像（A2） —— */
+/* —— 协作光标（A2） —— */
 .ds-peer-cursor {
   position: absolute;
   pointer-events: none;
@@ -389,36 +590,10 @@
 .ds-peer-name {
   display: inline-block;
   margin-left: 10px;
-  padding: 0 6px;
+  padding: 1px 6px;
   border-radius: 8px;
   font-size: 10px;
   line-height: 14px;
   color: #fff;
   white-space: nowrap;
-}
-.ds-peers {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-right: 6px;
-}
-.ds-peer-status {
-  font-size: 12px;
-  color: var(--ink-3);
-}
-.ds-peer-status.is-connected {
-  color: var(--accent);
-}
-.ds-peer-status.is-offline {
-  color: var(--danger);
-}
-.ds-peer-avatar {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  color: #fff;
 }

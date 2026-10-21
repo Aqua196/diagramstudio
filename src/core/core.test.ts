@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { ACCENT, ACCENT_INK, contrastRatio, NODE_COLORS, TEXT_ON } from './palette'
+import {
+  ACCENT,
+  ACCENT_INK,
+  contrastRatio,
+  NODE_COLORS,
+  NODE_STROKES,
+  resolveStroke,
+  SURFACE,
+  TEXT_ON,
+} from './palette'
 import { validateDoc } from './model/schema'
 import { docToJson, jsonToDoc } from './io/serialize'
 import { dagreLayout } from './layout/dagre'
@@ -19,6 +28,19 @@ describe('配色对比度（SPEC：每对节点底色与文字色 ≥4.5:1）', 
   it('强调色上的文字色（--accent-ink）≥4.5:1', () => {
     expect(contrastRatio(ACCENT.light, ACCENT_INK.light)).toBeGreaterThanOrEqual(4.5)
     expect(contrastRatio(ACCENT.dark, ACCENT_INK.dark)).toBeGreaterThanOrEqual(4.5)
+  })
+  it('强调色作为面板上的文字/图标 ≥4.5:1', () => {
+    expect(contrastRatio(ACCENT.light, SURFACE.light)).toBeGreaterThanOrEqual(4.5)
+    expect(contrastRatio(ACCENT.dark, SURFACE.dark)).toBeGreaterThanOrEqual(4.5)
+  })
+  it('同色相描边与底色可区分（≥1.8:1），默认 ink 描边跟随底色', () => {
+    for (const k of Object.keys(NODE_COLORS) as Array<keyof typeof NODE_COLORS>) {
+      expect(contrastRatio(NODE_COLORS[k].light, NODE_STROKES[k].light)).toBeGreaterThanOrEqual(1.8)
+      expect(contrastRatio(NODE_COLORS[k].dark, NODE_STROKES[k].dark)).toBeGreaterThanOrEqual(1.8)
+    }
+    expect(resolveStroke('ink', 'teal', 'light')).toBe(NODE_STROKES.teal.light)
+    expect(resolveStroke('ink', '#123456', 'dark')).toBe(NODE_STROKES.white.dark)
+    expect(resolveStroke('#ff0000', 'teal', 'light')).toBe('#ff0000')
   })
 })
 

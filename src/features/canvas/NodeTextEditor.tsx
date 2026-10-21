@@ -35,7 +35,7 @@ export function NodeTextEditor({ node, onDone }: { node: DiagramNode; onDone: ()
       ref={ref}
       className="ds-text-editor"
       value={value}
-      aria-label={zh.inspector.text}
+      aria-label={zh.toolbar.editText}
       placeholder={zh.canvas.textPlaceholder}
       style={{
         left: node.position.x * zoom + x,

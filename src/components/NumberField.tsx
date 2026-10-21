@@ -1,4 +1,4 @@
-// 数字输入：检查器里尺寸/位置/字号/描边共用的小输入框。
+// 数字输入：工具条「更多选项」里位置/尺寸/边框粗细共用的小输入框（前缀标签内嵌）。
 import { useEffect, useState } from 'react'
 
 interface Props {
@@ -27,10 +27,10 @@ export function NumberField({ label, value, min, max, step = 1, onCommit }: Prop
   }
 
   return (
-    <label className="ds-num-field">
-      <span className="ds-field-label">{label}</span>
+    <label className="ds-num">
+      <span className="ds-num-label">{label}</span>
       <input
-        className="ds-input ds-input-num"
+        className="ds-num-input"
         type="number"
         value={draft}
         min={min}

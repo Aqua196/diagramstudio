@@ -5,14 +5,11 @@ import type { DiagramNode, ErField } from '@/core/model/types'
 import type { ShapeRenderContext } from '@/core/plugin'
 import { zh } from '@/i18n/zh'
 import { AddButton, DelButton, KeyButton } from './erFieldButtons'
+import { addFieldCommand, entityHeight, fieldsOf, HEAD_H, ROW_H } from './erModel'
+
+export { addFieldCommand, entityHeight, fieldsOf, HEAD_H, ROW_H }
 
 const er = zh.plugins.er
-export const ROW_H = 26
-export const HEAD_H = 30
-
-export const fieldsOf = (n: DiagramNode): ErField[] =>
-  (n.data as { fields?: ErField[] }).fields ?? []
-
 function move<T>(arr: T[], from: number, to: number): T[] {
   const next = [...arr]
   const [x] = next.splice(from, 1)
@@ -144,12 +141,16 @@ function FieldRow({
 export function FieldRows({ node, ctx }: { node: DiagramNode; ctx: ShapeRenderContext }) {
   const { w } = node.size
   const fields = fieldsOf(node)
-  const h = Math.max(node.size.h, HEAD_H + Math.max(1, fields.length) * ROW_H + 4)
+  const h = entityHeight(fields)
   // 拖动排序过程态：drag=被拖行→目标位；松手才提交命令（C1 保留原行为）
   const [drag, setDrag] = useState<{ from: number; to: number } | null>(null)
   const update: RowApi['update'] = (next, label = er.updateField) =>
     ctx.dispatch(
-      patchNode(node.id, { data: { ...node.data, fields: next }, size: { w: node.size.w, h } }, label),
+      patchNode(
+        node.id,
+        { data: { ...node.data, fields: next }, size: { w: node.size.w, h: entityHeight(next) } },
+        label,
+      ),
     )
   const api: RowApi = {
     update,
@@ -179,7 +180,7 @@ export function FieldRows({ node, ctx }: { node: DiagramNode; ctx: ShapeRenderCo
         />
       ))}
       <foreignObject x={0} y={HEAD_H + fields.length * ROW_H} width={w} height={ROW_H}>
-        <AddButton fields={fields} api={api} />
+        <AddButton onAdd={() => ctx.dispatch(addFieldCommand(node))} />
       </foreignObject>
     </>
   )

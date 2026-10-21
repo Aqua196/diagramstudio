@@ -14,6 +14,7 @@ import './canvas.css'
 import { getPlugin } from '@/plugins/registry'
 import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
+import { zh } from '@/i18n/zh'
 
 import DsShapeNode from './DsShapeNode'
 import DsEdge from './DsEdge'
@@ -25,20 +26,17 @@ import { EmptyState } from './EmptyState'
 import { AlignmentGuides } from './AlignmentGuides'
 import { NodeTextEditor } from './NodeTextEditor'
 import { ConnectMenu } from './ConnectMenu'
+import { SelectionToolbar } from './toolbar/SelectionToolbar'
 
 // 类型表在模块级定义（SPEC §3.4）
 const nodeTypes = { dsShape: DsShapeNode }
 const edgeTypes = { dsEdge: DsEdge }
 
-function GridLayers() {
+/** 点阵网格：24px 间距，比方格线安静，吸附仍按 12px */
+function GridLayer() {
   const grid = useDocumentStore((s) => s.doc.settings.grid)
   if (!grid) return null
-  return (
-    <>
-      <Background id="fine" variant={BackgroundVariant.Lines} gap={24} color="var(--grid-fine)" />
-      <Background id="coarse" variant={BackgroundVariant.Lines} gap={120} color="var(--grid-coarse)" />
-    </>
-  )
+  return <Background id="dots" variant={BackgroundVariant.Dots} gap={24} size={1.6} color="var(--dot)" />
 }
 
 function Overlays() {
@@ -81,9 +79,12 @@ function FlowInner() {
       <CanvasContextMenu>
         <div className="ds-canvas-flow">
           <ReactFlow {...rfProps} nodeTypes={nodeTypes} edgeTypes={edgeTypes}>
-            <GridLayers />
-            {minimapVisible && <MiniMap className="ds-minimap" pannable zoomable />}
+            <GridLayer />
+            {minimapVisible && (
+              <MiniMap className="ds-minimap" pannable zoomable position="bottom-right" ariaLabel={zh.editor.minimap} />
+            )}
             <PeerCursors />
+            <SelectionToolbar />
           </ReactFlow>
         </div>
       </CanvasContextMenu>

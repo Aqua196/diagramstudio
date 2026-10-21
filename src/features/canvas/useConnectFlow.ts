@@ -3,11 +3,11 @@
 import { useCallback, useRef, type RefObject } from 'react'
 import { useReactFlow, type Connection, type FinalConnectionState } from '@xyflow/react'
 import { addEdge } from '@/core/commands/ops'
-import { createEdge } from '@/core/model/factories'
 import type { DiagramPlugin } from '@/core/plugin'
 import type { DiagramDoc } from '@/core/model/types'
 import { useDocumentStore } from '@/store/documentStore'
 import { useCanvasStore } from './canvasStore'
+import { createPluginEdge } from './nodeFactory'
 
 export function useConnectFlow(
   doc: DiagramDoc,
@@ -22,14 +22,9 @@ export function useConnectFlow(
 
   const onConnect = useCallback((conn: Connection) => {
     if (!conn.source || !conn.target || conn.source === conn.target) return
-    const p = pluginRef.current
-    const edge = createEdge(conn.source, conn.target, {
+    const edge = createPluginEdge(pluginRef.current, conn.source, conn.target, {
       sourceHandle: conn.sourceHandle ?? undefined,
       targetHandle: conn.targetHandle ?? undefined,
-      routing: p.edgeDefaults.routing,
-      arrowStart: p.edgeDefaults.arrowStart,
-      arrowEnd: p.edgeDefaults.arrowEnd,
-      style: { ...p.edgeDefaults.style },
     })
     useDocumentStore.getState().execute(addEdge(edge))
   }, [])

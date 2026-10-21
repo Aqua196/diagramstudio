@@ -1,25 +1,21 @@
-// 首页文档卡：打开 / 重命名 / 副本 / 删除（确认对话框）（C1 从 HomePage 拆出）。
+// 最近文档卡：缩略图 + 标题 + 类型与相对时间；右上菜单（打开/重命名/副本/删除确认）。
 import { useState } from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { MoreVertical } from 'lucide-react'
+import { Copy, FolderOpen, MoreHorizontal, PencilLine, Trash2 } from 'lucide-react'
 import { emit, EV } from '@/core/events'
-import { zh } from '@/i18n/zh'
-import type { DocIndexEntry } from '../docs/docsStore'
+import type { DiagramDoc } from '@/core/model/types'
+import { fmt, zh } from '@/i18n/zh'
 import { ActionDialog } from './ActionDialog'
-
-function formatTime(ts: number): string {
-  const d = new Date(ts)
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
-}
+import { MiniDiagram } from './MiniDiagram'
+import { relativeTime } from './time'
 
 function DocMenu({
-  entry,
+  doc,
   onChanged,
   onRename,
   onDelete,
 }: {
-  entry: DocIndexEntry
+  doc: DiagramDoc
   onChanged: () => void
   onRename: () => void
   onDelete: () => void
@@ -27,33 +23,37 @@ function DocMenu({
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button type="button" className="ds-icon-btn" aria-label={zh.menus.actions}>
-          <MoreVertical size={15} />
+        <button
+          type="button"
+          className="ds-icon-btn ds-icon-btn-sm ds-doc-menu"
+          aria-label={zh.home.docActions}
+        >
+          <MoreHorizontal size={16} />
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="ds-menu" align="end" sideOffset={4}>
+        <DropdownMenu.Content className="ds-menu" align="end" sideOffset={6}>
           <DropdownMenu.Item
             className="ds-menu-item"
-            onSelect={() => emit(EV.OPEN_DOC, { id: entry.id })}
+            onSelect={() => emit(EV.OPEN_DOC, { id: doc.id })}
           >
-            {zh.menus.open}
+            <FolderOpen size={16} /> {zh.home.open}
           </DropdownMenu.Item>
           <DropdownMenu.Item className="ds-menu-item" onSelect={onRename}>
-            {zh.common.rename}
+            <PencilLine size={16} /> {zh.common.rename}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="ds-menu-item"
             onSelect={() => {
-              emit(EV.DUPLICATE_DOC, { id: entry.id })
+              emit(EV.DUPLICATE_DOC, { id: doc.id })
               onChanged()
             }}
           >
-            {zh.common.duplicate}
+            <Copy size={16} /> {zh.common.duplicate}
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="ds-menu-sep" />
-          <DropdownMenu.Item className="ds-menu-item ds-menu-danger" onSelect={onDelete}>
-            {zh.common.delete}
+          <DropdownMenu.Item className="ds-menu-item is-danger" onSelect={onDelete}>
+            <Trash2 size={16} /> {zh.common.delete}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
@@ -61,39 +61,22 @@ function DocMenu({
   )
 }
 
-function OpenButton({ entry }: { entry: DocIndexEntry }) {
-  return (
-    <button
-      type="button"
-      className="ds-doc-open"
-      onClick={() => emit(EV.OPEN_DOC, { id: entry.id })}
-    >
-      <span className="ds-doc-title">{entry.title || zh.topbar.docTitle}</span>
-      <span className="ds-doc-meta">
-        {zh.plugins.typeNames[entry.type]} · {zh.home.updated} {formatTime(entry.updatedAt)}
-      </span>
-    </button>
-  )
-}
-
-interface CardDialogsProps {
-  entry: DocIndexEntry
-  onChanged: () => void
-  renaming: boolean
-  setRenaming: (v: boolean) => void
-  confirmDel: boolean
-  setConfirmDel: (v: boolean) => void
-}
-
 function CardDialogs({
-  entry,
+  doc,
   onChanged,
   renaming,
   setRenaming,
   confirmDel,
   setConfirmDel,
-}: CardDialogsProps) {
-  const [name, setName] = useState(entry.title)
+}: {
+  doc: DiagramDoc
+  onChanged: () => void
+  renaming: boolean
+  setRenaming: (v: boolean) => void
+  confirmDel: boolean
+  setConfirmDel: (v: boolean) => void
+}) {
+  const [name, setName] = useState(doc.title)
   return (
     <>
       <ActionDialog
@@ -106,13 +89,13 @@ function CardDialogs({
             className="ds-input"
             value={name}
             autoFocus
-            aria-label={zh.topbar.docTitle}
+            aria-label={zh.editor.docTitle}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.stopPropagation()}
           />
         }
         onConfirm={() => {
-          if (name.trim()) emit(EV.RENAME_DOC, { id: entry.id, title: name.trim() })
+          if (name.trim()) emit(EV.RENAME_DOC, { id: doc.id, title: name.trim() })
           setRenaming(false)
           onChanged()
         }}
@@ -123,9 +106,9 @@ function CardDialogs({
         title={zh.home.deleteTitle}
         confirmLabel={zh.common.delete}
         danger
-        body={<p className="ds-muted">{zh.home.deleteConfirm}</p>}
+        body={<p className="ds-muted">{fmt(zh.home.deleteConfirm, { name: doc.title })}</p>}
         onConfirm={() => {
-          emit(EV.DELETE_DOC, { id: entry.id })
+          emit(EV.DELETE_DOC, { id: doc.id })
           setConfirmDel(false)
           onChanged()
         }}
@@ -134,26 +117,41 @@ function CardDialogs({
   )
 }
 
-export function DocCard({ entry, onChanged }: { entry: DocIndexEntry; onChanged: () => void }) {
+export function DocCard({ doc, onChanged }: { doc: DiagramDoc; onChanged: () => void }) {
   const [confirmDel, setConfirmDel] = useState(false)
   const [renaming, setRenaming] = useState(false)
   return (
-    <div className="ds-doc-card">
-      <OpenButton entry={entry} />
+    <article className="ds-doc-card">
+      <button
+        type="button"
+        className="ds-doc-open"
+        onClick={() => emit(EV.OPEN_DOC, { id: doc.id })}
+      >
+        <span className="ds-doc-thumb">
+          <MiniDiagram doc={doc} className="ds-doc-mini" />
+        </span>
+        <span className="ds-doc-info">
+          <span className="ds-doc-title">{doc.title || zh.editor.docTitle}</span>
+          <span className="ds-doc-sub">
+            <span className={`ds-type-badge is-${doc.type}`}>{zh.plugins.typeNames[doc.type]}</span>
+            {relativeTime(doc.updatedAt)}
+          </span>
+        </span>
+      </button>
       <DocMenu
-        entry={entry}
+        doc={doc}
         onChanged={onChanged}
         onRename={() => setRenaming(true)}
         onDelete={() => setConfirmDel(true)}
       />
       <CardDialogs
-        entry={entry}
+        doc={doc}
         onChanged={onChanged}
         renaming={renaming}
         setRenaming={setRenaming}
         confirmDel={confirmDel}
         setConfirmDel={setConfirmDel}
       />
-    </div>
+    </article>
   )
 }

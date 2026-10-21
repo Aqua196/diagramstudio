@@ -1,5 +1,5 @@
 // 自定义节点 'dsShape'：形状本体由插件 ShapeDef.render 渲染（策略模式），
-// 这里只负责注入主题解析后的 CSS 变量、连接锚点、选中框与 CAD 缩放夹点。
+// 这里只负责注入主题解析后的 CSS 变量、连接锚点、选中框、缩放夹点与快捷加号。
 import { memo, useMemo, type CSSProperties } from 'react'
 import { NodeResizer, type NodeProps } from '@xyflow/react'
 import type { ShapeRenderContext } from '@/core/plugin'
@@ -10,8 +10,9 @@ import type { ReactPlugin } from '@/plugins/registry'
 import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
 import { useCanvasStore } from './canvasStore'
-import { nodeTextColor, resolveNodeColor } from './color'
+import { nodeTextColor, resolveNodeColor, resolveNodeStroke } from './color'
 import { ShapeHandles } from './ShapeHandles'
+import { QuickAdd } from './QuickAdd'
 
 // 交互层最小尺寸（命令层不约束，见 DECISIONS）
 const MIN_W = 32
@@ -48,13 +49,14 @@ function DsShapeNode({ id, data, selected, width, height, dragging }: NodeProps)
     plugin: ReactPlugin
   }
   const theme = useUiStore((s) => s.resolvedTheme)
+  const single = useUiStore((s) => s.selection.nodeIds.length === 1 && s.selection.edgeIds.length === 0)
   const isDropTarget = useCanvasStore((s) => s.dropTargetId === id)
   const execute = useDocumentStore((s) => s.execute)
   const { editing, liveNode, ctx, shape } = useShapeCtx(id, node, plugin, width, height)
 
   const vars = {
     '--node-fill': resolveNodeColor(node.style.fill, theme),
-    '--node-stroke': resolveNodeColor(node.style.stroke, theme),
+    '--node-stroke': resolveNodeStroke(node.style.stroke, node.style.fill, theme),
     '--node-text': nodeTextColor(theme),
   } as CSSProperties
   const cls = [
@@ -87,6 +89,7 @@ function DsShapeNode({ id, data, selected, width, height, dragging }: NodeProps)
         {shape ? shape.render(liveNode, ctx) : <FallbackShape node={liveNode} />}
       </div>
       <ShapeHandles />
+      {selected && single && !editing && !dragging && <QuickAdd nodeId={id} plugin={plugin} />}
     </div>
   )
 }

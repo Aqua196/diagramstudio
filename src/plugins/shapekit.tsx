@@ -24,7 +24,8 @@ export function svgShell(
             justifyContent: node.style.align === 'left' ? 'flex-start' : node.style.align === 'right' ? 'flex-end' : 'center',
             textAlign: node.style.align,
             fontSize: node.style.fontSize,
-            fontWeight: node.style.bold ? 700 : 400,
+            fontWeight: node.style.bold ? 650 : 450,
+            lineHeight: 1.35,
             color: 'var(--node-text)',
             overflow: 'hidden',
             wordBreak: 'break-word',
@@ -44,7 +45,7 @@ const dash = (n: DiagramNode) => (n.style.dash === 'dashed' ? '6 4' : undefined)
 
 export const shapePaths = {
   rect: (n: DiagramNode, ctx: ShapeRenderContext) =>
-    svgShell(n, (w, h) => <rect width={w} height={h} fill="var(--node-fill)" stroke="var(--node-stroke)" strokeWidth={sw(n)} strokeDasharray={dash(n)} />, ctx),
+    svgShell(n, (w, h) => <rect width={w} height={h} rx={Math.min(8, h / 4)} fill="var(--node-fill)" stroke="var(--node-stroke)" strokeWidth={sw(n)} strokeDasharray={dash(n)} />, ctx),
 
   rounded: (n: DiagramNode, ctx: ShapeRenderContext) =>
     svgShell(n, (w, h) => <rect width={w} height={h} rx={h / 2} fill="var(--node-fill)" stroke="var(--node-stroke)" strokeWidth={sw(n)} strokeDasharray={dash(n)} />, ctx),
@@ -61,9 +62,9 @@ export const shapePaths = {
   subprocess: (n: DiagramNode, ctx: ShapeRenderContext) =>
     svgShell(n, (w, h) => (
       <g fill="var(--node-fill)" stroke="var(--node-stroke)" strokeWidth={sw(n)} strokeDasharray={dash(n)}>
-        <rect width={w} height={h} />
-        <line x1={10} y1={0} x2={10} y2={h} />
-        <line x1={w - 10} y1={0} x2={w - 10} y2={h} />
+        <rect width={w} height={h} rx={3} />
+        <line x1={12} y1={0} x2={12} y2={h} />
+        <line x1={w - 12} y1={0} x2={w - 12} y2={h} />
       </g>
     ), ctx),
 

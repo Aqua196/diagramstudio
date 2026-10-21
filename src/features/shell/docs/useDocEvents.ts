@@ -9,6 +9,7 @@ import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
 import { zh } from '@/i18n/zh'
 import { openDocInEditor, toast } from './docNav'
+import { discardPristine, markPristine, watchPristine } from './pristine'
 import {
   buildNewDoc,
   deleteStoredDoc,
@@ -37,6 +38,7 @@ export function useDocEvents(): void {
       const doc = buildNewDoc(detail.type, detail.templateId)
       saveDoc(doc)
       openDocInEditor(doc)
+      if (detail.templateId === undefined) markPristine(doc.id)
     }
     const openDoc = (e: Event) => {
       const { id } = (e as CustomEvent).detail as { id: string }
@@ -95,14 +97,23 @@ export function useDocEvents(): void {
       if (s.doc === prev.doc) return
       if (timer) clearTimeout(timer)
       timer = setTimeout(() => {
+        if (useUiStore.getState().route !== 'editor') return
         saveDoc(useDocumentStore.getState().doc)
         useUiStore.getState().setLastSavedAt(Date.now())
       }, SAVE_DEBOUNCE_MS)
     })
 
+    // 回到首页时回收未动过的空白文档
+    const unsubPristine = watchPristine()
+    const unsubRoute = useUiStore.subscribe((s, prev) => {
+      if (s.route === 'home' && prev.route !== 'home') discardPristine()
+    })
+
     return () => {
       for (const [n, fn] of handlers) window.removeEventListener(n, fn)
       unsub()
+      unsubPristine()
+      unsubRoute()
       if (timer) clearTimeout(timer)
     }
   }, [])

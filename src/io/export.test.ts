@@ -3,13 +3,12 @@ import { describe, expect, it } from 'vitest'
 import { composeExportSvg, type ExportColors } from './export'
 
 const colors: ExportColors = {
-  line: '#D9DEE4',
-  ink: '#1B2430',
-  ink3: '#5D6875',
-  panel: '#FAFBFC',
-  sheet: '#F1F4F6',
-  gridFine: 'rgba(27,36,48,.06)',
-  gridCoarse: 'rgba(27,36,48,.12)',
+  line: '#E4E4DF',
+  ink: '#1C1C1A',
+  ink3: '#6B6B66',
+  panel: '#FFFFFF',
+  canvas: '#F6F6F3',
+  dot: 'rgba(28,28,26,.17)',
 }
 const content = '<svg><rect width="10" height="10"/></svg>'
 const base = { width: 200, height: 100, colors }
@@ -18,23 +17,22 @@ describe('composeExportSvg', () => {
   it('白底：单个白色背景矩形', () => {
     const svg = composeExportSvg(content, { ...base, background: 'white' })
     expect(svg).toContain('fill="#FFFFFF"')
-    expect(svg).not.toContain('ds-gf')
+    expect(svg).not.toContain('ds-dots')
   })
 
   it('透明：无背景矩形', () => {
     const svg = composeExportSvg(content, { ...base, background: 'transparent' })
     expect(svg).not.toContain('<rect width="200"')
-    expect(svg).not.toContain('ds-gf')
+    expect(svg).not.toContain('ds-dots')
   })
 
-  it('方格纸：sheet 底色 + 细 24 / 粗 120 两组 pattern', () => {
+  it('点阵：canvas 底色 + 24px 圆点 pattern（与画布一致）', () => {
     const svg = composeExportSvg(content, { ...base, background: 'grid' })
+    expect(svg).toContain(`fill="${colors.canvas}"`)
     expect(svg).toContain('width="24"')
-    expect(svg).toContain('width="120"')
-    expect(svg).toContain('url(#ds-gf)')
-    expect(svg).toContain('url(#ds-gc)')
-    expect(svg).toContain(colors.gridFine)
-    expect(svg).toContain(colors.gridCoarse)
+    expect(svg).toContain('<circle')
+    expect(svg).toContain('url(#ds-dots)')
+    expect(svg).toContain(colors.dot)
   })
 
   it('带图框：外层 frameSvg 含标题栏与内容', () => {

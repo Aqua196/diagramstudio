@@ -1,80 +1,97 @@
-// 首页：三种图的新建入口卡 + 文档列表（localStorage 索引），
-// 每卡带模板缩略示意；文档支持打开/重命名/副本/删除。
+// 首页：欢迎语 + 三种图的新建卡（真实示例缩略图）+ 最近的图表（缩略图网格）。
 import { useState } from 'react'
-import { FilePlus2, Upload } from 'lucide-react'
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
+import { FileJson, Moon, Sun, Upload, Workflow } from 'lucide-react'
 import { emit, EV } from '@/core/events'
 import type { DiagramType } from '@/core/model/types'
 import { useUiStore } from '@/store/uiStore'
-import { zh } from '@/i18n/zh'
-import { listDocs } from '../docs/docsStore'
+import { fmt, zh } from '@/i18n/zh'
+import { BrandMark } from '@/components/BrandMark'
+import { IconButton } from '@/components/IconButton'
+import { listStoredDocs } from '../docs/docsStore'
 import { DocCard } from './DocCard'
-import { Thumb } from './Thumb'
+import { NewCard } from './NewCard'
 
 const TYPES: DiagramType[] = ['flowchart', 'mindmap', 'er']
-const DESCS = {
-  flowchart: zh.home.newFlowchartDesc,
-  mindmap: zh.home.newMindmapDesc,
-  er: zh.home.newErDesc,
+
+function ImportMenu() {
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button type="button" className="ds-btn ds-btn-ghost">
+          <Upload size={15} /> {zh.home.importFile}
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content className="ds-menu" align="end" sideOffset={6}>
+          <DropdownMenu.Item className="ds-menu-item" onSelect={() => emit(EV.IMPORT_JSON)}>
+            <FileJson size={16} /> {zh.home.importJson}
+          </DropdownMenu.Item>
+          <DropdownMenu.Item className="ds-menu-item" onSelect={() => emit(EV.IMPORT_MERMAID)}>
+            <Workflow size={16} /> {zh.home.importMermaid}
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  )
+}
+
+function Header() {
+  const theme = useUiStore((s) => s.resolvedTheme)
+  const setTheme = useUiStore((s) => s.setTheme)
+  return (
+    <header className="ds-home-head">
+      <div className="ds-home-brand">
+        <BrandMark size={28} />
+        <span className="ds-home-name">{zh.app.name}</span>
+      </div>
+      <div className="ds-home-actions">
+        <ImportMenu />
+        <IconButton
+          icon={theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+          label={zh.editor.theme}
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        />
+      </div>
+    </header>
+  )
 }
 
 export default function HomePage() {
   const [, setTick] = useState(0)
   const refresh = () => setTick((n) => n + 1)
-  const docs = listDocs()
-  const theme = useUiStore((s) => s.resolvedTheme)
-  const setTheme = useUiStore((s) => s.setTheme)
-
+  const docs = listStoredDocs()
   return (
-    <main className="ds-home">
-      <header className="ds-home-head">
-        <h1 className="ds-home-logo">{zh.app.name}</h1>
-        <div className="ds-home-actions">
-          <button type="button" className="ds-btn" onClick={() => emit(EV.IMPORT_JSON)}>
-            <Upload size={14} /> {zh.home.importJson}
-          </button>
-          <button
-            type="button"
-            className="ds-btn"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            aria-label={zh.topbar.theme}
-          >
-            {theme === 'dark' ? zh.topbar.themeLight : zh.topbar.themeDark}
-          </button>
-        </div>
-      </header>
-
-      <section>
-        <h2 className="ds-panel-title">{zh.home.heading}</h2>
-        <div className="ds-new-grid">
-          {TYPES.map((type) => (
-            <button
-              key={type}
-              type="button"
-              className="ds-new-card"
-              onClick={() => emit(EV.NEW_DOC, { type })}
-            >
-              <Thumb type={type} />
-              <span className="ds-new-name">
-                <FilePlus2 size={14} /> {zh.plugins.typeNames[type]}
-              </span>
-              <span className="ds-new-desc">{DESCS[type]}</span>
-            </button>
+    <div className="ds-home">
+      <Header />
+      <main className="ds-home-main">
+        <section className="ds-hero">
+          <h1 className="ds-hero-title">{zh.home.heroTitle}</h1>
+          <p className="ds-hero-sub">{zh.home.heroSub}</p>
+        </section>
+        <section className="ds-new-grid" aria-label={zh.home.newBlank}>
+          {TYPES.map((t) => (
+            <NewCard key={t} type={t} />
           ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="ds-panel-title">{zh.home.myDocs}</h2>
-        {docs.length === 0 ? (
-          <p className="ds-muted">{zh.home.empty}</p>
-        ) : (
-          <div className="ds-doc-grid">
-            {docs.map((d) => (
-              <DocCard key={d.id} entry={d} onChanged={refresh} />
-            ))}
+        </section>
+        <section className="ds-recent">
+          <div className="ds-section-head">
+            <h2 className="ds-section-title">{zh.home.recent}</h2>
+            {docs.length > 0 && (
+              <span className="ds-section-count">{fmt(zh.home.docCount, { n: docs.length })}</span>
+            )}
           </div>
-        )}
-      </section>
-    </main>
+          {docs.length === 0 ? (
+            <p className="ds-recent-empty">{zh.home.empty}</p>
+          ) : (
+            <div className="ds-doc-grid">
+              {docs.map((d) => (
+                <DocCard key={d.id} doc={d} onChanged={refresh} />
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
   )
 }

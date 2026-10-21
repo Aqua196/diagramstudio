@@ -30,10 +30,9 @@ function themeColors(): ExportColors {
     line: v('--line'),
     ink: v('--ink'),
     ink3: v('--ink-3'),
-    panel: v('--panel'),
-    sheet: v('--sheet'),
-    gridFine: v('--grid-fine'),
-    gridCoarse: v('--grid-coarse'),
+    panel: v('--surface'),
+    canvas: v('--canvas'),
+    dot: v('--dot'),
   }
 }
 

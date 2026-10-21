@@ -1,0 +1,603 @@
+/* 界面基元：按钮、浮动条、菜单、气泡提示、弹层、对话框、输入、分段、开关、提示条。
+   颜色一律走 tokens.css 变量。 */
+
+/* —— 按钮 —— */
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast),
+    border-color var(--dur-fast),
+    box-shadow var(--dur-fast);
+}
+.ds-btn:hover {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+}
+.ds-btn:active {
+  background: var(--surface-3);
+}
+.ds-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  background: var(--surface);
+}
+.ds-btn-primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-ink);
+}
+.ds-btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: transparent;
+}
+.ds-btn-primary:active {
+  background: var(--accent-hover);
+}
+.ds-btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink-2);
+}
+.ds-btn-ghost:hover {
+  background: var(--surface-2);
+  border-color: transparent;
+  color: var(--ink);
+}
+.ds-btn-danger {
+  background: var(--danger);
+  border-color: transparent;
+  color: #fff;
+}
+.ds-btn-danger:hover {
+  background: var(--danger);
+  border-color: transparent;
+  filter: brightness(1.06);
+}
+.ds-btn-sm {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+.ds-btn-lg {
+  height: 40px;
+  padding: 0 18px;
+  font-size: 14px;
+  border-radius: var(--r-lg);
+}
+.ds-btn-block {
+  width: 100%;
+}
+
+.ds-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast),
+    color var(--dur-fast);
+}
+.ds-icon-btn:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.ds-icon-btn:active {
+  background: var(--surface-3);
+}
+.ds-icon-btn.is-active,
+.ds-icon-btn[data-state='open'],
+.ds-icon-btn[aria-pressed='true'] {
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+.ds-icon-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+  background: transparent;
+  color: var(--ink-2);
+}
+.ds-icon-btn-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+}
+.ds-icon-btn.is-danger:hover {
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+
+/* —— 浮动条（编辑器四角 + 上下文工具条共用） —— */
+.ds-float {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-float);
+}
+.ds-float-col {
+  flex-direction: column;
+}
+.ds-sep {
+  flex-shrink: 0;
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: var(--line);
+}
+.ds-float-col .ds-sep {
+  width: 20px;
+  height: 1px;
+  margin: 4px 0;
+}
+
+/* —— 菜单（下拉/右键共用） —— */
+.ds-menu {
+  min-width: 196px;
+  padding: 4px;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop);
+  z-index: 60;
+  animation: ds-pop-in var(--dur-med) var(--ease-out);
+}
+.ds-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+}
+.ds-menu-item svg {
+  flex-shrink: 0;
+  color: var(--ink-3);
+}
+.ds-menu-item:hover,
+.ds-menu-item[data-highlighted] {
+  background: var(--surface-2);
+}
+.ds-menu-item[data-disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+.ds-menu-item.is-danger {
+  color: var(--danger);
+}
+.ds-menu-item.is-danger svg {
+  color: var(--danger);
+}
+.ds-menu-item.is-danger[data-highlighted] {
+  background: var(--danger-wash);
+}
+.ds-menu-item[data-state='checked'] svg.ds-menu-check {
+  color: var(--accent);
+}
+.ds-menu-kbd {
+  margin-left: auto;
+  padding-left: 16px;
+  font-size: 12px;
+  color: var(--ink-3);
+  font-feature-settings: 'tnum';
+}
+.ds-menu-label {
+  padding: 8px 10px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+.ds-menu-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--line);
+}
+.ds-menu-check-slot {
+  display: inline-flex;
+  width: 16px;
+  justify-content: center;
+}
+
+/* —— 气泡提示 —— */
+.ds-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: var(--r-sm);
+  background: var(--ink);
+  color: var(--canvas);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  z-index: 120;
+  animation: ds-fade-in var(--dur-fast) ease-out;
+  pointer-events: none;
+}
+.ds-tip-kbd {
+  color: color-mix(in srgb, var(--canvas) 62%, transparent);
+  font-feature-settings: 'tnum';
+}
+
+/* —— 弹层（Popover） —— */
+.ds-pop {
+  padding: 12px;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop);
+  z-index: 60;
+  animation: ds-pop-in var(--dur-med) var(--ease-out);
+  outline: none;
+}
+.ds-pop-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+/* —— 对话框 —— */
+.ds-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 18, 0.28);
+  backdrop-filter: blur(2px);
+  z-index: 90;
+  animation: ds-fade-in var(--dur-med) ease-out;
+}
+.dark .ds-overlay {
+  background: rgba(0, 0, 0, 0.55);
+}
+.ds-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+  width: min(440px, calc(100vw - 32px));
+  max-height: min(720px, calc(100vh - 48px));
+  overflow-y: auto;
+  padding: 20px;
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-pop);
+  animation: ds-dialog-in var(--dur-med) var(--ease-out);
+  outline: none;
+}
+.ds-dialog-wide {
+  width: min(560px, calc(100vw - 32px));
+}
+.ds-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.ds-dialog-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ds-dialog-desc {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.ds-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+/* —— 表单 —— */
+.ds-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  transition:
+    border-color var(--dur-fast),
+    box-shadow var(--dur-fast);
+}
+.ds-input:hover {
+  border-color: var(--line-strong);
+}
+.ds-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+.ds-input::placeholder {
+  color: var(--ink-3);
+}
+.ds-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ds-field + .ds-field {
+  margin-top: 14px;
+}
+.ds-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.ds-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 32px;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+/* 分段控件 */
+.ds-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.ds-seg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 32px;
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ds-seg-btn:hover {
+  color: var(--ink);
+}
+.ds-seg-btn.is-active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow:
+    var(--shadow-card),
+    0 0 0 1px var(--line);
+}
+.ds-seg-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.ds-seg-block {
+  display: flex;
+}
+.ds-seg-block .ds-seg-btn {
+  flex: 1;
+}
+
+/* 开关 */
+.ds-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--surface-3);
+  cursor: pointer;
+  transition: background var(--dur-fast);
+}
+.ds-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.dark .ds-switch::after {
+  background: var(--ink);
+}
+.ds-switch[aria-checked='true'] {
+  background: var(--accent);
+}
+.ds-switch[aria-checked='true']::after {
+  transform: translateX(14px);
+}
+
+.ds-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  font-feature-settings: 'tnum';
+  white-space: nowrap;
+}
+.ds-muted {
+  color: var(--ink-3);
+  font-size: 13px;
+}
+
+/* —— 提示条 —— */
+.ds-toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 72px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 200;
+  pointer-events: none;
+}
+.ds-toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 8px 8px 8px 12px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--canvas);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-pop);
+  pointer-events: auto;
+  animation: ds-toast-in var(--dur-med) var(--ease-out);
+}
+.ds-toast-icon {
+  display: inline-flex;
+  color: var(--toast-ok);
+}
+.ds-toast-error .ds-toast-icon {
+  color: var(--toast-err);
+}
+.ds-toast-close {
+  display: inline-flex;
+  padding: 4px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+}
+.ds-toast-close:hover {
+  opacity: 1;
+}
+
+@keyframes ds-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ds-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+@keyframes ds-dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 8px)) scale(0.98);
+  }
+}
+@keyframes ds-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* 前缀标签数字框 */
+.ds-num {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding-left: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  transition:
+    border-color var(--dur-fast),
+    box-shadow var(--dur-fast);
+}
+.ds-num:hover {
+  border-color: var(--line-strong);
+}
+.ds-num:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+.ds-num-label {
+  flex-shrink: 0;
+  min-width: 14px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.ds-num-input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  font-feature-settings: 'tnum';
+  outline: none;
+  -moz-appearance: textfield;
+}
+.ds-num-input::-webkit-inner-spin-button,
+.ds-num-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.ds-num-input:focus-visible {
+  box-shadow: none;
+}

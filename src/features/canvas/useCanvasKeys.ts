@@ -1,14 +1,15 @@
-// 画布本地按键：方向键微调、Enter 进入文字编辑、Esc 取消选择、插件 keymap。
+// 画布本地按键：方向键微调、Enter/F2 进入文字编辑、Esc 取消选择、插件 keymap。
+// 插件按键新增的节点自动选中并进入编辑（思维导图 Tab → 直接打字）。
 // EV 表内的快捷键由外壳快捷键总线派发（IMPL_CONTRACT §5）。
 import { useEffect, useRef } from 'react'
-import { emit, type EvName } from '@/core/events'
+import { emit, EV, type EvName } from '@/core/events'
 import type { DiagramPlugin } from '@/core/plugin'
 import type { DiagramDoc } from '@/core/model/types'
 import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
-import { useCanvasStore } from './canvasStore'
 import { arrowDelta } from './guides'
 import { nudgeNodes } from './commands'
+import { executeAndFocus, startEditing } from './focus'
 
 function isTypingTarget(t: EventTarget | null): boolean {
   const el = t as HTMLElement | null
@@ -43,7 +44,7 @@ export function useCanvasKeys(doc: DiagramDoc, plugin: DiagramPlugin, deps: Deps
         })
         if (cmd) {
           e.preventDefault()
-          useDocumentStore.getState().execute(cmd)
+          executeAndFocus(cmd)
           return
         }
       }
@@ -55,10 +56,9 @@ export function useCanvasKeys(doc: DiagramDoc, plugin: DiagramPlugin, deps: Deps
         return
       }
 
-      if (e.key === 'Enter' && sel.nodeIds.length === 1 && sel.edgeIds.length === 0) {
+      if ((e.key === 'Enter' || e.key === 'F2') && sel.nodeIds.length === 1 && sel.edgeIds.length === 0) {
         e.preventDefault()
-        useCanvasStore.getState().setEditingNode(sel.nodeIds[0])
-        ui.setTextEditing(true)
+        startEditing(sel.nodeIds[0])
         return
       }
 
@@ -66,8 +66,16 @@ export function useCanvasKeys(doc: DiagramDoc, plugin: DiagramPlugin, deps: Deps
         deps.selectIds([], [])
       }
     }
+    const onEditText = () => {
+      const sel = useUiStore.getState().selection
+      if (sel.nodeIds.length === 1) startEditing(sel.nodeIds[0])
+    }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    window.addEventListener(EV.EDIT_TEXT, onEditText)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener(EV.EDIT_TEXT, onEditText)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 }

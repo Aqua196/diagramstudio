@@ -1,4 +1,4 @@
-// 通用确认/表单对话框（C1 从 DocCard 拆出，可在 shell 复用）。
+// 通用确认/表单对话框（重命名、删除确认等）。
 import * as Dialog from '@radix-ui/react-dialog'
 import { zh } from '@/i18n/zh'
 
@@ -24,7 +24,9 @@ export function ActionDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="ds-overlay" />
         <Dialog.Content className="ds-dialog" aria-describedby={undefined}>
-          <Dialog.Title className="ds-dialog-title">{title}</Dialog.Title>
+          <div className="ds-dialog-head">
+            <Dialog.Title className="ds-dialog-title">{title}</Dialog.Title>
+          </div>
           {body}
           <div className="ds-dialog-actions">
             <Dialog.Close asChild>

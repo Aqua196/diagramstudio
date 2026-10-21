@@ -1,6 +1,13 @@
-// 节点/连线颜色解析：palette key → 当前主题色值；'ink' → 令牌变量；
+// 节点/连线颜色解析：palette key → 当前主题色值；'ink' 描边跟随底色同色相；
 // 其余字符串原样放行（导出/自定义场景）。
-import { isNodeColorKey, NODE_COLORS, TEXT_ON, type ThemeName } from '@/core/palette'
+import {
+  isNodeColorKey,
+  NODE_COLORS,
+  NODE_STROKES,
+  resolveStroke,
+  TEXT_ON,
+  type ThemeName,
+} from '@/core/palette'
 
 export function resolveNodeColor(key: string, theme: ThemeName): string {
   if (isNodeColorKey(key)) return NODE_COLORS[key][theme]
@@ -9,10 +16,15 @@ export function resolveNodeColor(key: string, theme: ThemeName): string {
   return key
 }
 
-/** 边线颜色：默认 'ink-2' 灰线，选中态由组件覆盖为 var(--accent) */
-export function resolveEdgeStroke(key: string): string {
-  if (key === 'ink' || key.startsWith('ink-')) return `var(--${key})`
-  if (isNodeColorKey(key)) return 'var(--node-stroke)'
+export function resolveNodeStroke(stroke: string, fill: string, theme: ThemeName): string {
+  return resolveStroke(stroke, fill, theme)
+}
+
+/** 边线颜色：默认 'ink-2' 走 --edge 令牌；palette key（思维导图分支）取该色描边 */
+export function resolveEdgeStroke(key: string, theme: ThemeName): string {
+  if (key === 'ink' || key === 'ink-2') return 'var(--edge)'
+  if (key.startsWith('ink-')) return `var(--${key})`
+  if (isNodeColorKey(key)) return NODE_STROKES[key][theme]
   return key
 }
 

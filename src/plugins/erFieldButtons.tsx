@@ -1,5 +1,4 @@
 // ER 字段行的小按钮组（C1 从 erFields 拆出）：键位切换、删除字段、新增字段。
-import { createId } from '@/core/model/factories'
 import type { ErField } from '@/core/model/types'
 import { zh } from '@/i18n/zh'
 
@@ -52,21 +51,18 @@ export function DelButton({ f, fields, api }: { f: ErField; fields: ErField[]; a
   )
 }
 
-export function AddButton({ fields, api }: { fields: ErField[]; api: RowApiLike }) {
+export function AddButton({ onAdd }: { onAdd: () => void }) {
   return (
     <button
       type="button"
-      className="ds-er-add"
+      className="ds-er-add ds-export-exclude"
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation()
-        api.update(
-          [...fields, { id: createId(), name: `field_${fields.length + 1}`, type: 'int' }],
-          er.addField,
-        )
+        onAdd()
       }}
     >
-      {er.addField}
+      ＋ {er.addField}
     </button>
   )
 }

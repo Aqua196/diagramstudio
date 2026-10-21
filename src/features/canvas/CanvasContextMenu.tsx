@@ -1,58 +1,100 @@
-// 画布右键菜单：菜单项随当前 selection 变化（IMPL_CONTRACT §6），
-// 行为统一走 EV.* 事件派发，不直接改文档。
+// 画布右键菜单：菜单项随当前 selection 变化（IMPL_CONTRACT §6），带快捷键提示；
+// 行为统一走 EV.* 事件派发，不直接改文档。空白处右键提供粘贴/全选/适应画面。
 import type { ReactNode } from 'react'
 import * as ContextMenu from '@radix-ui/react-context-menu'
-import { emit, EV } from '@/core/events'
+import {
+  BringToFront,
+  ClipboardPaste,
+  Copy,
+  CopyPlus,
+  Maximize,
+  Pencil,
+  Scissors,
+  SendToBack,
+  SquareDashedMousePointer,
+  Trash2,
+} from 'lucide-react'
+import { emit, EV, type EvName } from '@/core/events'
 import { useUiStore } from '@/store/uiStore'
+import { keyLabel } from '@/components/kbd'
 import { hasClipboard } from './clipboard'
-import { useCanvasStore } from './canvasStore'
 import { zh } from '@/i18n/zh'
 
-function Item({ label, onSelect }: { label: string; onSelect: () => void }) {
+const s = zh.shortcuts
+
+function Item({
+  icon,
+  label,
+  kbd,
+  ev,
+  danger,
+}: {
+  icon: ReactNode
+  label: string
+  kbd?: string
+  ev: EvName
+  danger?: boolean
+}) {
   return (
-    <ContextMenu.Item className="ds-menu-item" onSelect={onSelect}>
+    <ContextMenu.Item
+      className={`ds-menu-item${danger ? ' is-danger' : ''}`}
+      onSelect={() => emit(ev)}
+    >
+      {icon}
       {label}
+      {kbd && <span className="ds-menu-kbd">{keyLabel(kbd)}</span>}
     </ContextMenu.Item>
   )
 }
 
 function MenuItems() {
-  const sel = useUiStore((s) => s.selection)
-  const setEditingNode = useCanvasStore((s) => s.setEditingNode)
-  const setTextEditing = useUiStore((s) => s.setTextEditing)
+  const sel = useUiStore((st) => st.selection)
   const singleNode = sel.nodeIds.length === 1 && sel.edgeIds.length === 0
   const hasNodes = sel.nodeIds.length > 0
   const hasSelection = hasNodes || sel.edgeIds.length > 0
   return (
     <>
       {singleNode && (
-        <Item
-          label={zh.inspector.text}
-          onSelect={() => {
-            setEditingNode(sel.nodeIds[0])
-            setTextEditing(true)
-          }}
-        />
+        <Item icon={<Pencil size={16} />} label={zh.toolbar.editText} kbd="F2" ev={EV.EDIT_TEXT} />
       )}
       {hasNodes && (
         <>
-          <Item label={zh.shortcuts.copy} onSelect={() => emit(EV.COPY)} />
-          <Item label={zh.shortcuts.cut} onSelect={() => emit(EV.CUT)} />
-          <Item label={zh.common.duplicate} onSelect={() => emit(EV.DUPLICATE)} />
+          <Item icon={<Copy size={16} />} label={s.copy} kbd="Ctrl+C" ev={EV.COPY} />
+          <Item icon={<Scissors size={16} />} label={s.cut} kbd="Ctrl+X" ev={EV.CUT} />
+          <Item icon={<CopyPlus size={16} />} label={s.duplicate} kbd="Ctrl+D" ev={EV.DUPLICATE} />
         </>
       )}
-      {hasClipboard() && <Item label={zh.shortcuts.paste} onSelect={() => emit(EV.PASTE)} />}
+      {hasClipboard() && (
+        <Item icon={<ClipboardPaste size={16} />} label={s.paste} kbd="Ctrl+V" ev={EV.PASTE} />
+      )}
+      {!hasSelection && (
+        <>
+          <Item
+            icon={<SquareDashedMousePointer size={16} />}
+            label={s.selectAll}
+            kbd="Ctrl+A"
+            ev={EV.SELECT_ALL}
+          />
+          <Item icon={<Maximize size={16} />} label={s.fit} kbd="Ctrl+0" ev={EV.FIT} />
+        </>
+      )}
       {hasNodes && (
         <>
           <ContextMenu.Separator className="ds-menu-sep" />
-          <Item label={zh.inspector.zFront} onSelect={() => emit(EV.Z_FRONT)} />
-          <Item label={zh.inspector.zBack} onSelect={() => emit(EV.Z_BACK)} />
+          <Item icon={<BringToFront size={16} />} label={s.zFront} kbd="]" ev={EV.Z_FRONT} />
+          <Item icon={<SendToBack size={16} />} label={s.zBack} kbd="[" ev={EV.Z_BACK} />
         </>
       )}
       {hasSelection && (
         <>
           <ContextMenu.Separator className="ds-menu-sep" />
-          <Item label={zh.common.delete} onSelect={() => emit(EV.DELETE)} />
+          <Item
+            icon={<Trash2 size={16} />}
+            label={zh.common.delete}
+            kbd="Del"
+            ev={EV.DELETE}
+            danger
+          />
         </>
       )}
     </>

@@ -1,130 +1,95 @@
-// 阶段3/4 e2e：首页入口 → 编辑器骨架 → 画布拖入节点 → 检查器联动，
-// 两档视口截图（1440×900 / 1280×720），控制台零 error/warning。
-import { expect, test, type Page } from '@playwright/test'
-
-function watchConsole(page: Page): string[] {
-  const problems: string[] = []
-  page.on('console', (msg) => {
-    if (msg.type() === 'error' || msg.type() === 'warning') problems.push(msg.text())
-  })
-  page.on('pageerror', (err) => problems.push(err.message))
-  return problems
-}
+// 编辑器骨架 e2e（UI 改版）：首页入口 → 画布优先布局（四角浮动条 + 形状坞）→ 拖入节点 →
+// 上下文工具条联动 → 自动保存；两档视口截图（1440×900 / 1280×720），控制台零 error/warning。
+import { expect, test } from '@playwright/test'
+import { dropShape, freshHome, newBlank, paneCenter, vpTag, watchConsole } from './helpers'
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/')
-  await page.evaluate(() => localStorage.clear())
+  await freshHome(page)
 })
 
-test('首页：三类入口卡 + 空文档列表', async ({ page }) => {
+test('首页：品牌 + 三类新建卡 + 空的最近列表', async ({ page }) => {
   const problems = watchConsole(page)
-  await expect(page.locator('h1')).toContainText('DiagramStudio')
+  await expect(page.locator('.ds-home-name')).toContainText('DiagramStudio')
+  await expect(page.locator('h1')).toBeVisible()
   await expect(page.locator('.ds-new-card')).toHaveCount(3)
-  const vp = page.viewportSize()!
-  const tag = vp.width === 1440 ? '1440' : '1280'
-  await page.screenshot({ path: `docs/screenshots/stage34-home-${tag}.png` })
+  await expect(page.locator('.ds-recent-empty')).toBeVisible()
+  await page.screenshot({ path: `docs/screenshots/stage34-home-${vpTag(page)}.png` })
   expect(problems).toEqual([])
 })
 
-test('新建流程图进入编辑器：顶栏/面板/空画布提示齐全', async ({ page }) => {
+test('新建流程图进入编辑器：四角浮动条 / 形状坞 / 空画布引导齐全', async ({ page }) => {
   const problems = watchConsole(page)
-  await page.locator('.ds-new-card').first().click()
-  await expect(page.locator('.ds-topbar')).toBeVisible()
-  await expect(page.locator('.ds-panel-left')).toBeVisible()
-  await expect(page.locator('.ds-panel-right')).toBeVisible()
-  await expect(page.locator('.react-flow')).toBeVisible()
+  await newBlank(page, 'flowchart')
+  await expect(page.locator('.ds-corner-tl')).toBeVisible()
+  await expect(page.locator('.ds-corner-tr')).toBeVisible()
+  await expect(page.locator('.ds-dock')).toBeVisible()
+  await expect(page.locator('.ds-corner-bl')).toBeVisible()
   await expect(page.locator('.ds-empty')).toBeVisible()
-  const vp = page.viewportSize()!
-  const tag = vp.width === 1440 ? '1440' : '1280'
-  await page.screenshot({ path: `docs/screenshots/stage34-editor-empty-${tag}.png` })
+  await page.screenshot({ path: `docs/screenshots/stage34-editor-empty-${vpTag(page)}.png` })
   expect(problems).toEqual([])
 })
 
-test('拖入形状 → 节点上画布 → 检查器显示节点面板 → 保存到 localStorage', async ({ page }) => {
+test('拖入形状 → 节点上画布 → 上下文工具条出现 → 保存到 localStorage', async ({ page }) => {
   const problems = watchConsole(page)
-  await page.locator('.ds-new-card').first().click()
-  await expect(page.locator('.react-flow')).toBeVisible()
-
-  // HTML5 DnD：playwright 下用 DataTransfer 事件派发模拟（落点在画布中部）
-  const shape = page.locator('.ds-shape').first()
-  const pane = page.locator('.react-flow__pane')
-  const dropAt = async (kind: string, x: number, y: number) => {
-    const init = {
-      clientX: x,
-      clientY: y,
-      dataTransfer: await page.evaluateHandle((k) => {
-        const dt = new DataTransfer()
-        dt.setData('application/x-diagram-shape', k)
-        return dt
-      }, kind),
-    }
-    await pane.dispatchEvent('dragover', init)
-    await pane.dispatchEvent('drop', init)
-  }
-  const paneBox = (await pane.boundingBox())!
-  const cx = paneBox.x + paneBox.width / 2
-  const cy = paneBox.y + paneBox.height / 2
-  await shape.dispatchEvent('dragstart', {
-    dataTransfer: await page.evaluateHandle(() => new DataTransfer()),
-  })
-  await dropAt('process', cx - 120, cy - 40)
+  await newBlank(page, 'flowchart')
+  const c = await paneCenter(page)
+  await dropShape(page, 'process', c.x - 120, c.y - 40)
   await expect(page.locator('.react-flow__node')).toHaveCount(1, { timeout: 5000 })
-  await page.locator('.ds-group-head', { hasText: '节点' }).click()
-  await expect(page.locator('.ds-panel-right')).toContainText('填充')
+  // 拖入即选中：工具条出现，含颜色/删除
+  const bar = page.getByRole('toolbar')
+  await expect(bar).toBeVisible()
+  await expect(bar.getByRole('button', { name: '颜色' })).toBeVisible()
+  await expect(bar.getByRole('button', { name: '删除' })).toBeVisible()
 
-  // 再放一个 → 两个节点都出现在画布上
-  await dropAt('decision', cx + 140, cy + 60)
+  await dropShape(page, 'decision', c.x + 140, c.y + 60)
   await expect(page.locator('.react-flow__node')).toHaveCount(2)
 
   // 自动保存落盘（防抖 500ms）
   await page.waitForTimeout(700)
   const docs = await page.evaluate(
-    () => JSON.parse(localStorage.getItem('ds.docs.v1') ?? '{}') as Record<string, { nodes: Record<string, unknown> }>,
+    () =>
+      JSON.parse(localStorage.getItem('ds.docs.v1') ?? '{}') as Record<
+        string,
+        { nodes: Record<string, unknown> }
+      >,
   )
   expect(Object.keys(docs)).toHaveLength(1)
   expect(Object.keys(Object.values(docs)[0].nodes)).toHaveLength(2)
-
-  const vp = page.viewportSize()!
-  const tag = vp.width === 1440 ? '1440' : '1280'
-  await page.screenshot({ path: `docs/screenshots/stage34-editor-nodes-${tag}.png` })
+  await page.screenshot({ path: `docs/screenshots/stage34-editor-nodes-${vpTag(page)}.png` })
   expect(problems).toEqual([])
 })
 
-test('快捷键帮助对话框列出全部快捷键', async ({ page }) => {
+test('双击空白放节点（不再被双击缩放吞掉）', async ({ page }) => {
   const problems = watchConsole(page)
-  await page.locator('.ds-new-card').first().click()
-  await expect(page.locator('.react-flow')).toBeVisible()
+  await newBlank(page, 'flowchart')
+  const c = await paneCenter(page)
+  await page.mouse.dblclick(c.x + 200, c.y - 150)
+  await expect(page.locator('.react-flow__node')).toHaveCount(1)
+  await expect(page.getByRole('button', { name: '缩放到 100%' })).toHaveText('100%')
+  expect(problems).toEqual([])
+})
+
+test('快捷键面板列出全部快捷键', async ({ page }) => {
+  const problems = watchConsole(page)
+  await newBlank(page, 'flowchart')
   await page.keyboard.press('?')
-  await expect(page.locator('.ds-dialog')).toBeVisible()
-  await expect(page.locator('.ds-dialog')).toContainText('撤销')
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await expect(page.getByRole('dialog')).toContainText('撤销')
+  await expect(page.getByRole('dialog')).toContainText('思维导图：添加子主题')
   await page.keyboard.press('Escape')
   expect(problems).toEqual([])
 })
 
-test('暗色主题：编辑器完整渲染', async ({ page }) => {
+test('深色主题：编辑器完整渲染', async ({ page }) => {
   const problems = watchConsole(page)
-  await page.locator('.ds-new-card').first().click()
-  await expect(page.locator('.react-flow')).toBeVisible()
+  await newBlank(page, 'flowchart')
   await page.evaluate(() => localStorage.setItem('ds:theme', 'dark'))
   await page.reload()
   await expect(page.locator('.react-flow')).toBeVisible()
   await expect(page.locator('html.dark')).toHaveCount(1)
-  const pane = page.locator('.react-flow__pane')
-  const box = (await pane.boundingBox())!
-  const init = {
-    clientX: box.x + box.width / 2,
-    clientY: box.y + box.height / 2,
-    dataTransfer: await page.evaluateHandle(() => {
-      const dt = new DataTransfer()
-      dt.setData('application/x-diagram-shape', 'process')
-      return dt
-    }),
-  }
-  await pane.dispatchEvent('dragover', init)
-  await pane.dispatchEvent('drop', init)
+  const c = await paneCenter(page)
+  await dropShape(page, 'process', c.x, c.y)
   await expect(page.locator('.react-flow__node')).toHaveCount(1)
-  const vp = page.viewportSize()!
-  const tag = vp.width === 1440 ? '1440' : '1280'
-  await page.screenshot({ path: `docs/screenshots/stage34-editor-dark-${tag}.png` })
+  await page.screenshot({ path: `docs/screenshots/stage34-editor-dark-${vpTag(page)}.png` })
   expect(problems).toEqual([])
 })

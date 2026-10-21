@@ -1,0 +1,486 @@
+/* 编辑器外壳：全屏画布 + 四角浮动条 + 左侧形状坞 + 底部提示。颜色一律走 tokens.css 变量。 */
+.ds-editor {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background: var(--canvas);
+}
+.ds-editor-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* —— 四角浮动条 —— */
+.ds-corner {
+  position: absolute;
+  z-index: 30;
+}
+.ds-corner-tl {
+  top: 12px;
+  left: 12px;
+  gap: 4px;
+  padding: 4px 12px 4px 4px;
+  max-width: calc(50vw - 40px);
+}
+.ds-corner-tr {
+  top: 12px;
+  right: 12px;
+  gap: 6px;
+}
+.ds-corner-bl {
+  bottom: 12px;
+  left: 12px;
+}
+.ds-corner-br {
+  bottom: 12px;
+  right: 12px;
+}
+
+.ds-home-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 36px;
+  padding: 0 6px 0 2px;
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast),
+    color var(--dur-fast);
+}
+.ds-home-btn:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.ds-home-chev {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.ds-home-btn:hover .ds-home-chev {
+  transform: translateX(-2px);
+}
+.ds-brand {
+  display: block;
+  flex-shrink: 0;
+}
+
+.ds-doc-head {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding-left: 4px;
+}
+.ds-title {
+  max-width: 320px;
+  padding: 1px 6px;
+  margin-left: -6px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+}
+.ds-title:hover {
+  background: var(--surface-2);
+}
+.ds-title-input {
+  width: 240px;
+  height: 24px;
+  margin-left: -6px;
+  padding: 0 6px;
+  font-weight: 600;
+}
+.ds-doc-meta {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.ds-doc-saved {
+  color: var(--ink-3);
+}
+
+/* —— 左侧形状坞 —— */
+.ds-dock {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  z-index: 30;
+}
+.ds-dock .ds-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+}
+.ds-dock-shape {
+  cursor: grab;
+}
+.ds-dock-shape:active {
+  cursor: grabbing;
+}
+.ds-shape-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 84px);
+  gap: 4px;
+}
+.ds-shape-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 4px 10px;
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 12px;
+  cursor: grab;
+}
+.ds-shape-tile:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.ds-tpl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 220px;
+}
+.ds-tpl-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.ds-tpl-item:hover {
+  background: var(--surface-2);
+}
+.ds-tpl-meta {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+/* —— 缩放 —— */
+.ds-zoom-val {
+  min-width: 52px;
+  height: 32px;
+  padding: 0 4px;
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 500;
+  font-feature-settings: 'tnum';
+  cursor: pointer;
+}
+.ds-zoom-val:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* —— 画布设置弹层 —— */
+.ds-settings {
+  width: 260px;
+}
+
+/* —— 底部提示条 —— */
+.ds-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100vw - 640px);
+  padding: 6px 6px 6px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-float);
+  color: var(--ink-2);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  animation: ds-fade-in var(--dur-med) ease-out;
+}
+.ds-hint-icon {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.ds-hint-item {
+  display: inline-flex;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ds-hint-dot {
+  color: var(--ink-3);
+}
+.ds-hint-close {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-left: 4px;
+  padding: 4px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.ds-hint-close:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* —— 分享弹层 —— */
+.ds-share {
+  width: 360px;
+  padding: 16px;
+}
+.ds-share-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ds-share-desc {
+  margin: 4px 0 14px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ink-3);
+}
+.ds-share-link {
+  display: flex;
+  gap: 6px;
+}
+.ds-share-link .ds-input {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.ds-share-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.ds-share-peers {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.ds-share-hint {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ink-2);
+}
+.ds-share-leave {
+  margin-top: 10px;
+  margin-left: -10px;
+}
+.ds-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-3);
+}
+.ds-status-dot.is-connected {
+  background: var(--success);
+}
+.ds-status-dot.is-connecting {
+  background: var(--accent);
+  animation: ds-pulse 1.2s ease-in-out infinite;
+}
+.ds-status-dot.is-offline {
+  background: var(--danger);
+}
+@keyframes ds-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+.ds-peers {
+  display: flex;
+  margin-right: 2px;
+}
+.ds-peers .ds-peer-avatar + .ds-peer-avatar {
+  margin-left: -6px;
+}
+.ds-peer-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--surface);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* —— 导出对话框 —— */
+.ds-format-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.ds-format {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  row-gap: 2px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast),
+    background var(--dur-fast),
+    box-shadow var(--dur-fast);
+}
+.ds-format:hover {
+  border-color: var(--line-strong);
+}
+.ds-format.is-active {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.ds-format:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.ds-format-icon {
+  grid-row: span 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.ds-format.is-active .ds-format-icon {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.ds-format-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ds-format-desc {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.ds-export-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.ds-export-opts .ds-field + .ds-field {
+  margin-top: 0;
+}
+.ds-field-hint {
+  margin-top: -4px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.ds-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.ds-grid-2 .ds-field + .ds-field {
+  margin-top: 0;
+}
+
+/* —— 窄屏提示 —— */
+.ds-narrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  padding: 24px;
+  color: var(--ink-3);
+  text-align: center;
+}
+.ds-narrow-title {
+  margin: 8px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ds-narrow-hint {
+  margin: 0;
+  max-width: 320px;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+/* —— 快捷键面板 —— */
+.ds-sc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 32px;
+}
+.ds-sc-group {
+  margin-bottom: 14px;
+}
+.ds-sc-group-title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.ds-sc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 30px;
+  font-size: 13px;
+  color: var(--ink);
+}
+.ds-sc-keys {
+  display: inline-flex;
+  gap: 4px;
+}

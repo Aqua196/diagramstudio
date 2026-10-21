@@ -112,7 +112,7 @@ export function reparentCommand(doc: DiagramDoc, draggedId: string, targetId: st
 }
 
 export function mkChild(doc: DiagramDoc, parentId: string | null): Command {
-  const child = createNode('topic', { x: 0, y: 0 }, { w: 140, h: 40 }, zh.plugins.shapes.topic)
+  const child = createNode('topic', { x: 0, y: 0 }, { w: 140, h: 40 }, zh.plugins.mindmap.newTopic)
   child.data = { parentId }
   const fill = colorForNewChild(doc, parentId)
   if (fill) child.style.fill = fill

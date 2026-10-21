@@ -1,0 +1,267 @@
+/* 首页：品牌头 + 欢迎语 + 新建卡 + 最近图表网格。颜色一律走 tokens.css 变量。 */
+.ds-home {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--canvas);
+}
+.ds-home-head {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 32px;
+  background: color-mix(in srgb, var(--canvas) 86%, transparent);
+  backdrop-filter: blur(10px);
+}
+.ds-home-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ds-home-name {
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.ds-home-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ds-home-main {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 32px 80px;
+}
+
+/* 欢迎语 */
+.ds-hero {
+  margin-bottom: 32px;
+}
+.ds-hero-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.ds-hero-sub {
+  margin: 10px 0 0;
+  max-width: 680px;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--ink-3);
+}
+
+/* 新建卡 */
+.ds-new-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.ds-new-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow:
+    var(--shadow-card),
+    0 0 0 1px var(--line);
+  overflow: hidden;
+  transition:
+    box-shadow var(--dur-med) var(--ease-out),
+    transform var(--dur-med) var(--ease-out);
+}
+.ds-new-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    var(--shadow-card-hover),
+    0 0 0 1px var(--line-strong);
+}
+.ds-new-main {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ds-new-preview {
+  display: block;
+  height: 180px;
+  padding: 18px 24px;
+  background-color: var(--canvas);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1.2px);
+  background-size: 16px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.ds-new-mini {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transition: transform var(--dur-med) var(--ease-out);
+}
+.ds-new-card:hover .ds-new-mini {
+  transform: scale(1.03);
+}
+.ds-new-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px 4px;
+}
+.ds-new-name {
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--ink);
+}
+.ds-new-desc {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ink-3);
+}
+.ds-new-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 18px 18px;
+}
+
+/* 最近 */
+.ds-recent {
+  margin-top: 48px;
+}
+.ds-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.ds-section-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--ink);
+}
+.ds-section-count {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.ds-recent-empty {
+  margin: 0;
+  padding: 28px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--r-xl);
+  color: var(--ink-3);
+  font-size: 13px;
+  text-align: center;
+}
+.ds-doc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+.ds-doc-card {
+  position: relative;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow:
+    var(--shadow-card),
+    0 0 0 1px var(--line);
+  overflow: hidden;
+  transition:
+    box-shadow var(--dur-med) var(--ease-out),
+    transform var(--dur-med) var(--ease-out);
+}
+.ds-doc-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    var(--shadow-card-hover),
+    0 0 0 1px var(--line-strong);
+}
+.ds-doc-open {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ds-doc-thumb {
+  display: block;
+  height: 132px;
+  padding: 14px 18px;
+  background: var(--canvas);
+  border-bottom: 1px solid var(--line);
+}
+.ds-doc-mini {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.ds-doc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px 14px;
+  min-width: 0;
+}
+.ds-doc-title {
+  padding-right: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ds-doc-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.ds-type-badge {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 11px;
+  font-weight: 500;
+}
+.ds-doc-menu {
+  position: absolute;
+  right: 8px;
+  bottom: 30px;
+  opacity: 0;
+  transition: opacity var(--dur-fast);
+}
+.ds-doc-card:hover .ds-doc-menu,
+.ds-doc-menu:focus-visible,
+.ds-doc-menu[data-state='open'] {
+  opacity: 1;
+}
+
+@media (max-width: 860px) {
+  .ds-new-grid {
+    grid-template-columns: 1fr;
+  }
+  .ds-home-main {
+    padding: 24px 16px 64px;
+  }
+  .ds-home-head {
+    padding: 0 16px;
+  }
+}

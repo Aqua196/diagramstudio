@@ -8,6 +8,7 @@ import { getPlugin } from '@/plugins/registry'
 export const DOCS_KEY = 'ds.docs.v1'
 export const INDEX_KEY = 'ds.docIndex.v1'
 export const LAST_DOC_KEY = 'ds.lastDoc.v1'
+const UNTITLED = '未命名图表'
 
 export interface DocIndexEntry {
   id: string
@@ -53,6 +54,11 @@ export function listDocs(): DocIndexEntry[] {
 
 export function getStoredDoc(id: string): DiagramDoc | null {
   return readMap()[id] ?? null
+}
+
+/** 全部已存文档，按最近修改倒序（首页缩略图一次读完，避免逐个解析整张表） */
+export function listStoredDocs(): DiagramDoc[] {
+  return Object.values(readMap()).sort((a, b) => b.updatedAt - a.updatedAt)
 }
 
 /** 保存文档并刷新索引；返回更新后的索引 */
@@ -104,7 +110,7 @@ export function buildNewDoc(type: DiagramType, templateId?: string): DiagramDoc 
   const tpl =
     plugin.templates.find((t) => t.id === templateId) ??
     (templateId !== undefined ? plugin.templates[Number(templateId)] : undefined)
-  if (!tpl) return createDoc(type)
+  if (!tpl) return plugin.createBlank?.(UNTITLED) ?? createDoc(type, UNTITLED)
   const doc = structuredClone(tpl)
   doc.id = createId()
   doc.createdAt = Date.now()

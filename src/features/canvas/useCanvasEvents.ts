@@ -144,7 +144,7 @@ export function useCanvasEvents(doc: DiagramDoc, plugin: DiagramPlugin, deps: De
           }
         },
       ],
-      [EV.FIT, () => rfRef.current.fitView({ duration: 200, padding: 0.15 })],
+      [EV.FIT, () => rfRef.current.fitView({ duration: 200, padding: 0.2, maxZoom: 1.5 })],
       [EV.ZOOM_IN, () => rfRef.current.zoomIn({ duration: 120 })],
       [EV.ZOOM_OUT, () => rfRef.current.zoomOut({ duration: 120 })],
       [EV.ZOOM_RESET, () => rfRef.current.zoomTo(1, { duration: 120 })],

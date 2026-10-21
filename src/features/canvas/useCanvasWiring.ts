@@ -1,6 +1,6 @@
 // 画布装配（C1 从 EditorCanvas/FlowInner 拆出）：hook 接线全部收在这里，
 // ReactFlow props 以对象形式返回，UI 层只做 JSX 布局。
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import {
   ConnectionMode,
   useReactFlow,
@@ -40,6 +40,24 @@ export interface CanvasWiring {
   empty: boolean
 }
 
+const FIT = { padding: 0.2, maxZoom: 1 }
+
+/** 适应画面只在「打开文档」时做：挂载时已有内容 → RF 初始 fitView；之后换文档 → 手动 fit。
+ *  空文档放下第一个节点时不再被初始 fitView 拽到正中（否则第二个落点会叠上去） */
+function useFitOnOpen(doc: DiagramDoc, rf: ReturnType<typeof useReactFlow>): boolean {
+  const fitOnMount = useRef(Object.keys(doc.nodes).length > 0).current
+  const lastId = useRef(doc.id)
+  useEffect(() => {
+    if (lastId.current === doc.id) return
+    lastId.current = doc.id
+    if (Object.keys(doc.nodes).length === 0) return
+    const t = window.setTimeout(() => void rf.fitView(FIT), 30)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doc.id])
+  return fitOnMount
+}
+
 export function useCanvasWiring(doc: DiagramDoc, plugin: DiagramPlugin): CanvasWiring {
   const execute = useDocumentStore((s) => s.execute)
   const theme = useUiStore((s) => s.resolvedTheme)
@@ -59,10 +77,11 @@ export function useCanvasWiring(doc: DiagramDoc, plugin: DiagramPlugin): CanvasW
 
   const drag = useDragGuards(doc, plugin, setNodes)
   const rf = useReactFlow()
+  const fitOnMount = useFitOnOpen(doc, rf)
   useExportEvents()
   const cursor = useCollabCursor(rf)
   const conn = useConnectFlow(doc, plugin, wrapperRef)
-  const drop = useCanvasDrop(doc, plugin)
+  const drop = useCanvasDrop(doc, plugin, wrapperRef)
   useCanvasEvents(doc, plugin, { containerRef: wrapperRef, selectIds, visibleNodeIds })
   useCanvasKeys(doc, plugin, { selectIds })
 
@@ -114,10 +133,13 @@ export function useCanvasWiring(doc: DiagramDoc, plugin: DiagramPlugin): CanvasW
       panOnScroll: true,
       zoomOnPinch: true,
       zoomOnScroll: false,
+      zoomOnDoubleClick: false,
+      // 遵守 React Flow 开源署名要求：保留署名，移到左下浮动条上方、弱化显示
+      attributionPosition: 'bottom-left',
       minZoom: 0.1,
       maxZoom: 4,
-      fitView: true,
-      fitViewOptions: { padding: 0.15, maxZoom: 1 },
+      fitView: fitOnMount,
+      fitViewOptions: FIT,
       onMove: (_e: unknown, vp: { zoom: number }) => setZoom(vp.zoom),
       onPointerMove: cursor.onPointerMove,
       onPointerLeave: cursor.onPointerLeave,
@@ -130,7 +152,7 @@ export function useCanvasWiring(doc: DiagramDoc, plugin: DiagramPlugin): CanvasW
     [
       nodes, edges, onNodesChange, onEdgesChange, onSelectionChange, conn, drag,
       startNodeEdit, setEditingEdge, onReconnect, theme, doc.settings.snap,
-      tool, setZoom, cursor,
+      tool, setZoom, cursor, fitOnMount,
     ],
   )
 

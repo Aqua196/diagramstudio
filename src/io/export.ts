@@ -24,6 +24,7 @@ export function exportMermaidFile(doc: DiagramDoc): void {
   download(`${doc.title}.mmd`, URL.createObjectURL(blob))
 }
 
+/** grid = 与画布一致的点阵底 */
 export type ExportBackground = 'white' | 'transparent' | 'grid'
 
 export interface FrameInfo {
@@ -35,9 +36,8 @@ export interface FrameInfo {
 
 /** 主题 token 计算值（导出时由调用方从 getComputedStyle 读入） */
 export interface ExportColors extends FrameColors {
-  sheet: string
-  gridFine: string
-  gridCoarse: string
+  canvas: string
+  dot: string
 }
 
 export interface ComposeOptions {
@@ -48,8 +48,8 @@ export interface ComposeOptions {
   colors: ExportColors
 }
 
-const GRID_FINE = 24
-const GRID_COARSE = 120
+const DOT_GAP = 24
+const EXCLUDE = ['ds-export-exclude', 'react-flow__handle', 'react-flow__resize-control']
 const FRAME_MARGIN = 40
 const FRAME_GAP = 12
 
@@ -58,18 +58,14 @@ function backgroundSvg(o: ComposeOptions): string {
   if (o.background === 'white') {
     return `<rect width="${o.width}" height="${o.height}" fill="#FFFFFF"/>`
   }
-  // 方格纸：sheet 底色 + 细 24 / 粗 120 两组线（与画布 Background 一致）
-  return `<rect width="${o.width}" height="${o.height}" fill="${o.colors.sheet}"/>
+  // 点阵：canvas 底色 + 24px 间距圆点（与画布 Background 一致）
+  return `<rect width="${o.width}" height="${o.height}" fill="${o.colors.canvas}"/>
   <defs>
-    <pattern id="ds-gf" width="${GRID_FINE}" height="${GRID_FINE}" patternUnits="userSpaceOnUse">
-      <path d="M ${GRID_FINE} 0 L 0 0 0 ${GRID_FINE}" fill="none" stroke="${o.colors.gridFine}" stroke-width="1"/>
-    </pattern>
-    <pattern id="ds-gc" width="${GRID_COARSE}" height="${GRID_COARSE}" patternUnits="userSpaceOnUse">
-      <path d="M ${GRID_COARSE} 0 L 0 0 0 ${GRID_COARSE}" fill="none" stroke="${o.colors.gridCoarse}" stroke-width="1"/>
+    <pattern id="ds-dots" width="${DOT_GAP}" height="${DOT_GAP}" patternUnits="userSpaceOnUse">
+      <circle cx="${DOT_GAP / 2}" cy="${DOT_GAP / 2}" r="0.8" fill="${o.colors.dot}"/>
     </pattern>
   </defs>
-  <rect width="${o.width}" height="${o.height}" fill="url(#ds-gf)"/>
-  <rect width="${o.width}" height="${o.height}" fill="url(#ds-gc)"/>`
+  <rect width="${o.width}" height="${o.height}" fill="url(#ds-dots)"/>`
 }
 
 /** 统一生成最终导出 SVG：背景层 + 画布内容（可选图框标题栏） */
@@ -117,9 +113,10 @@ async function captureContentSvg(
       height: `${o.height}px`,
       transform: o.transform,
     },
+    // 交互件不进成品：显式标记的、连接点、缩放夹点
     filter: (node) => {
-      const el = node as HTMLElement
-      return !el.classList?.contains('ds-export-exclude')
+      const cl = (node as HTMLElement).classList
+      return !cl || !EXCLUDE.some((c) => cl.contains(c))
     },
   })
   // toSvg 返回 data:image/svg+xml;charset=utf-8,<encoded>

@@ -16,8 +16,10 @@ export interface ShortcutRow {
 export const SHORTCUT_ROWS: ShortcutRow[] = [
   { keys: 'V', label: zh.shortcuts.selTool, group: 'tools' },
   { keys: 'H', label: zh.shortcuts.handTool, group: 'tools' },
-  { keys: 'Space', label: zh.shortcuts.pan, group: 'tools' },
-  { keys: 'Enter', label: zh.shortcuts.editText, group: 'edit' },
+  { keys: 'Space+拖动', label: zh.shortcuts.pan, group: 'tools' },
+  { keys: 'Enter / F2', label: zh.shortcuts.editText, group: 'edit' },
+  { keys: 'Tab', label: zh.shortcuts.mindChild, group: 'edit' },
+  { keys: 'Enter', label: zh.shortcuts.mindSibling, group: 'edit' },
   { keys: 'Ctrl+A', label: zh.shortcuts.selectAll, group: 'edit' },
   { keys: 'Ctrl+C', label: zh.shortcuts.copy, group: 'edit' },
   { keys: 'Ctrl+X', label: zh.shortcuts.cut, group: 'edit' },
@@ -25,7 +27,7 @@ export const SHORTCUT_ROWS: ShortcutRow[] = [
   { keys: 'Ctrl+D', label: zh.shortcuts.duplicate, group: 'edit' },
   { keys: 'Delete', label: zh.shortcuts.del, group: 'edit' },
   { keys: 'Ctrl+Z', label: zh.shortcuts.undo, group: 'edit' },
-  { keys: 'Ctrl+Shift+Z / Ctrl+Y', label: zh.shortcuts.redo, group: 'edit' },
+  { keys: 'Ctrl+Shift+Z', label: zh.shortcuts.redo, group: 'edit' },
   { keys: 'Ctrl+S', label: zh.shortcuts.save, group: 'edit' },
   { keys: 'Esc', label: zh.shortcuts.deselect, group: 'edit' },
   { keys: 'Ctrl+0', label: zh.shortcuts.fit, group: 'view' },
@@ -35,8 +37,8 @@ export const SHORTCUT_ROWS: ShortcutRow[] = [
   { keys: 'Shift+L', label: zh.shortcuts.autoLayout, group: 'arrange' },
   { keys: ']', label: zh.shortcuts.zFront, group: 'arrange' },
   { keys: '[', label: zh.shortcuts.zBack, group: 'arrange' },
-  { keys: '←→↑↓', label: zh.shortcuts.nudge, group: 'arrange' },
-  { keys: 'Shift+←→↑↓', label: zh.shortcuts.nudgeFast, group: 'arrange' },
+  { keys: '↑↓←→', label: zh.shortcuts.nudge, group: 'arrange' },
+  { keys: 'Shift+↑↓←→', label: zh.shortcuts.nudgeFast, group: 'arrange' },
 ]
 
 export const SHORTCUT_GROUPS: Record<ShortcutRow['group'], string> = {

@@ -70,7 +70,7 @@ export const useUiStore = create<UiStore>()((set, get) => ({
   tool: 'select',
   leftPanelOpen: true,
   rightPanelOpen: true,
-  minimapVisible: true,
+  minimapVisible: false,
   zoom: 1,
   selection: { nodeIds: [], edgeIds: [] },
   textEditing: false,
