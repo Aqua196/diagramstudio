@@ -1,5 +1,5 @@
 // 画布动效编排：用假时钟/假定时器驱动 reconcile → 补间帧 → 到期清理，验证只动视图、不碰文档。
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { Edge, Node } from '@xyflow/react'
 import { createDoc, createNode } from '@/core/model/factories'
 import type { DiagramDoc, DiagramNode } from '@/core/model/types'
@@ -8,7 +8,7 @@ import type { FlowEdgeData, FlowNodeData } from '@/store/selectors'
 import { deriveEdges, deriveNodes } from '../derive'
 import { CanvasMotion } from './canvasMotion'
 import type { MotionEnv } from './env'
-import { revealNext, skipNextMotion } from './hints'
+import { revealNext, skipNextMotion, takeInstant, takeReveal } from './hints'
 
 type FNode = Node<FlowNodeData>
 type FEdge = Edge<FlowEdgeData>
@@ -94,6 +94,12 @@ const base = mindDoc('d1', [topic('r', 0, 0, null)])
 const withChild = mindDoc('d1', [topic('r', 0, 0, null), topic('c', 300, 100, 'r')])
 
 describe('CanvasMotion', () => {
+  // 提示是模块级状态（自绘提示有 1.5s 有效期），每个用例前清掉，免得串到下一个用例
+  beforeEach(() => {
+    takeReveal('')
+    takeInstant()
+  })
+
   it('不允许动效时原样返回派生结果，不登记任何动画', () => {
     const h = harness(false)
     h.sync(base, 'set')
@@ -113,6 +119,7 @@ describe('CanvasMotion', () => {
     expect(h.get('r')!.className).toBeUndefined()
     expect(h.isBusy()).toBe(false)
 
+    takeReveal('') // 提示有效期内重开同一份文档会再播（StrictMode 需要），这里模拟过期
     const plain = harness()
     plain.sync(withChild, 'set')
     expect(plain.get('r')!.className).toBeUndefined()
