@@ -58,6 +58,13 @@ describe('importMermaidText', () => {
     expect(Object.values(r.doc!.nodes).every((n) => n.position.x === 1 && n.position.y === 2)).toBe(true)
   })
 
+  it('注入的连线路由覆盖默认曲线；不注入保持原样', () => {
+    const step = importMermaidText('graph TD\n  A --> B\n', { edgeRouting: 'step' })
+    expect(Object.values(step.doc!.edges).every((e) => e.routing === 'step')).toBe(true)
+    const plain = importMermaidText('graph TD\n  A --> B\n')
+    expect(Object.values(plain.doc!.edges)[0].routing).toBe('bezier')
+  })
+
   it('边端点在导入后仍然有效（schema 可过）', () => {
     const r = importMermaidText('graph TD\n  A --> B\n  A --> C\n')
     const doc = r.doc!

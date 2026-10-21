@@ -37,7 +37,21 @@
 - 注册表 `src/plugins/registry.ts`（`registerPlugin/getPlugin/getAllPlugins`，预置 `basePlugin` 后被完整实现覆盖）
 - 三个策略实现 `src/plugins/flowchart.tsx`、`mindmap.tsx`、`er.tsx`，共享渲染件 `src/plugins/shapekit.tsx`
 
-**为什么**：SPEC §4 要求「画布、检查器、历史、导入导出里不得出现 `type === 'mindmap'` 分支」。例如：检查器渲染 ER 基数下拉时查的是 `plugin.edgeFields === 'cardinality'`；思维导图的自动重排靠 `autoLayoutOnChange: true`；折叠子树靠 `hiddenNodeIds(doc)`。新增一种图类型 = 写一个插件并注册，引擎零改动（开闭原则）。
+**为什么**：SPEC §4 要求「画布、工具条、历史、导入导出里不得出现 `type === 'mindmap'` 分支」。例如：连线工具条显示 ER 基数选择时查的是 `plugin.edgeFields === 'cardinality'`；思维导图的自动重排靠 `autoLayoutOnChange: true`；折叠子树靠 `hiddenNodeIds(doc)`。新增一种图类型 = 写一个插件并注册，引擎零改动（开闭原则）。
+
+**2026-10-21 改版新增的可选钩子**（全部可选，不实现即走通用默认，见 `docs/REDESIGN.md` §4.6）：
+
+| 钩子 | 谁用 | 默认行为 |
+| --- | --- | --- |
+| `ShapeDef.icon` / `defaultData()` / `paletteHidden` | 形状坞、连线菜单、所有建节点路径（`features/canvas/nodeFactory.ts`） | 无图标 / 空数据 / 显示 |
+| `nodeActions[]` | 单选工具条（`toolbar/NodeToolbarContent.tsx`） | 无额外按钮 |
+| `placeFromPalette(doc, kind, sel)` | 形状坞点击、双击空白（`useCanvasDrop.ts`） | 放到视口中心 / 落点 |
+| `quickAddSides` / `nextKind(kind)` | 四周「+」（`QuickAdd.tsx`） | 四向 / 同形状 |
+| `createBlank(title)` | 新建空白（`docsStore.buildNewDoc`） | 空文档 |
+| `tips` | 底部提示条（`shell/editor/HintBar.tsx`） | 不显示 |
+| `edgeDefaults.cardinality` | 所有建连线路径（`nodeFactory.createPluginEdge`） | 无基数 |
+
+这些钩子把「同一个 UI 动作在不同图里含义不同」交给策略对象：同样是点形状坞里的「主题」，流程图在视口中心放一个节点，思维导图则挂到所选主题下——外壳代码完全一样。
 
 ## 3. 工厂模式 Factory——模型创建收口
 
@@ -46,6 +60,8 @@
 **在哪**：`src/core/model/factories.ts`（`createId` 用 `crypto.randomUUID()`；`DEFAULT_NODE_STYLE` 统一默认样式）。使用方遍布 `ops.ts`（剪贴板克隆 `cloneForPaste`）、`mermaid.ts`（解析建节点）、`persist.ts`（`newDoc`）、各插件模板。
 
 **为什么**：`DiagramDoc/DiagramNode/DiagramEdge` 的必填字段多（schemaVersion、zOrder、settings、style），工厂保证不变量成立——例如 `createDoc` 必给 `settings.layoutDirection`，`createEdge` 默认 `arrowEnd: 'arrow'`、`routing: 'bezier'`；zod schema 与工厂一一对应，导入校验只走 schema。
+
+画布层再收一层：`src/features/canvas/nodeFactory.ts` 的 `createShapeNode(plugin, kind, center)` / `createPluginEdge(plugin, s, t)` 把「插件默认尺寸/文字/私有数据/线型/基数」与 core 工厂组合起来，拖入、双击、形状坞、四周「+」、连线菜单五条建节点路径共用，保证结果一致（例如 ER 实体无论怎么建都自带 `id` 主键）。
 
 ## 4. 观察者模式 Observer——store 订阅与 yjs observe
 

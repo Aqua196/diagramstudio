@@ -109,12 +109,16 @@ window.dispatchEvent(new CustomEvent(EV.X, { detail }))
 | EV.SAVE / EV.EXPORT_JSON / EV.EXPORT_PNG (detail {scale, background, titleblock}) / EV.EXPORT_SVG / EV.EXPORT_MERMAID / EV.IMPORT_JSON / EV.IMPORT_MERMAID | 见左 | io | 保存与导入导出 |
 | EV.SET_TOOL (detail: 'select'\|'hand') | — | uiStore 消费方 | V/H 切换工具 |
 | EV.SHOW_SHORTCUTS | — | uiStore | 「?」打开快捷键列表 |
-| EV.SHARE | — | collab | 顶栏「分享」按钮；阶段7 实现，若协作被砍则移除该按钮 |
+| EV.SHARE | — | collab | 右上「分享」弹层里的「开启协作并生成链接」 |
+| EV.ADD_SHAPE (detail: {kind}) | 形状 kind | canvas | 形状坞点击：先问 plugin.placeFromPalette，否则放到视口中心（2026-10-21 新增） |
+| EV.EDIT_TEXT | — | canvas | 工具条/右键「编辑文字」：选中单节点进入编辑（2026-10-21 新增） |
 
 ## 6. 组件契约
 
+> 2026-10-21 UI 改版（见 `docs/REDESIGN.md`）：外壳由「顶栏 + 左右停靠面板」改为「全屏画布 + 四角浮动条 + 左侧形状坞 + 上下文工具条」，检查器能力移入 `features/canvas/toolbar/`；下文「面板」「顶栏」两条为阶段4 原始契约，现行布局以 REDESIGN.md §4.3 为准。拖放约定、空画布提示归属、右键菜单规则不变。
+
 - `features/canvas/EditorCanvas.tsx`：默认导出 `<EditorCanvas />`，无 props；内部接 React Flow。
-- `src/App.tsx`（外壳）：`route === 'editor'` 渲染编辑器骨架（顶栏 + 左右面板 + `<EditorCanvas/>`），`'home'` 渲染 `<HomePage/>`（阶段6 提供；阶段4 时 route 恒为 'editor'，不渲染任何占位文案）。
+- `src/App.tsx`（外壳）：`route === 'editor'` 渲染编辑器骨架（阶段4：顶栏 + 左右面板 + `<EditorCanvas/>`；改版后：`<EditorCanvas/>` + 浮动条），`'home'` 渲染 `<HomePage/>`（阶段6 提供；阶段4 时 route 恒为 'editor'，不渲染任何占位文案）。
 - 面板：左侧 240px 形状库、右侧 280px 检查器、顶栏 48px，均为贴边停靠、1px 分隔线、无阴影、可折叠；窗口宽 <1024 渲染「请使用更宽的窗口」整屏提示。
 - 右键菜单项由当前 selection 决定，菜单文案/行为由外壳统一发 EDITOR_EVENTS，不直接改文档。
 - 形状库拖放约定（阶段4 提供 drag source，阶段3 实现 canvas drop）：`dataTransfer.setData('application/x-diagram-shape', kind)`；canvas 在 onDrop 里读 kind，经 `getPlugin(doc.type)` 找 ShapeDef 建节点，是一条命令。

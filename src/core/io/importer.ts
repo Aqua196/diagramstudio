@@ -1,6 +1,6 @@
 // 导入（SPEC §5）：JSON 严格校验；Mermaid 解析后用布局器摆位（默认 dagre）。
 import { createDoc } from '../model/factories'
-import type { DiagramDoc, DiagramEdge, DiagramNode } from '../model/types'
+import type { DiagramDoc, DiagramEdge, DiagramNode, EdgeRouting } from '../model/types'
 import { dagreLayout } from '../layout/dagre'
 import { parseMermaid } from './mermaid'
 import { jsonToDoc } from './serialize'
@@ -26,6 +26,8 @@ export function importMermaidText(
     title?: string
     emptyError?: string
     layout?: (doc: DiagramDoc, o: { direction: 'TB' | 'LR' }) => Record<string, { x: number; y: number }>
+    /** 连线路由：由外壳按流程图插件默认值注入（Mermaid 本身不描述路由） */
+    edgeRouting?: EdgeRouting
   } = {},
 ): ImportResult {
   const layout = opts.layout ?? dagreLayout
@@ -51,7 +53,9 @@ export function importMermaidText(
   doc.nodes = nodes
   doc.zOrder = Object.keys(nodes)
   const edges: Record<string, DiagramEdge> = {}
-  for (const [id, e] of Object.entries(parsed.edges)) edges[id] = e
+  for (const [id, e] of Object.entries(parsed.edges)) {
+    edges[id] = opts.edgeRouting ? { ...e, routing: opts.edgeRouting } : e
+  }
   doc.edges = edges
   return { ok: true, doc, errors: [], skipped: parsed.skipped }
 }

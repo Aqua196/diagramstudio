@@ -17,7 +17,7 @@
 | 层 | 工具 | 覆盖对象 | 依据 |
 | --- | --- | --- | --- |
 | 单元测试 | Vitest + jsdom | `src/core` 全部纯函数：命令/历史、布局、zod 校验、Mermaid、协作 diff、配色对比度、i18n 骨架 | SPEC §8 |
-| 组件测试 | @testing-library/react | 检查器、色板、数字输入（规划中） | SPEC §8 |
+| 交互逻辑单测 | Vitest + jsdom（真实 zustand store） | 快捷加号、统一建节点/连线、焦点交接、多选改色、插件上手钩子、空白文档回收 | REDESIGN.md §7 |
 | 端到端 | Playwright + @axe-core/playwright | SPEC §8 的 8 个场景；两档视口 1440×900 / 1280×720 | `playwright.config.ts` |
 | 质量门 | eslint / tsc -b / vitest --coverage / vite build | lint 零警告、core 行/语句/函数/分支覆盖 ≥80% | `vitest.config.ts` 阈值 |
 
@@ -25,7 +25,22 @@
 
 ## 2. 单元测试清单（Vitest）
 
-实测：**18 个测试文件，96 个用例**（`pnpm test`，jsdom）。除下方早期清单外，本批次新增：
+实测（2026-10-21，UI 改版后）：**22 个测试文件，125 个用例**（`pnpm test`，jsdom）。
+
+改版批次新增 / 更新：
+
+| 文件 | 用例 | 覆盖点 |
+| --- | --- | --- |
+| `src/features/canvas/quickAdd.test.ts`（10） | 快捷加号与建节点 | 起止后接处理且连线、占位时向外找空位、ER 默认基数、已连线侧推算、`createShapeNode` 居中/吸附/私有数据不共享、`createPluginEdge` 默认线型、`executeAndFocus` 选中并进入编辑、多选改色一次撤销 |
+| `src/plugins/hooks.test.ts`（8） | 插件上手钩子 | 空白导图自带中心主题、形状坞挂到所选/根下、无根时补中心主题、根上「加同级」退化为加子、关闭快捷加号、`nextKind`、ER「添加字段」同步高度、三插件都有提示与图标 |
+| `src/features/shell/docs/pristine.test.ts`（2） | 空白文档回收 | 未编辑离开即删除、编辑过则保留 |
+| `src/features/shell/home/time.test.ts`（2） | 相对时间 | 分钟/小时/天分档、超过一周显示日期 |
+| `src/core/core.test.ts`（+2） | 配色 | 强调色在面板上 ≥4.5:1、同色相描边与底色 ≥1.8:1 且 `ink` 跟随底色 |
+| `src/core/io/importer.test.ts`（+1） | Mermaid 路由注入 | 注入 `step` 覆盖默认曲线，不注入保持原样 |
+| `src/io/export.test.ts`（改） | 点阵背景 | canvas 底色 + 24px 圆点 pattern |
+| `src/i18n/zh.test.ts`（3） | 文案契约 | 新命名空间齐全、三种图都有空状态与提示、`fmt` 占位符 |
+
+早期批次新增（沿用）：
 
 || 文件 | 用例 | 覆盖点 |
 || --- | --- | --- |
@@ -120,19 +135,22 @@
 | 文件 | 用例 |
 | --- | --- |
 | `e2e/smoke.spec.ts` | 首页渲染且控制台干净 |
-| `e2e/stage34.spec.ts` | 首页入口卡、编辑器骨架、拖入形状→检查器→localStorage、快捷键面板、暗色编辑器 |
-| `e2e/stage8.spec.ts` | 500n/800e 性能（4173 预览构建）、axe 首页+编辑器亮/暗 |
-| `e2e/visual.spec.ts` | v1–v5 视觉基线截图 |
-| `e2e/features.spec.ts` | SPEC §8 场景 1–7 |
-| `e2e/collab.spec.ts` | SPEC §8 场景 8：两 browser context 同 `?room=` 双向同步 |
+| `e2e/stage34.spec.ts` | 首页新建卡与空列表、四角浮动条/形状坞/空画布引导、拖入→工具条出现→localStorage、双击空白放节点（不被缩放吞掉）、快捷键面板、深色编辑器 |
+| `e2e/stage8.spec.ts` | 500n/800e 真实拖拽主线程任务（CDP Trace，局部视口断言 p95<50ms、全览记录）、axe 首页+编辑器亮/暗 |
+| `e2e/visual.spec.ts` | v1–v5 视觉定景截图（`VISUAL_DIR` 可改输出目录，改版前后对比即由它生成） |
+| `e2e/features.spec.ts` | SPEC §8 场景 1–7 + 1b「形状坞点击→打字→快捷加号→工具条改色」 |
+| `e2e/collab.spec.ts` | SPEC §8 场景 8：分享弹层开启协作，两 browser context 同 `?room=` 双向同步 |
+| `e2e/guide.spec.ts` | 用户手册 8 张配图（仅 1440 档） |
+
+共用助手：`e2e/helpers.ts`（新建/示例、拖入、把柄连线、选边）、`e2e/perf.ts`（CDP Trace 主线程统计）。实测（2026-10-21）：1440 档 33 个、1280 档 25 个（另 8 个手册配图在 1280 档跳过），全部通过。
 
 SPEC §8 场景对照（全部已实现）：
 
 | # | 场景 | 关键断言 |
 | --- | --- | --- |
 | 1 | 模板新建流程图→拖入形状→连线→改文字→撤销重做 | 节点出现、连线出现、文本更新、undo 回退 |
-| 2 | 思维导图 Tab/Enter 建树→折叠→自动布局 | 子/同级节点生成、子树隐藏、坐标非重叠 |
-| 3 | ER 图新增实体、字段与关系 | 字段行出现、PK/FK 标记、基数可见 |
+| 2 | 思维导图 Tab/Enter 建树（新主题直接打字）→折叠→整支删除→撤销 | 空白导图自带中心主题、子/同级生成且文字正确、子树隐藏与恢复 |
+| 3 | ER 图新增实体、字段与关系 | 新实体预置 id 主键、字段行增改、默认基数、工具条改终点基数 |
 | 4 | 导出 JSON→再导入一致；导出 PNG 非空 | 往返文档等价；PNG 字节数 >0 |
 | 5 | 导入 Mermaid | 节点/连线数量与 skipped 提示 |
 | 6 | 自动保存后刷新仍在 | reload 后文档内容一致 |
@@ -145,44 +163,41 @@ SPEC §8 场景对照（全部已实现）：
 
 `vitest run --coverage`（v8 provider，`include: ['src/core/**/*.ts']`；阈值 lines/statements/functions/branches ≥80%）。
 
-**实测（2026-10-11，main，批次 C 后）**：语句/行 **98.43%**，分支 **86.15%**，函数 **98.14%**。分目录：
+**实测（2026-10-21，UI 改版后）**：语句/行 **98.78%**，分支 **87.40%**，函数 **99.08%**。分目录：
 
 | 目录 | 行% | 说明 |
 | --- | --- | --- |
 | core/commands | 100 | history/ops 均 100% |
-| core/layout | 97.80 | dagre 100%，mindmap 96.92 |
+| core/layout | 100 | dagre、mindmap |
 | core/model | 97.70 | factories 100%，schema 96.42 |
 | core/io | 99.45 | importer/mermaid/persist/serialize/titleblock 均 ≥99 |
-| core/collab | 96.17 | diff 92.3，yjs 96.94（假 provider 驱动真 Y.Doc） |
-| core（根文件） | 92.64 | events 100，palette 84.84；plugin/adapter/command/types 为纯类型声明文件 |
+| core/collab | 96.20 | diff、yjs（假 provider 驱动真 Y.Doc） |
+| core（根文件） | 96.47 | events、palette（新增 `resolveStroke` 已覆盖）；plugin/adapter/command/types 为纯类型声明文件 |
 
-**历史对照**：阶段 2 收口 93.7% → 阶段 5–7 跌至 71.49%（新增 IO/网络文件未配测）→ 批次 C 补齐至 98.43%。
+**历史对照**：阶段 2 收口 93.7% → 阶段 5–7 跌至 71.49%（新增 IO/网络文件未配测）→ 批次 C 补齐至 98.43% → 改版后 98.78%。
 
 ## 5. 质量门实测结果
 
-2026-10-10 对 `origin/main` 执行（Node 20.20.2、pnpm 10.34.6）：
+2026-10-21 对 `redesign/canvas-first` 执行（Node 22、pnpm 10.34.6）：
 
 | 命令 | 结果 | 说明 |
 | --- | --- | --- |
 | `pnpm typecheck` (`tsc -b`) | ✅ 通过 | strict，无错误 |
-| `pnpm build` (`tsc -b && vite build`) | ✅ 通过 | dist 产物 ~143 kB JS（gzip ~46 kB） |
-| `pnpm lint` (`eslint .`) | ✅ 0 error 0 warning | D-01 违例已修（导出上移 `src/io/`） |
-| `pnpm test` | ✅ 18 文件 96 用例全绿 | |
-| `pnpm test:coverage` | ✅ 行 98.43 / 语句 98.43 / 函数 98.14 / 分支 86.15 | 阈值 80% 全过 |
-| `pnpm exec playwright test` | ✅ 全绿 | 6 个 spec 文件 × 双视口 |
+| `pnpm build` (`tsc -b && vite build`) | ✅ 通过 | vendor 按库拆为 react/xyflow/radix/yjs/layout/vendor，每个 chunk <200 kB；应用 chunk 131 kB（gzip 45 kB）；无体积警告（zod 自带的 2 条注释提示与改版前相同） |
+| `pnpm lint` (`eslint .`) | ✅ 0 error 0 warning | |
+| `pnpm test` | ✅ 22 文件 125 用例全绿 | |
+| `pnpm test:coverage` | ✅ 行 98.78 / 语句 98.78 / 函数 99.08 / 分支 87.40 | 阈值 80% 全过 |
+| `pnpm exec playwright test` | ✅ 全绿 | 7 个 spec 文件 × 双视口（手册配图仅 1440） |
 
 ## 6. 性能测试方法
 
-目标（SPEC §5）：**500 节点 + 800 连线时拖动平均每帧 < 20ms**。
+目标：**500 节点 + 800 连线真实拖动时主线程无长任务**（任务 p95 < 50ms）。原目标「平均每帧 < 20ms」的测量方式经复查测的是无头浏览器帧时钟（空白页同样 17.8ms），已替换，详见 `docs/PERFORMANCE.md` §1。
 
-方法与达成手段：
+方法：Playwright `mouse.down/move/up` 真实拖动 40 步；期间用 CDP Tracing 采集渲染主线程每个 `RunTask` 的耗时，统计 p50/p95/max 与总忙碌时长（`e2e/perf.ts`）。生产构建、1440×900。
 
-1. **渲染面**：React Flow `onlyRenderVisibleElements` 只挂可视区节点；自定义节点/连线 `React.memo`；`nodeTypes/edgeTypes` 模块级定义（避免每渲染新建引用）。
-2. **订阅面**：zustand 选择器订阅（禁取整 store）；`selectFlowNodes/selectFlowEdges` 纯派生。
-3. **过程态隔离**：拖动期间只动 React Flow 内部态，松手才 `execute` 一条命令——拖动不触发 immer 补丁与历史写入。
-4. **测量**：Playwright 脚本生成 500 节点 + 800 连线的文档（localStorage 预置或命令批量构造），`requestAnimationFrame` 采样拖动全程帧间隔，报告平均帧时间；两档视口各跑一遍。真实数据将记录在 `docs/PERFORMANCE.md`（达到或达不到都如实记录）。
+达成手段：`onlyRenderVisibleElements`；节点/连线 `React.memo`；zustand 选择器订阅；拖动期间只动 React Flow 内部态、松手才提交命令；**只给有标注的连线挂 EdgeLabelRenderer**（改版中发现的第一热点）；节点不用 transform 动画与 CSS filter。
 
-当前状态：已实测通过（`docs/PERFORMANCE.md`）：500n/800e 局部视口静态 p95≈17.8ms、拖拽合成事件 p95<1ms、全览 p95≈19ms，<20ms 达标。
+当前状态（2026-10-21）：局部视口任务 p95 12–14ms、主线程忙碌比改版前少约 20%；全览忙碌少约 65%、最长任务 ~560ms → ~160ms。
 
 ## 7. 已知缺陷与限制
 
@@ -200,3 +215,11 @@ SPEC §8 场景对照（全部已实现）：
 | D-06 | 功能边界 | 协作房间存内存、无鉴权、无持久化（服务重启文档丢失）；昵称为 `用户{clientID%100}` 自动生成，不可改 | `server/dev.mjs`、`yjs.ts` |
 | D-07 | 功能边界 | Mermaid 仅为子集：不支持 subgraph、classDef、样式指令、注释外的高级语法；不认识的行跳过并计数 | `src/core/io/mermaid.ts` |
 | D-08 | 平台 | 桌面优先：窗口 <1024 显示整屏提示，不做移动端适配 | `i18n/zh.ts` app.windowTooNarrow |
+| D-11 | 交互（已修复，改版）| 空画布提示「双击放节点」，实际被 React Flow 双击缩放吞掉（放大到 200%） | `useCanvasWiring` `zoomOnDoubleClick:false` + stage34 用例 |
+| D-12 | 交互（已修复，改版）| 空文档放第一个节点被初始 fitView 拽到正中，第二个落点与之重叠 | `useCanvasWiring` `useFitOnOpen`；features 场景 3 覆盖 |
+| D-13 | 交互（已修复，改版）| 思维导图折叠钮被派生连线的重连热区挡住，点击无效 | `selectors.ts` 派生边 `reconnectable:false, zIndex:0`；features 场景 2 |
+| D-14 | 交互（已修复，改版）| 顶栏「切换图类型」把整份文档改成另一类型，节点退化为方框 | 控件与 `setDocType` 删除 |
+| D-15 | 测试（已修复，改版）| 性能用例测的是帧时钟、合成事件未触发拖拽，阈值判定无效 | `e2e/perf.ts` + `stage8.spec.ts` 重写 |
+| D-16 | 性能（已修复，改版）| 每条连线都挂 EdgeLabelRenderer，800 条边每帧 800 次 querySelector | `DsEdge.tsx` 按需挂载 |
+| D-17 | 文档（已修复，改版）| README 引用的两张截图不存在；首页思维导图缩略图错乱（未布局即缩画） | README 指向手册配图；`MiniDiagram` 先布局 |
+| D-18 | 性能边界 | 全览（500 节点全可见）拖拽每步主线程约 137ms：受控模式下每帧全量处理节点数组 | 见 PERFORMANCE.md §5，未修 |

@@ -4,18 +4,19 @@
 
 - [x] 阶段0 准备（总指挥）：git 仓库初始化、docs/SPEC.md、docs/IMPL_CONTRACT.md、Node20+pnpm10 环境
 - [x] 阶段1 脚手架与规范：lint/typecheck/test/build/e2e 全过零警告；截图 docs/screenshots/stage1-home.png
-- [ ] 阶段2 核心层（模型/命令/布局/IO/单元测试）
-- [ ] 阶段3 画布（与阶段4并行）
-- [ ] 阶段4 界面外壳（与阶段3并行）
-- [ ] 阶段5 三种图插件
-- [ ] 阶段6 文档管理与导入导出
-- [ ] 阶段7 协作
-- [ ] 阶段8 质量与打磨
-- [ ] 阶段9 课程文档
+- [x] 阶段2 核心层（模型/命令/布局/IO/单元测试）
+- [x] 阶段3 画布（与阶段4并行）
+- [x] 阶段4 界面外壳（与阶段3并行）
+- [x] 阶段5 三种图插件
+- [x] 阶段6 文档管理与导入导出
+- [x] 阶段7 协作
+- [x] 阶段8 质量与打磨
+- [x] 阶段9 课程文档
+- [x] 批次 D 前端改版「画布优先」（2026-10-21，见下方与 docs/REDESIGN.md）
 
 ## 下一步
 
-阶段2：核心层（模型/命令与历史/布局/Mermaid/序列化/store 公共 API + 单元测试）。
+（无阻塞项）可选：全览大图拖拽的增量更新优化（PERFORMANCE.md §5）。
 
 ## 待协调
 
@@ -58,3 +59,13 @@
 - C2 覆盖：新增 yjs（假 provider）/persist/importer/events/selectors 等测试至 96 用例；core 行/语句 98.43%、函数 98.14%、分支 86.15%，四项阈值 80% 全过
 - C3 e2e：features.spec.ts（场景 1–7）+ collab.spec.ts（场景 8 双 context 同房同步），全断言 console 零 error/warning，双视口
 - C4 文档：README 脚本/目录更新、TEST_REPORT 真实数字、DEFENSE 局限与问答修正、DESIGN_PATTERNS 补 expandDeletion/mergeWithPrevious 钩子说明
+
+## 批次 D 前端改版「画布优先」✅ 2026-10-21
+- 设计系统：暖白画布 + 靛蓝强调令牌（浅/深）、Inter 字体、节点同色相描边、点阵网格；对比度单测扩充
+- 首页：欢迎语 + 三类新建卡（真实示例缩略图，新建空白/看示例）+ 最近图表缩略图网格与相对时间
+- 编辑器：去掉常驻左右面板与「切换图类型」；四角浮动条 + 左侧形状坞 + 底部上手提示；导出合并为格式卡片对话框；分享弹层
+- 上下文工具条（单选/多选/连线）取代检查器；四周「+」快捷添加；点形状/双击/Tab 新建后直接打字；空白导图自带中心主题；ER 预置主键与默认基数
+- 修复：双击空白被缩放吞掉、首个节点被 fitView 拽走、思维导图折叠钮被连线热区挡住、空白文档残留、首页导图缩略图错乱、README 断图
+- 插件新增可选钩子：nodeActions / placeFromPalette / quickAddSides / nextKind / createBlank / tips / ShapeDef.icon·defaultData·paletteHidden / edgeDefaults.cardinality
+- 性能：性能用例改为 CDP Trace 主线程任务；按需挂载连线标注层；500 节点拖拽主线程忙碌较改版前 −20%（局部）/ −65%（全览）
+- 门禁：lint/typecheck/build 零警告、125 单测、core 行覆盖 98.78%、e2e 双视口全绿、axe 零违规；文档全部同步（REDESIGN/PERFORMANCE/USER_GUIDE/DEMO_SCRIPT/TEST_REPORT/DEFENSE/DECISIONS/ARCHITECTURE/DESIGN_PATTERNS）

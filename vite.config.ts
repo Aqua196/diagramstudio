@@ -16,10 +16,15 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // 拆出体积大的第三方库，保持应用 chunk 在警告阈值内
-        manualChunks: {
-          react: ['react', 'react-dom'],
-          xyflow: ['@xyflow/react'],
+        // 按库拆 vendor chunk，保持每个 chunk 在 500 kB 警告阈值内（构建零警告是质量门）
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react'
+          if (id.includes('@xyflow')) return 'xyflow'
+          if (id.includes('@radix-ui')) return 'radix'
+          if (/node_modules\/(yjs|y-websocket|y-protocols|lib0)\//.test(id)) return 'yjs'
+          if (/node_modules\/(@dagrejs|d3-)/.test(id)) return 'layout'
+          return 'vendor'
         },
       },
     },

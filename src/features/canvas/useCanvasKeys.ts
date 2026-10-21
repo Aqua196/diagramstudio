@@ -62,7 +62,8 @@ export function useCanvasKeys(doc: DiagramDoc, plugin: DiagramPlugin, deps: Deps
         return
       }
 
-      if (e.key === 'Escape') {
+      // 弹层/菜单开着时 Esc 只关弹层，不顺带清空选择
+      if (e.key === 'Escape' && !document.querySelector('[data-radix-popper-content-wrapper]')) {
         deps.selectIds([], [])
       }
     }

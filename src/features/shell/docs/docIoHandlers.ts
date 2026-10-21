@@ -3,6 +3,7 @@
 import { docToJson, jsonToDoc } from '@/core/io/serialize'
 import { docToMermaid } from '@/core/io/mermaid'
 import { importMermaidText } from '@/core/io/importer'
+import { getPlugin } from '@/plugins/registry'
 import { useDocumentStore } from '@/store/documentStore'
 import { useCollabStore } from '@/store/collabStore'
 import { zh } from '@/i18n/zh'
@@ -72,6 +73,7 @@ export async function importMermaid(): Promise<void> {
   const r = importMermaidText(text, {
     title: zh.io.importedDocTitle,
     emptyError: zh.errors.importInvalid,
+    edgeRouting: getPlugin('flowchart').edgeDefaults.routing,
   })
   if (!r.ok || !r.doc) {
     toast('error', `${zh.io.importFailed}：${r.errors[0] ?? zh.errors.importInvalid}`)

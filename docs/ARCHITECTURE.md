@@ -17,7 +17,7 @@
 
 ## 1. 设计目标
 
-1. **三种图共用一套引擎**：画布、检查器、历史、导入导出对图类型无感知，差异全部收敛进插件。
+1. **三种图共用一套引擎**：画布、工具条、历史、导入导出对图类型无感知，差异全部收敛进插件。
 2. **可靠撤销重做**：文档只能通过命令修改，历史按补丁（patch）回放，而不是存快照。
 3. **核心层可纯单测**：`src/core` 是纯 TypeScript，不依赖 React/zustand/@xyflow，由 ESLint `no-restricted-imports` 强制。
 4. **协作可拔插**：协作经 `CollabAdapter` 接口接入，关闭或失败时产品完全正常。
@@ -27,9 +27,9 @@
 ```mermaid
 flowchart TB
     subgraph UI["界面层 features/ + components/"]
-        canvas["features/canvas<br/>EditorCanvas、EmptyState、画布局部过程态"]
-        shell["features/topbar · palette · inspector<br/>menus · shortcuts"]
-        home["features/home · io<br/>首页、导入导出交互"]
+        canvas["features/canvas<br/>EditorCanvas、快捷加号、上下文工具条 toolbar/"]
+        shell["features/shell/editor<br/>四角浮动条 · 形状坞 · 提示条 · 导出/分享"]
+        home["features/shell/home · docs · shortcuts<br/>首页、文档存储、快捷键"]
     end
 
     subgraph PLUG["插件层 src/plugins/"]
@@ -82,7 +82,7 @@ flowchart TB
 | plugin/events/palette | `src/core/` | `DiagramPlugin` 契约（plugin.ts）、`EV.*` 事件名常量（events.ts）、节点配色与 WCAG 工具（palette.ts） | — |
 | store | `src/store/` | `documentStore`（文档唯一真相源）、`uiStore`（界面过程态）、`collabStore`（协作状态）、`selectors`（doc→React Flow 派生） | 不直接渲染 |
 | plugins | `src/plugins/` | 三种图的 `DiagramPlugin` 实现（flowchart/mindmap/er.tsx）、共享 SVG 件（shapekit.tsx）、基座插件（base.tsx）、注册表（registry.ts） | 不改文档数据（经 dispatch 命令） |
-| features | `src/features/` | EditorCanvas 及画布交互、顶栏/形状库/检查器/菜单/快捷键外壳、首页与导入导出交互 | 不写 `type === 'x'` 分支 |
+| features | `src/features/` | `canvas/`：EditorCanvas 与画布交互、快捷加号、统一建节点（nodeFactory）、焦点交接（focus）、上下文工具条（toolbar/）；`shell/editor/`：四角浮动条、形状坞、提示条、导出与分享；`shell/home|docs|shortcuts|toasts`：首页、文档存储与事件、快捷键、提示条 | 不写 `type === 'x'` 分支 |
 | server | `server/dev.mjs` | y-websocket 兼容 ws 服务（sync+awareness，房间存内存） | 不持久化、不鉴权 |
 
 ## 4. 数据模型
@@ -213,7 +213,7 @@ flowchart LR
 要点：
 
 - `ShapeDef.render(node, ctx)` 返回渲染结果；core 用泛型 `R` 隔离类型，`plugins/` 以 `R=ReactNode` 实例化——契约在 core、渲染在插件。`ctx.dispatch` 是形状行内编辑（ER 字段、折叠圆钮）提交命令的唯一通道。
-- 画布/检查器查能力位而非判断类型：检查器靠 `plugin.edgeFields === 'cardinality'` 决定渲染 ER 基数下拉；思维导图 `autoLayoutOnChange=true` 使画布在文档变化后自动重排。
+- 画布/工具条查能力位而非判断类型：连线工具条靠 `plugin.edgeFields === 'cardinality'` 决定显示 ER 基数；单选工具条渲染 `plugin.nodeActions`；形状坞点击先问 `plugin.placeFromPalette`；思维导图 `autoLayoutOnChange=true` 使画布在文档变化后自动重排。
 - `templates` 挂在插件上，首页/空画布经 `getPlugin(type).templates` 取模板，不出现图类型分支。
 
 ## 7. 协作架构
@@ -267,7 +267,7 @@ sequenceDiagram
 
 收益：
 
-1. **可测**：命令、历史、布局、解析、diff 都是纯函数，32 个单测毫秒级跑完，不启浏览器。
+1. **可测**：命令、历史、布局、解析、diff 都是纯函数，上百个单测数秒内跑完，不启浏览器。
 2. **可换**：画布换成别的库、协作换成别的协议时 core 不动（`CollabAdapter`/`ShapeDef<R>` 泛型已经把 React/yjs 类型挡在边界外）。
 3. **可控**：core 对 UI 零了解，`EV.*` 事件名也是纯字符串常量（`events.ts` 不引 DOM），发不发事件由 features 决定。
 
@@ -279,17 +279,17 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    KB[快捷键/菜单/顶栏] -- "emit(EV.ALIGN,{detail:'left'})" --> BUS((window 事件))
-    BUS --> CV3[features/canvas<br/>剪贴板/对齐/视图/自动布局]
+    KB[快捷键/菜单/浮动条/工具条] -- "emit(EV.ALIGN,{detail:'left'})" --> BUS((window 事件))
+    BUS --> CV3[features/canvas<br/>剪贴板/对齐/视图/自动布局<br/>形状坞放置 ADD_SHAPE/编辑 EDIT_TEXT]
     BUS --> HOME2[features/home+io<br/>文档管理/导入导出]
     BUS --> UIS[uiStore 消费方<br/>工具切换/快捷键面板]
     BUS --> CLB[collab<br/>EV.SHARE → 复制链接]
 ```
 
-所有权表（IMPL_CONTRACT §5）：canvas 消费 `SELECT_ALL/COPY/…/ALIGN/DISTRIBUTE/AUTO_LAYOUT/FIT/ZOOM_*`；home/io 消费 `NEW_DOC/OPEN_DOC/…/SAVE/EXPORT_*/IMPORT_*`；collab 消费 `SHARE`。
+所有权表（IMPL_CONTRACT §5）：canvas 消费 `SELECT_ALL/COPY/…/ALIGN/DISTRIBUTE/AUTO_LAYOUT/FIT/ZOOM_*`，以及改版新增的 `ADD_SHAPE`（形状坞点击，画布按视口中心放置）与 `EDIT_TEXT`（工具条/右键「编辑文字」）；home/io 消费 `NEW_DOC/OPEN_DOC/…/SAVE/EXPORT_*/IMPORT_*`；collab 消费 `SHARE`。
 
 ## 10. 部署形态
 
-- **单机（默认）**：`pnpm install && pnpm dev` → Vite :5173。全部资源本地打包（字体 @fontsource、图标 lucide），离线可用；文档存 localStorage（`ds.docs.v1` + `ds.docIndex.v1`）。
+- **单机（默认）**：`pnpm install && pnpm dev` → Vite :5173。全部资源本地打包（字体 @fontsource-variable/inter、图标 lucide），离线可用；文档存 localStorage（`ds.docs.v1` + `ds.docIndex.v1`）。
 - **协作**：`pnpm dev:collab` 起 `server/dev.mjs`（ws :1234，`DS_COLLAB_PORT`/`VITE_COLLAB_WS` 可覆盖）+ Vite。房间存内存、无鉴权，定位为同机/内网演示。
 - **构建**：`pnpm build`（tsc -b + vite build）→ `dist/` 静态站。

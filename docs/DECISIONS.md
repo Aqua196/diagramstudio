@@ -55,3 +55,18 @@
 - 流程图模板末节点文案取「进入主页」而非「进入首页」：与既有 e2e 断言（visual.spec.ts）一致，语义相同。
 - `--accent-ink` 入 tokens.css 双主题（亮 #FFFFFF on #0B7A75 / 暗 #0B1F38 on #4FD1C0），对比度纳入核心单测。
 - EV.CUT 复制与删除一致使用 expandDeletion 扩展集，剪切+粘贴思维导图分支可整支恢复。
+
+## 2026-10-21 前端改版：画布优先（详见 docs/REDESIGN.md）
+- **去掉常驻左右面板，改为四角浮动条 + 上下文工具条**：旧检查器分组默认折叠、未选中时 280px 基本空白；属性在被选中元素旁边改，视线不用横跨屏幕。检查器的全部能力都保留，分布到工具条与「⋯ 更多选项」。
+- **删除顶栏「切换图类型」**：它会把整份文档改成另一种类型（`setDocType`），节点退化为兜底方框。类型在新建时决定；`setDocType` 命令一并删除，换成多选改样式的 `patchNodesStyle`。
+- **「加完直接打字」统一走 `features/canvas/focus.ts`**：命令执行后若恰好新增一个节点就选中并进入编辑。形状坞、四周「+」、双击、连线菜单、插件按键/工具条动作共用这一条路径，不各自处理焦点。
+- **新增插件可选钩子而不是在外壳里判断类型**：`nodeActions`、`placeFromPalette`、`quickAddSides`、`nextKind`、`createBlank`、`tips`、`ShapeDef.icon/defaultData/paletteHidden`、`edgeDefaults.cardinality`。全部可选，未实现时有通用默认行为；SPEC §4「禁止 type 分支」约束不变。
+- **默认描边 `ink` 改为跟随底色取同色相描边**（`NODE_STROKES`）：旧文档无需迁移即获得新外观；自定义描边仍原样使用。
+- **流程图新连线默认折线（圆角）**；两端正对时退化为直线，避免亚像素偏差画出小锯齿；折线标注取路径实测中点（L 形折线的几何中心不在线上）。Mermaid 导入由外壳注入流程图默认路由，core 不依赖插件。
+- **适应画面只在打开/切换文档时做**：React Flow 的 `fitView` 属性在空文档放下第一个节点时也会触发，把节点拽到正中、第二个落点叠上去。改为挂载时已有内容才用初始 fitView，换文档时手动 fit。
+- **思维导图派生父子连线 `reconnectable:false`、`zIndex:0`**：原先连线重连热区（r=10 的端点圆）盖在节点外侧的折叠钮上，点击被吞掉（e2e 发现）。
+- **保留 React Flow 署名**：`hideAttribution` 仅限 Pro 订阅者使用，开发期还会打印警告；改为移到左下浮动条上方并弱化显示。
+- **没动过的空白文档离开时回收**（`features/shell/docs/pristine.ts`）：新建空白登记、首次本地编辑注销、离开（回首页/打开别的/新建）时仍未编辑则删除；自动保存只在编辑器路由下落盘，避免回收后又被防抖写回。
+- **性能测量改用 CDP Trace 主线程任务**：旧 rAF 间隔在空白页上也是 17.8ms，测的是无头浏览器帧时钟；合成 pointermove 也不会触发 d3-drag。详见 docs/PERFORMANCE.md §1–2。
+- **只给有标注的连线挂 `EdgeLabelRenderer`**：其 store 选择器每次更新都会 `querySelector`，800 条边即每帧 800 次 DOM 查询（CPU profile 第一热点）。节点不使用 transform 入场动画与 CSS filter（两者都会让拖动时整图重绘）。
+- **手册配图改由 `e2e/guide.spec.ts` 生成**：界面改了配图就能一键重生成，避免手册与界面脱节。
