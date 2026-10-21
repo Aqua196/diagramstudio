@@ -10,6 +10,7 @@ import { useUiStore } from '@/store/uiStore'
 import { arrowDelta } from './guides'
 import { nudgeNodes } from './commands'
 import { executeAndFocus, startEditing } from './focus'
+import { skipNextMotion } from './motion/hints'
 
 function isTypingTarget(t: EventTarget | null): boolean {
   const el = t as HTMLElement | null
@@ -52,6 +53,8 @@ export function useCanvasKeys(doc: DiagramDoc, plugin: DiagramPlugin, deps: Deps
       const dPos = arrowDelta(e.key, e.shiftKey ? 10 : 1)
       if (dPos && sel.nodeIds.length > 0) {
         e.preventDefault()
+        // 方向键微移是直接操作，补间只会显得拖沓
+        skipNextMotion()
         useDocumentStore.getState().execute(nudgeNodes(sel.nodeIds, dPos.x, dPos.y))
         return
       }

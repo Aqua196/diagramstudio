@@ -164,7 +164,6 @@
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-pop);
   z-index: 60;
-  animation: ds-pop-in var(--dur-med) var(--ease-out);
 }
 .ds-menu-item {
   display: flex;
@@ -246,7 +245,6 @@
   font-weight: 500;
   line-height: 16px;
   z-index: 120;
-  animation: ds-fade-in var(--dur-fast) ease-out;
   pointer-events: none;
 }
 .ds-tip-kbd {
@@ -261,7 +259,6 @@
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-pop);
   z-index: 60;
-  animation: ds-pop-in var(--dur-med) var(--ease-out);
   outline: none;
 }
 .ds-pop-title {
@@ -278,7 +275,6 @@
   background: rgba(20, 20, 18, 0.28);
   backdrop-filter: blur(2px);
   z-index: 90;
-  animation: ds-fade-in var(--dur-med) ease-out;
 }
 .dark .ds-overlay {
   background: rgba(0, 0, 0, 0.55);
@@ -296,7 +292,6 @@
   background: var(--surface);
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-pop);
-  animation: ds-dialog-in var(--dur-med) var(--ease-out);
   outline: none;
 }
 .ds-dialog-wide {
@@ -507,7 +502,6 @@
   font-weight: 500;
   box-shadow: var(--shadow-pop);
   pointer-events: auto;
-  animation: ds-toast-in var(--dur-med) var(--ease-out);
 }
 .ds-toast-icon {
   display: inline-flex;
@@ -528,30 +522,6 @@
 }
 .ds-toast-close:hover {
   opacity: 1;
-}
-
-@keyframes ds-fade-in {
-  from {
-    opacity: 0;
-  }
-}
-@keyframes ds-pop-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.98);
-  }
-}
-@keyframes ds-dialog-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, calc(-50% + 8px)) scale(0.98);
-  }
-}
-@keyframes ds-toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
 }
 
 /* 前缀标签数字框 */

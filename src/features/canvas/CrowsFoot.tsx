@@ -46,7 +46,7 @@ function Feet({ x, y, position, card, stroke }: FeetProps) {
         {parts.map((d) => (
           <path key={d} d={d} />
         ))}
-        {hasCircle && <circle cx={circleCx} cy={0} r={3.5} fill="var(--panel)" />}
+        {hasCircle && <circle cx={circleCx} cy={0} r={3.5} fill="var(--surface)" />}
       </g>
       <text
         x={-34}

@@ -8,6 +8,7 @@ import { fmt, zh } from '@/i18n/zh'
 import { ActionDialog } from './ActionDialog'
 import { MiniDiagram } from './MiniDiagram'
 import { relativeTime } from './time'
+import { markSharedSource } from '../transition'
 
 function DocMenu({
   doc,
@@ -35,7 +36,10 @@ function DocMenu({
         <DropdownMenu.Content className="ds-menu" align="end" sideOffset={6}>
           <DropdownMenu.Item
             className="ds-menu-item"
-            onSelect={() => emit(EV.OPEN_DOC, { id: doc.id })}
+            onSelect={() => {
+              markSharedSource(document.querySelector(`[data-doc-id="${CSS.escape(doc.id)}"] .ds-doc-thumb`))
+              emit(EV.OPEN_DOC, { id: doc.id })
+            }}
           >
             <FolderOpen size={16} /> {zh.home.open}
           </DropdownMenu.Item>
@@ -121,11 +125,15 @@ export function DocCard({ doc, onChanged }: { doc: DiagramDoc; onChanged: () => 
   const [confirmDel, setConfirmDel] = useState(false)
   const [renaming, setRenaming] = useState(false)
   return (
-    <article className="ds-doc-card">
+    <article className="ds-doc-card" data-doc-id={doc.id}>
       <button
         type="button"
         className="ds-doc-open"
-        onClick={() => emit(EV.OPEN_DOC, { id: doc.id })}
+        onClick={(e) => {
+          // 缩略图将「长成」编辑器画布（返回首页时再形变回这里）
+          markSharedSource(e.currentTarget.querySelector('.ds-doc-thumb'))
+          emit(EV.OPEN_DOC, { id: doc.id })
+        }}
       >
         <span className="ds-doc-thumb">
           <MiniDiagram doc={doc} className="ds-doc-mini" />

@@ -9,6 +9,7 @@ import { fmt, zh } from '@/i18n/zh'
 import { BrandMark } from '@/components/BrandMark'
 import { IconButton } from '@/components/IconButton'
 import { listStoredDocs } from '../docs/docsStore'
+import { themeTransition } from '../transition'
 import { DocCard } from './DocCard'
 import { NewCard } from './NewCard'
 
@@ -50,7 +51,11 @@ function Header() {
         <IconButton
           icon={theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
           label={zh.editor.theme}
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          onClick={(e) => {
+            const r = e.currentTarget.getBoundingClientRect()
+            const next = theme === 'dark' ? 'light' : 'dark'
+            themeTransition(() => setTheme(next), { x: r.left + r.width / 2, y: r.top + r.height / 2 })
+          }}
         />
       </div>
     </header>

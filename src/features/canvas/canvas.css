@@ -20,8 +20,9 @@
 }
 
 /* —— 节点 —— */
-/* 性能约束（500 节点拖拽实测）：不给 .react-flow__node 加 transform 动画、不给节点加 CSS filter，
-   二者都会让整张图在拖动时反复重绘。入场只做内层 opacity 渐显。 */
+/* 性能约束（500 节点拖拽实测）：不给 .react-flow__node 外层加常驻 transform 动画/过渡、不给节点加 CSS filter，
+   二者都会让整张图在拖动时反复重绘。位置补间由 motion/canvasMotion 逐帧写 position（连线跟着走），
+   长出/弹出/收回只动内层 .ds-node（选中框、夹点、锚点、折叠钮跟着一起缩放），类名在动画结束后即摘掉。 */
 .ds-node {
   position: relative;
   width: 100%;
@@ -30,26 +31,100 @@
 .ds-node-body {
   width: 100%;
   height: 100%;
-  animation: ds-node-in var(--dur-med) ease-out;
-}
-@keyframes ds-node-in {
-  from {
-    opacity: 0;
-  }
 }
 .ds-node.is-selected {
   outline: 1.5px solid var(--accent);
   outline-offset: 2px;
   border-radius: 4px;
+  animation: ds-select-ring 200ms var(--ease-out);
+}
+/* 选中框从外圈收拢到位；一次选中很多（全选/框选）时不播，免得几百个节点同时重绘 */
+.ds-canvas[data-many-selected] .ds-node.is-selected {
+  animation: none;
+}
+@keyframes ds-select-ring {
+  from {
+    outline-offset: 7px;
+    outline-color: transparent;
+  }
+}
+
+/* —— 节点动效（视图层，见 motion/canvasMotion.ts） —— */
+/* 从父/源节点长出：位置由补间从源中心滑到落点，内层同步由小变大（优先级高于选中框的收拢动画） */
+.react-flow__node.ds-fx-enter .ds-node {
+  animation: ds-node-grow 400ms var(--ease-out) backwards;
+}
+@keyframes ds-node-grow {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  45% {
+    opacity: 1;
+  }
+}
+/* 原地弹出（粘贴、拖入、撤销删除、打开文档时依次自绘） */
+.react-flow__node.ds-fx-pop .ds-node {
+  animation: ds-node-pop 300ms var(--ease-spring) var(--ds-delay, 0ms) backwards;
+}
+@keyframes ds-node-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+/* 退场残影：删除时原地缩小淡出；折叠时一边滑回父节点一边缩小 */
+.react-flow__node.ds-fx-ghost {
+  pointer-events: none;
+}
+.react-flow__node.ds-fx-ghost .ds-node {
+  animation: ds-node-out 220ms var(--ease-in) forwards;
+}
+.react-flow__node.ds-fx-ghost.is-folding .ds-node {
+  animation: ds-node-fold 220ms var(--ease-out) forwards;
+}
+/* 撤销/重做/协作者改动：内容变了的节点外圈闪一下，看得出「刚才改了哪里」 */
+.react-flow__node.ds-fx-changed .ds-node::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 0 6px var(--accent-wash);
+  opacity: 0;
+  pointer-events: none;
+  animation: ds-node-changed 700ms var(--ease-out);
+}
+@keyframes ds-node-changed {
+  from {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes ds-node-out {
+  to {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+@keyframes ds-node-fold {
+  to {
+    opacity: 0;
+    transform: scale(0.3);
+  }
 }
 .ds-node.is-drop-target {
   outline: 2px dashed var(--accent);
   outline-offset: 6px;
   border-radius: 8px;
-}
-/* 自动布局 300ms 过渡：只作用于 RF 的 translate */
-.ds-layout-animating .react-flow__node {
-  transition: transform var(--dur-layout) var(--ease-out);
 }
 
 /* 缩放夹点 */
@@ -82,6 +157,12 @@
 .ds-handle.connectingto,
 .ds-handle.valid {
   opacity: 1;
+}
+/* 正在长出/弹出/退场的节点先不露连接点，落位后再淡入 */
+.react-flow__node.ds-fx-enter .ds-handle,
+.react-flow__node.ds-fx-pop .ds-handle,
+.react-flow__node.ds-fx-ghost .ds-handle {
+  opacity: 0;
 }
 .react-flow__handle.ds-handle:hover {
   background: var(--accent);
@@ -158,6 +239,39 @@
     opacity: 0;
   }
 }
+/* 「+」悬停预览：落点处的新节点虚影（主题色淡染）+ 回连的虚线 */
+.ds-quick-ghost {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.6;
+  --node-fill: var(--accent-wash);
+  --node-stroke: var(--accent);
+  --node-text: var(--accent);
+  animation: ds-quick-ghost-in 140ms var(--ease-out);
+}
+@keyframes ds-quick-ghost-in {
+  from {
+    opacity: 0;
+    scale: 0.94;
+  }
+}
+.ds-quick-link {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  overflow: visible;
+  pointer-events: none;
+  animation: ds-fade-in 140ms var(--ease-out);
+}
+.ds-quick-link line {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
 
 /* —— 连线 —— */
 /* 标注层压在连线（zIndex 1000）之上，线不会穿过文字 */
@@ -169,9 +283,68 @@
   stroke-width: 1.75;
   stroke-dasharray: 5 4;
 }
-.react-flow__edge.selected .react-flow__edge-path,
-.react-flow__edge:focus .react-flow__edge-path {
+/* 键盘聚焦的连线（只会有一条）保留柔光；选中态改用 DsEdge 画的半透明底线，全选几百条也不卡 */
+.react-flow__edge:focus-visible .react-flow__edge-path {
   filter: drop-shadow(0 0 3px var(--accent-wash-2));
+}
+.ds-edge-halo {
+  fill: none;
+  stroke: var(--accent-wash-2);
+  stroke-linecap: round;
+  pointer-events: none;
+}
+/* 方向提示：选中单条连线时一颗光珠从起点跑到终点，只跑一趟（不常驻动画） */
+.ds-edge-comet {
+  fill: none;
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 2;
+  stroke-dashoffset: 0.1;
+  opacity: 0;
+  pointer-events: none;
+  animation: ds-edge-comet 720ms cubic-bezier(0.65, 0, 0.35, 1) 100ms;
+}
+@keyframes ds-edge-comet {
+  from {
+    stroke-dashoffset: 0.1;
+    opacity: 0;
+  }
+  12%,
+  85% {
+    opacity: 0.9;
+  }
+  to {
+    stroke-dashoffset: -1;
+    opacity: 0;
+  }
+}
+/* 连线自绘：路径归一化（pathLength=1）后让虚线偏移从 1 走到 0；虚线样式的连线改为淡入 */
+.react-flow__edge-path.ds-edge-draw {
+  stroke-dasharray: 1 2;
+  animation: ds-edge-draw var(--ds-dur, 320ms) var(--ease-emph) var(--ds-delay, 0ms) backwards;
+}
+@keyframes ds-edge-draw {
+  from {
+    stroke-dashoffset: 1.05;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.react-flow__edge-path.ds-edge-fade {
+  animation: ds-fade-in var(--ds-dur, 320ms) var(--ease-out) var(--ds-delay, 0ms) backwards;
+}
+.react-flow__edge.ds-fx-ghost-edge {
+  pointer-events: none;
+  animation: ds-fade-out 220ms var(--ease-in) forwards;
+}
+.ds-edge-label.is-drawing {
+  animation: ds-fade-in 200ms var(--ease-out) backwards;
+  animation-delay: calc(var(--ds-delay, 0ms) + var(--ds-dur, 320ms) * 0.5);
+}
+.ds-edge-label.is-leaving {
+  pointer-events: none;
+  animation: ds-fade-out 160ms var(--ease-in) forwards;
 }
 .ds-edge-label {
   position: absolute;
@@ -257,6 +430,13 @@
     0 0 0 6px var(--accent-wash);
   outline: none;
   overflow: hidden;
+  animation: ds-editor-in 160ms var(--ease-out) backwards;
+}
+@keyframes ds-editor-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
 }
 
 /* —— 上下文工具条 —— */

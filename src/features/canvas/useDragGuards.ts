@@ -52,7 +52,9 @@ export function useDragGuards(doc: DiagramDoc, plugin: DiagramPlugin, setNodes: 
       const cs = useCanvasStore.getState()
       cs.setGuides({ v: res.guidesV, h: res.guidesH })
       if (pluginRef.current.onDropOnNode) {
-        const hit = rf.getIntersectingNodes(node).find((n) => n.id !== node.id)
+        const hit = rf
+          .getIntersectingNodes(node)
+          .find((n) => n.id !== node.id && !(n.data as FlowNodeData).ghost)
         const target = hit && !dragNodes.some((d) => d.id === hit.id) ? hit.id : null
         if (cs.dropTargetId !== target) cs.setDropTarget(target)
       }

@@ -1,0 +1,279 @@
+/* 动效（统一在此编排）：弹层从触发点长出、退场先收再走、浮动条依次入场、工具条弹出。
+   原则：只回应操作；进场用 --ease-spring / --ease-out，退场更快用 --ease-in；
+   系统「减少动态效果」时 index.css 的全局规则把时长压到 0。
+   性能约束：不在 .react-flow__node 外层加常驻 animation/transition/filter（见 canvas.css 注释）。 */
+
+/* —— 关键帧 —— */
+@keyframes ds-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ds-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes ds-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+@keyframes ds-pop-out {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+@keyframes ds-dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 12px)) scale(0.96);
+  }
+}
+@keyframes ds-dialog-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 6px)) scale(0.98);
+  }
+}
+@keyframes ds-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.92);
+  }
+}
+@keyframes ds-toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+}
+/* 位移用独立的 translate 属性：与元素自身的 transform（如居中用的 translateX(-50%)）叠加而不覆盖 */
+@keyframes ds-rise-in {
+  from {
+    opacity: 0;
+    translate: var(--rise-x, 0) var(--rise-y, 8px);
+  }
+}
+@keyframes ds-tip-in {
+  from {
+    opacity: 0;
+    translate: var(--tip-x, 0) var(--tip-y, 0);
+  }
+}
+
+/* —— 下拉/右键菜单与弹层：从触发点长出，退场 120ms —— */
+.ds-menu[data-state='open'],
+.ds-pop[data-state='open'] {
+  animation: ds-pop-in var(--dur-med) var(--ease-spring);
+}
+.ds-menu[data-state='closed'],
+.ds-pop[data-state='closed'] {
+  animation: ds-pop-out var(--dur-fast) var(--ease-in) forwards;
+}
+.ds-menu {
+  transform-origin: var(
+    --radix-dropdown-menu-content-transform-origin,
+    var(--radix-context-menu-content-transform-origin, top center)
+  );
+}
+.ds-pop {
+  transform-origin: var(--radix-popover-content-transform-origin, center);
+}
+
+/* 退场动画期间不再接收点击（否则关闭中的菜单会挡住下一次点击） */
+.ds-menu[data-state='closed'],
+.ds-pop[data-state='closed'],
+.ds-tip[data-state='closed'],
+.ds-dialog[data-state='closed'],
+.ds-overlay[data-state='closed'] {
+  pointer-events: none;
+}
+
+/* —— 气泡提示：朝远离触发点的方向轻移入场 —— */
+.ds-tip[data-side='top'] {
+  --tip-y: 4px;
+}
+.ds-tip[data-side='bottom'] {
+  --tip-y: -4px;
+}
+.ds-tip[data-side='left'] {
+  --tip-x: 4px;
+}
+.ds-tip[data-side='right'] {
+  --tip-x: -4px;
+}
+.ds-tip[data-state='delayed-open'] {
+  animation: ds-tip-in var(--dur-med) var(--ease-out);
+}
+.ds-tip[data-state='instant-open'] {
+  animation: ds-fade-in var(--dur-fast) ease-out;
+}
+.ds-tip[data-state='closed'] {
+  animation: ds-fade-out 90ms ease-in forwards;
+}
+
+/* —— 对话框 —— */
+.ds-overlay[data-state='open'] {
+  animation: ds-fade-in var(--dur-med) ease-out;
+}
+.ds-overlay[data-state='closed'] {
+  animation: ds-fade-out var(--dur-fast) ease-in forwards;
+}
+.ds-dialog[data-state='open'] {
+  animation: ds-dialog-in 260ms var(--ease-spring);
+}
+.ds-dialog[data-state='closed'] {
+  animation: ds-dialog-out var(--dur-fast) var(--ease-in) forwards;
+}
+
+/* —— 提示条：弹性上浮进场，下沉淡出 —— */
+.ds-toast {
+  animation: ds-toast-in 280ms var(--ease-spring);
+}
+.ds-toast.is-leaving {
+  animation: ds-toast-out 160ms var(--ease-in) forwards;
+}
+
+/* —— 上下文工具条：从选中元素上方轻轻浮出（按选择集 key 重播；只动内层，不碰 RF 的定位容器） —— */
+@keyframes ds-toolbar-in {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+    scale: 0.97;
+  }
+}
+.ds-toolbar {
+  transform-origin: 50% 100%;
+  animation: ds-toolbar-in 180ms var(--ease-out);
+}
+
+/* —— 编辑器浮动条：进入编辑器时从各自所在的边依次浮入（只在进入时一次：.ds-editor[data-enter]） —— */
+/* 从首页形变进来时整体顺延，等卡片长成画布再浮入 */
+html.ds-vt-page .ds-editor {
+  --enter-offset: 160ms;
+}
+.ds-editor[data-enter] .ds-corner,
+.ds-editor[data-enter] .ds-dock,
+.ds-editor[data-enter] .ds-hint {
+  animation: ds-rise-in 300ms var(--ease-emph) backwards;
+  animation-delay: calc(var(--rise-delay, 0ms) + var(--enter-offset, 0ms));
+}
+.ds-editor .ds-corner-tl {
+  --rise-y: -8px;
+  --rise-delay: 0ms;
+}
+.ds-editor .ds-corner-tr {
+  --rise-y: -8px;
+  --rise-delay: 40ms;
+}
+.ds-editor .ds-dock {
+  --rise-x: -10px;
+  --rise-y: 0;
+  --rise-delay: 80ms;
+}
+.ds-editor .ds-corner-bl {
+  --rise-y: 8px;
+  --rise-delay: 120ms;
+}
+.ds-editor .ds-corner-br {
+  --rise-y: 8px;
+  --rise-delay: 160ms;
+}
+.ds-editor .ds-hint {
+  --rise-y: 10px;
+  --rise-delay: 220ms;
+}
+/* 形状坞里的按钮跟着坞体再错开一点，像被依次摆上去（每个 18ms，最多 140ms） */
+.ds-editor[data-enter] .ds-dock > * {
+  --rise-x: -6px;
+  --rise-y: 0;
+  animation: ds-rise-in 220ms var(--ease-out) backwards;
+  animation-delay: calc(100ms + min(var(--i, 0) * 18ms, 140ms) + var(--enter-offset, 0ms));
+}
+.ds-editor .ds-dock > :nth-child(1) {
+  --i: 0;
+}
+.ds-editor .ds-dock > :nth-child(2) {
+  --i: 1;
+}
+.ds-editor .ds-dock > :nth-child(3) {
+  --i: 2;
+}
+.ds-editor .ds-dock > :nth-child(4) {
+  --i: 3;
+}
+.ds-editor .ds-dock > :nth-child(5) {
+  --i: 4;
+}
+.ds-editor .ds-dock > :nth-child(6) {
+  --i: 5;
+}
+.ds-editor .ds-dock > :nth-child(7) {
+  --i: 6;
+}
+.ds-editor .ds-dock > :nth-child(8) {
+  --i: 7;
+}
+.ds-editor .ds-dock > :nth-child(9) {
+  --i: 8;
+}
+.ds-editor .ds-dock > :nth-child(n + 10) {
+  --i: 9;
+}
+
+/* —— 协作者光标：awareness 50ms 节流的跳点用线性过渡补平 —— */
+.ds-peer-cursor {
+  transition: transform 90ms linear;
+}
+
+/* —— 页面转场（View Transitions，见 features/shell/transition.ts） —— */
+/* 首页卡片缩略图 ↔ 编辑器画布同名，浏览器做位置/尺寸形变；其余界面交叉淡化 */
+.ds-vt-page .ds-editor-canvas {
+  view-transition-name: ds-stage;
+}
+::view-transition-group(ds-stage) {
+  animation-duration: 480ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+::view-transition-old(ds-stage),
+::view-transition-new(ds-stage) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  overflow: clip;
+}
+/* 进编辑器：小卡片图放大会糊，尽快让位给清晰的画布 */
+html.ds-vt-in::view-transition-old(ds-stage) {
+  animation: ds-fade-out 160ms var(--ease-in) both;
+}
+html.ds-vt-in::view-transition-new(ds-stage) {
+  animation: ds-fade-in 220ms var(--ease-out) both;
+}
+/* 回首页：先让清晰的画布缩小，快落位时再换成卡片缩略图 */
+html.ds-vt-out::view-transition-old(ds-stage) {
+  animation: ds-fade-out 220ms 200ms var(--ease-in) both;
+}
+html.ds-vt-out::view-transition-new(ds-stage) {
+  animation: ds-fade-in 200ms 240ms var(--ease-out) both;
+}
+html.ds-vt-page::view-transition-old(root) {
+  animation: ds-fade-out 200ms var(--ease-in) both;
+}
+html.ds-vt-page::view-transition-new(root) {
+  animation: ds-fade-in 320ms 80ms var(--ease-out) both;
+}
+/* 主题切换：新旧画面都不做默认淡化，由脚本给新画面加圆形 clip-path 扩散；
+   期间关掉所有颜色过渡，新画面直接是最终配色（否则圆圈里会看到颜色慢慢变） */
+html.ds-vt-theme::view-transition-old(root),
+html.ds-vt-theme::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+html.ds-vt-theme *,
+html.ds-vt-theme *::before,
+html.ds-vt-theme *::after {
+  transition: none !important;
+}

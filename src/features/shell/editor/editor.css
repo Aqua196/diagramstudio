@@ -9,6 +9,10 @@
   position: absolute;
   inset: 0;
 }
+.ds-editor-canvas:focus {
+  outline: none;
+  box-shadow: none;
+}
 
 /* —— 四角浮动条 —— */
 .ds-corner {
@@ -223,7 +227,6 @@
   font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
-  animation: ds-fade-in var(--dur-med) ease-out;
 }
 .ds-hint-icon {
   flex-shrink: 0;

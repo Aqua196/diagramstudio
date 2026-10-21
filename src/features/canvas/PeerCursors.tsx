@@ -22,7 +22,7 @@ export function PeerCursors() {
             <path
               d="M1 1 L15 7.5 L8.5 9.5 L12 16.5 L9.5 17.5 L6 10.5 L1 14 Z"
               fill={p.color}
-              stroke="var(--panel)"
+              stroke="var(--surface)"
               strokeWidth={1}
             />
           </svg>

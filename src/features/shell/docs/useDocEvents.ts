@@ -36,9 +36,10 @@ export function useDocEvents(): void {
     const newDoc = (e: Event) => {
       const detail = (e as CustomEvent).detail as { type: DiagramType; templateId?: string }
       const doc = buildNewDoc(detail.type, detail.templateId)
+      const blank = detail.templateId === undefined
       saveDoc(doc)
-      openDocInEditor(doc)
-      if (detail.templateId === undefined) markPristine(doc.id)
+      // 空白文档的登记必须在切换之后：切换时会先回收上一份没动过的空白文档
+      openDocInEditor(doc, { reveal: !blank, after: blank ? () => markPristine(doc.id) : undefined })
     }
     const openDoc = (e: Event) => {
       const { id } = (e as CustomEvent).detail as { id: string }

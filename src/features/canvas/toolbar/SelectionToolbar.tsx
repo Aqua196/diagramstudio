@@ -21,7 +21,13 @@ export function SelectionToolbar() {
   if (ids.length === 1 && !node) return null
   return (
     <NodeToolbar nodeId={ids} isVisible position={Position.Top} offset={14}>
-      <div className="ds-float ds-toolbar" role="toolbar" aria-label={zh.toolbar.label}>
+      {/* key：换选中节点时重播弹出动效；多选只按「多选」一个 key，框选过程中不反复重播 */}
+      <div
+        key={ids.length === 1 ? ids[0] : 'multi'}
+        className="ds-float ds-toolbar"
+        role="toolbar"
+        aria-label={zh.toolbar.label}
+      >
         {node ? (
           <NodeToolbarContent node={node} plugin={getPlugin(type)} />
         ) : (

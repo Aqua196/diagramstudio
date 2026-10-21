@@ -105,9 +105,12 @@ export function useCanvasDrop(
     [addShape],
   )
 
-  // 双击空白放一个默认形状节点并直接编辑文字（RF 的双击缩放已关闭，见 useCanvasWiring）
+  // 双击空白放一个默认形状节点并直接编辑文字（RF 的双击缩放已关闭，见 useCanvasWiring）。
+  // 刚进编辑器的头 500ms 不响应：在首页双击卡片（文件管理器习惯）时，第二下会落在新画布上
+  const mountedAt = useRef(performance.now())
   const onDoubleClick = useCallback(
     (e: MouseEvent) => {
+      if (performance.now() - mountedAt.current < 500) return
       const t = e.target as HTMLElement
       if (!t.closest('.react-flow__pane')) return
       if (t.closest('.react-flow__node') || t.closest('.ds-connect-menu')) return

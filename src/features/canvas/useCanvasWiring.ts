@@ -70,7 +70,10 @@ export function useCanvasWiring(doc: DiagramDoc, plugin: DiagramPlugin): CanvasW
     useFlowSync(doc, plugin)
   const nodesRef = useRef<FNode[]>(nodes)
   nodesRef.current = nodes
-  const visibleNodeIds = useCallback(() => nodesRef.current.map((n) => n.id), [])
+  const visibleNodeIds = useCallback(
+    () => nodesRef.current.filter((n) => !n.data.ghost).map((n) => n.id),
+    [],
+  )
 
   const setEditingNode = useCanvasStore((s) => s.setEditingNode)
   const setEditingEdge = useCanvasStore((s) => s.setEditingEdge)
@@ -82,7 +85,7 @@ export function useCanvasWiring(doc: DiagramDoc, plugin: DiagramPlugin): CanvasW
   const cursor = useCollabCursor(rf)
   const conn = useConnectFlow(doc, plugin, wrapperRef)
   const drop = useCanvasDrop(doc, plugin, wrapperRef)
-  useCanvasEvents(doc, plugin, { containerRef: wrapperRef, selectIds, visibleNodeIds })
+  useCanvasEvents(doc, plugin, { selectIds, visibleNodeIds })
   useCanvasKeys(doc, plugin, { selectIds })
 
   const startNodeEdit = useCallback(

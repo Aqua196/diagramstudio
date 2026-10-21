@@ -1,103 +1,18 @@
 // 自定义边 'dsEdge'：bezier/step/straight 三种路由、起止箭头、虚线/粗细、
 // 中点标注与双击编辑；选中单条连线时挂上下文工具条；重连走 onReconnect → reconnectEdge 命令。
-import { memo, useMemo, useState } from 'react'
+// 动效：edge.style 带 --ds-dur 时沿路径自绘（箭头/鸟脚等画完再出现）；选中单条时一颗光珠沿方向跑一趟；
+// data.ghost 为退场残影（随节点收回/淡出，不挂工具条）。
+import { memo, useMemo } from 'react'
 import { BaseEdge, EdgeLabelRenderer, EdgeToolbar, type EdgeProps } from '@xyflow/react'
-import { patchEdge } from '@/core/commands/ops'
 import type { FlowEdgeData } from '@/store/selectors'
-import { useDocumentStore } from '@/store/documentStore'
+import type { EdgeFxStyle } from './motion/canvasMotion'
 import { useUiStore } from '@/store/uiStore'
 import { useCanvasStore } from './canvasStore'
 import { resolveEdgeStroke } from './color'
-import { zh } from '@/i18n/zh'
 import { CrowsFeet } from './CrowsFoot'
+import { ArrowDefs, EdgeLabel } from './EdgeParts'
 import { pathFor } from './edgePath'
 import { EdgeToolbarContent } from './toolbar/EdgeToolbarContent'
-
-function ArrowDefs({
-  id,
-  stroke,
-  start,
-  end,
-}: {
-  id: string
-  stroke: string
-  start: boolean
-  end: boolean
-}) {
-  const marker = (mid: string) => (
-    <marker
-      id={mid}
-      viewBox="0 0 10 10"
-      refX="8.5"
-      refY="5"
-      markerWidth="8"
-      markerHeight="8"
-      orient="auto-start-reverse"
-    >
-      <path d="M1,1.2 L9,5 L1,8.8 L2.6,5 z" fill={stroke} />
-    </marker>
-  )
-  return (
-    <defs>
-      {start ? marker(`ds-m-start-${id}`) : null}
-      {end ? marker(`ds-m-end-${id}`) : null}
-    </defs>
-  )
-}
-
-function EdgeLabel({
-  id,
-  edge,
-  labelX,
-  labelY,
-  selected,
-}: {
-  id: string
-  edge: FlowEdgeData['edge']
-  labelX: number
-  labelY: number
-  selected: boolean
-}) {
-  const editing = useCanvasStore((s) => s.editingEdgeId === id)
-  const setEditingEdge = useCanvasStore((s) => s.setEditingEdge)
-  const execute = useDocumentStore((s) => s.execute)
-  const [draft, setDraft] = useState('')
-  const commitLabel = () => {
-    execute(patchEdge(id, { label: draft.trim() || undefined }, '编辑标注'))
-    setEditingEdge(null)
-  }
-  if (!editing && !edge.label) return null
-  return (
-    <div
-      className={`ds-edge-label nopan${selected ? ' is-selected' : ''}${editing ? ' is-editing' : ''}`}
-      style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
-      onDoubleClick={(e) => {
-        e.stopPropagation()
-        setDraft(edge.label ?? '')
-        setEditingEdge(id)
-      }}
-    >
-      {editing ? (
-        <input
-          className="ds-edge-label-input"
-          value={draft}
-          autoFocus
-          placeholder={zh.toolbar.edgeLabelPlaceholder}
-          aria-label={zh.toolbar.edgeLabel}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commitLabel}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') commitLabel()
-            if (e.key === 'Escape') setEditingEdge(null)
-            e.stopPropagation()
-          }}
-        />
-      ) : (
-        edge.label
-      )}
-    </div>
-  )
-}
 
 function DsEdge(p: EdgeProps) {
   const {
@@ -112,7 +27,10 @@ function DsEdge(p: EdgeProps) {
     targetPosition,
     interactionWidth,
   } = p
-  const { edge } = data as FlowEdgeData
+  const { edge, ghost } = data as FlowEdgeData
+  const fx = p.style as EdgeFxStyle | undefined
+  const drawing = fx?.['--ds-dur'] !== undefined
+  const dashed = edge.style.dash === 'dashed'
   const theme = useUiStore((s) => s.resolvedTheme)
   const single = useUiStore(
     (s) => s.selection.edgeIds.length === 1 && s.selection.nodeIds.length === 0,
@@ -129,25 +47,41 @@ function DsEdge(p: EdgeProps) {
     [edge.routing, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, needLabel],
   )
   const stroke = selected ? 'var(--accent)' : resolveEdgeStroke(edge.style.stroke, theme)
-  const arrowStart = edge.arrowStart === 'arrow'
-  const arrowEnd = edge.arrowEnd === 'arrow'
+  const arrowStart = edge.arrowStart === 'arrow' && !drawing
+  const arrowEnd = edge.arrowEnd === 'arrow' && !drawing
+  const w = edge.style.strokeWidth
   return (
     <>
       <ArrowDefs id={id} stroke={stroke} start={arrowStart} end={arrowEnd} />
+      {/* 选中光晕：一条更宽的半透明底线（比 CSS drop-shadow 便宜，全选几百条也不卡） */}
+      {selected && <path d={path} className="ds-edge-halo" style={{ strokeWidth: w + 7 }} aria-hidden />}
       <BaseEdge
         id={id}
         path={path}
         interactionWidth={interactionWidth ?? 20}
         style={{
+          ...fx,
           stroke,
-          strokeWidth: edge.style.strokeWidth + (selected ? 0.5 : 0),
-          strokeDasharray: edge.style.dash === 'dashed' ? '6 5' : undefined,
+          strokeWidth: w + (selected ? 0.5 : 0),
+          strokeDasharray: dashed && !drawing ? '6 5' : undefined,
           strokeLinecap: 'round',
         }}
+        className={drawing ? (dashed ? 'ds-edge-fade' : 'ds-edge-draw') : undefined}
+        pathLength={drawing && !dashed ? 1 : undefined}
         markerStart={arrowStart ? `url(#ds-m-start-${id})` : undefined}
         markerEnd={arrowEnd ? `url(#ds-m-end-${id})` : undefined}
       />
-      {edge.cardinality && (
+      {/* 方向提示：选中单条连线时一颗光珠从起点跑到终点，只跑一趟 */}
+      {selected && single && !ghost && (
+        <path
+          d={path}
+          pathLength={1}
+          className="ds-edge-comet ds-export-exclude"
+          style={{ strokeWidth: w + 4 }}
+          aria-hidden
+        />
+      )}
+      {edge.cardinality && !drawing && (
         <CrowsFeet
           card={edge.cardinality}
           sourceX={sourceX}
@@ -163,10 +97,18 @@ function DsEdge(p: EdgeProps) {
           只给真有标注/正在编辑的连线挂载（800 条无标注连线拖拽时省下 800 次 DOM 查询/帧） */}
       {(edge.label || editingLabel) && (
         <EdgeLabelRenderer>
-          <EdgeLabel id={id} edge={edge} labelX={labelX} labelY={labelY} selected={!!selected} />
+          <EdgeLabel
+            id={id}
+            edge={edge}
+            labelX={labelX}
+            labelY={labelY}
+            selected={!!selected}
+            fx={drawing ? fx : undefined}
+            leaving={ghost}
+          />
         </EdgeLabelRenderer>
       )}
-      {selected && single && !editingLabel && (
+      {selected && single && !editingLabel && !ghost && (
         <EdgeToolbar
           edgeId={id}
           x={labelX}
@@ -187,6 +129,8 @@ export default memo(DsEdge, (prev, next) => {
   const b = next.data as FlowEdgeData
   return (
     a.edge === b.edge &&
+    a.ghost === b.ghost &&
+    prev.style === next.style &&
     prev.selected === next.selected &&
     prev.sourceX === next.sourceX &&
     prev.sourceY === next.sourceY &&

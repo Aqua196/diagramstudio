@@ -14,6 +14,7 @@ import {
 import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
 import { zh } from '@/i18n/zh'
+import { finishCanvasMotion } from './motion/canvasMotion'
 
 const PAD = 72 // 内容四周留白（px）；需容纳越出节点包围盒的回环曲线
 
@@ -49,6 +50,12 @@ function frameInfo(doc: DiagramDoc, tb: ExportDetail['titleblock']): FrameInfo |
 }
 
 /** 挂一次：监听导出事件，用 RF 实例定位 .react-flow__viewport */
+const nextFrames = (n: number) =>
+  new Promise<void>((resolve) => {
+    const step = (k: number) => (k <= 0 ? resolve() : requestAnimationFrame(() => step(k - 1)))
+    step(n)
+  })
+
 export function useExportEvents(): void {
   const rf = useReactFlow()
   const rfRef = useRef(rf)
@@ -60,7 +67,9 @@ export function useExportEvents(): void {
       const doc = useDocumentStore.getState().doc
       const toast = useUiStore.getState().pushToast
       try {
-        const nodes = rfRef.current.getNodes()
+        // 导出要的是最终画面：正在播的动效立即到终点，等一帧让 React Flow 画好再截
+        if (finishCanvasMotion()) await nextFrames(2)
+        const nodes = rfRef.current.getNodes().filter((n) => !(n.data as { ghost?: boolean }).ghost)
         const vpEl = document.querySelector<HTMLElement>('.react-flow__viewport')
         if (!vpEl || nodes.length === 0) {
           toast('error', zh.io.exportFailed)

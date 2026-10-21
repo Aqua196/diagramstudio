@@ -1,11 +1,9 @@
 // 自动布局执行器：EV.AUTO_LAYOUT 与 plugin.autoLayoutOnChange 共用。
-// 布局是一条可撤销命令；300ms 过渡通过画布容器上的临时 CSS 类实现。
+// 布局是一条可撤销命令；节点滑到新位置的过渡由视图层动效（motion/canvasMotion）统一处理，连线全程跟随。
 import { setNodePositions } from '@/core/commands/ops'
 import type { Command } from '@/core/commands/command'
 import type { DiagramPlugin } from '@/core/plugin'
 import type { DiagramDoc, Point } from '@/core/model/types'
-
-export const LAYOUT_ANIM_MS = 320
 
 function positionsChanged(current: DiagramDoc, next: Record<string, Point>): boolean {
   for (const [id, p] of Object.entries(next)) {
@@ -28,11 +26,4 @@ export function buildLayoutCommand(
   const next = plugin.layout(doc, { direction })
   if (!positionsChanged(doc, next)) return null
   return setNodePositions(next, '自动布局')
-}
-
-/** 在容器元素上加一次性过渡类，让 RF 节点 transform 以 300ms 动画移动 */
-export function animateLayout(container: HTMLElement | null): void {
-  if (!container) return
-  container.classList.add('ds-layout-animating')
-  window.setTimeout(() => container.classList.remove('ds-layout-animating'), LAYOUT_ANIM_MS)
 }
