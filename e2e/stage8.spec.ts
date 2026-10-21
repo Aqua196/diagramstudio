@@ -2,14 +2,19 @@
 // 另补生成暗色 1280 截图（子代理版基线缺失）。
 import { expect, test, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+import { openWithoutTransition } from './helpers'
 import { fmtStats, traceMainThread } from './perf'
 
 // 性能断言针对生产构建（pnpm preview，4173）；dev 模式 React 严格双渲染不计入
 test.use({ baseURL: 'http://localhost:4173' })
 
-async function openEditor(page: Page) {
+async function openEditor(page: Page, opts: { dark?: boolean } = {}) {
   await page.goto('/')
-  await page.evaluate(() => localStorage.clear())
+  // 主题要在清空之后再写，否则暗色用例实际审的是亮色
+  await page.evaluate((dark) => {
+    localStorage.clear()
+    if (dark) localStorage.setItem('ds:theme', 'dark')
+  }, !!opts.dark)
   await page.reload()
   await page
     .getByRole('button', { name: /流程图/ })
@@ -53,20 +58,41 @@ async function dragFirstNode(page: Page) {
   return stats
 }
 
-test('性能：500 节点 + 800 边，局部视口拖拽无长任务（主线程 p95 < 50ms）', async ({ page }) => {
-  await openEditor(page)
-  await injectStress(page, { x: 140, y: 120, zoom: 1 })
-  const s = await dragFirstNode(page)
-  console.log(`PERF drag local: ${fmtStats(s)} per-move=${(s.busy / MOVES).toFixed(1)}ms`)
-  expect(s.p95).toBeLessThan(LONG_TASK_MS)
-})
+// 性能在「开启动效」下测：500 节点超过动效上限，引擎应整体让路、拖动数字不受影响
+test.describe('性能（开启动效）', () => {
+  test.use({ reducedMotion: 'no-preference' })
 
-test('性能：500 节点全部可见（缩放 0.3）拖拽，如实记录', async ({ page }) => {
-  await openEditor(page)
-  await injectStress(page, { x: 40, y: 60, zoom: 0.3 })
-  const s = await dragFirstNode(page)
-  console.log(`PERF drag full: ${fmtStats(s)} per-move=${(s.busy / MOVES).toFixed(1)}ms`)
-  expect(s.tasks).toBeGreaterThan(0)
+  test('性能：500 节点 + 800 边，局部视口拖拽无长任务（主线程 p95 < 50ms）', async ({ page }) => {
+    await openWithoutTransition(page, () => openEditor(page))
+    await injectStress(page, { x: 140, y: 120, zoom: 1 })
+    const s = await dragFirstNode(page)
+    console.log(`PERF drag local: ${fmtStats(s)} per-move=${(s.busy / MOVES).toFixed(1)}ms`)
+    expect(s.p95).toBeLessThan(LONG_TASK_MS)
+  })
+
+  test('性能：500 节点全部可见（缩放 0.3）拖拽，如实记录', async ({ page }) => {
+    await openWithoutTransition(page, () => openEditor(page))
+    await injectStress(page, { x: 40, y: 60, zoom: 0.3 })
+    const s = await dragFirstNode(page)
+    console.log(`PERF drag full: ${fmtStats(s)} per-move=${(s.busy / MOVES).toFixed(1)}ms`)
+    expect(s.tasks).toBeGreaterThan(0)
+  })
+
+  test('性能：180 节点自动布局的滑动补间（动效上限内）帧任务 p95 < 50ms', async ({ page }) => {
+    await openWithoutTransition(page, () => openEditor(page))
+    await page.evaluate(() => {
+      const ds = (window as unknown as { __ds: Ds }).__ds
+      ds.setDoc(ds.genDoc(180, 240))
+    })
+    await page.waitForTimeout(1200)
+    await page.locator('.react-flow__pane').click({ position: { x: 600, y: 400 } })
+    const s = await traceMainThread(page, async () => {
+      await page.keyboard.press('Shift+L')
+      await page.waitForTimeout(500)
+    })
+    console.log(`PERF layout tween 180: ${fmtStats(s)}`)
+    expect(s.p95).toBeLessThan(LONG_TASK_MS)
+  })
 })
 
 test('无障碍：首页+编辑器（亮色）axe 零 violation', async ({ page }) => {
@@ -80,12 +106,8 @@ test('无障碍：首页+编辑器（亮色）axe 零 violation', async ({ page 
 })
 
 test('无障碍：编辑器（暗色）axe 零 violation + 1280 截图', async ({ page }) => {
-  await page.goto('/')
-  await page.evaluate(() => {
-    localStorage.clear()
-    localStorage.setItem('ds:theme', 'dark')
-  })
-  await openEditor(page)
+  await openEditor(page, { dark: true })
+  await expect(page.locator('html')).toHaveClass(/dark/)
   const res = await new AxeBuilder({ page }).analyze()
   expect(res.violations).toEqual([])
   if (await page.evaluate(() => window.innerWidth === 1280))

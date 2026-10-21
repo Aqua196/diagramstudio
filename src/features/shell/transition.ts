@@ -45,6 +45,10 @@ function starter(): StartVT | null {
   return d.startViewTransition.bind(d)
 }
 
+/** 转场看门狗：最长的转场约 520ms；超过这么久还没结束（个别环境动画时钟不走）就直接跳到结尾，
+ *  否则转场期间整页不响应输入 */
+const WATCHDOG_MS = 1500
+
 /** 开始一个转场：先跳过正在进行的那个；ready/updateCallbackDone 被跳过时会 reject，统一吞掉 */
 function begin(start: StartVT, cb: () => Promise<void> | void): { vt: VT; mine: () => boolean } {
   active?.skipTransition()
@@ -54,7 +58,9 @@ function begin(start: StartVT, cb: () => Promise<void> | void): { vt: VT; mine: 
   const swallow = () => undefined
   vt.ready.catch(swallow)
   vt.updateCallbackDone.catch(swallow)
+  const guard = window.setTimeout(() => vt.skipTransition(), WATCHDOG_MS)
   const done = () => {
+    window.clearTimeout(guard)
     if (my === gen) active = null
   }
   vt.finished.then(done, done)

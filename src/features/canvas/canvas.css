@@ -22,7 +22,9 @@
 /* —— 节点 —— */
 /* 性能约束（500 节点拖拽实测）：不给 .react-flow__node 外层加常驻 transform 动画/过渡、不给节点加 CSS filter，
    二者都会让整张图在拖动时反复重绘。位置补间由 motion/canvasMotion 逐帧写 position（连线跟着走），
-   长出/弹出/收回只动内层 .ds-node（选中框、夹点、锚点、折叠钮跟着一起缩放），类名在动画结束后即摘掉。 */
+   长出/弹出只缩放形状本体 .ds-node-body——连接锚点不能跟着缩放：React Flow 按锚点的屏幕位置测量，
+   缩放中测到的位置会被记住，连线就接到节点里面去了。选中框、锚点、加号等在落位前先隐藏。
+   类名在动画结束后即摘掉。 */
 .ds-node {
   position: relative;
   width: 100%;
@@ -51,7 +53,7 @@
 
 /* —— 节点动效（视图层，见 motion/canvasMotion.ts） —— */
 /* 从父/源节点长出：位置由补间从源中心滑到落点，内层同步由小变大（优先级高于选中框的收拢动画） */
-.react-flow__node.ds-fx-enter .ds-node {
+.react-flow__node.ds-fx-enter .ds-node-body {
   animation: ds-node-grow 400ms var(--ease-out) backwards;
 }
 @keyframes ds-node-grow {
@@ -64,8 +66,18 @@
   }
 }
 /* 原地弹出（粘贴、拖入、撤销删除、打开文档时依次自绘） */
-.react-flow__node.ds-fx-pop .ds-node {
+.react-flow__node.ds-fx-pop .ds-node-body {
   animation: ds-node-pop 300ms var(--ease-spring) var(--ds-delay, 0ms) backwards;
+}
+/* 落位前不露选中框/夹点/加号/折叠钮；摘掉类名后选中框按 ds-select-ring 收拢进来 */
+.react-flow__node.ds-fx-enter .ds-node.is-selected,
+.react-flow__node.ds-fx-pop .ds-node.is-selected {
+  outline-color: transparent;
+  animation: none;
+}
+.react-flow__node.ds-fx-enter :is(.ds-grip, .ds-quick, .ds-mind-collapse),
+.react-flow__node.ds-fx-pop :is(.ds-grip, .ds-quick, .ds-mind-collapse) {
+  opacity: 0 !important;
 }
 @keyframes ds-node-pop {
   from {

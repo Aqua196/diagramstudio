@@ -101,6 +101,7 @@ docs/          规格、实施契约、决策记录与课程文档
 | `docs/TEST_REPORT.md` | 测试报告（用例、覆盖率、质量门、已知缺陷） |
 | `docs/PERFORMANCE.md` | 性能测试报告（500 节点真实拖拽、主线程任务耗时、改版前后对比） |
 | `docs/REDESIGN.md` | 前端改版说明（问题清单、设计原则、前后截图对比） |
+| `docs/MOTION.md` | 动效设计与实现（画布动效引擎、页面转场、减少动态效果、验证方法） |
 | `docs/USER_GUIDE.md` | 用户手册（操作、快捷键、FAQ） |
 | `docs/DEMO_SCRIPT.md` | 课堂演示脚本 |
 | `docs/DEFENSE.md` | 答辩手册（选型、链路、20+ 问答、局限） |

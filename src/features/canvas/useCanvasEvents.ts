@@ -19,6 +19,7 @@ import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
 import { buildDuplicate, buildPaste, copySelection } from './clipboard'
 import { buildLayoutCommand } from './layout'
+import { followLayout } from './useCameraFollow'
 
 interface Deps {
   selectIds: (nodeIds: string[], edgeIds: string[]) => void
@@ -137,7 +138,9 @@ export function useCanvasEvents(doc: DiagramDoc, plugin: DiagramPlugin, deps: De
           const dir = (e as CustomEvent).detail as 'TB' | 'LR' | undefined
           const d = docRef.current
           const cmd = buildLayoutCommand(d, pluginRef.current, dir ?? d.settings.layoutDirection)
-          if (cmd) execute(cmd)
+          if (!cmd) return
+          execute(cmd)
+          followLayout(rfRef.current, useDocumentStore.getState().doc)
         },
       ],
       [EV.FIT, () => rfRef.current.fitView({ duration: 200, padding: 0.2, maxZoom: 1.5 })],

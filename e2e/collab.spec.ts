@@ -4,8 +4,8 @@ import { expect, test } from '@playwright/test'
 import { dropShape, freshHome, newBlank, watchConsole } from './helpers'
 
 test('8 协作：两上下文同房同步新增节点', async ({ browser }) => {
-  const ctxA = await browser.newContext()
-  const ctxB = await browser.newContext()
+  const ctxA = await browser.newContext({ reducedMotion: 'reduce' })
+  const ctxB = await browser.newContext({ reducedMotion: 'reduce' })
   const a = await ctxA.newPage()
   const b = await ctxB.newPage()
   const probA = watchConsole(a)

@@ -23,6 +23,7 @@ import { useCanvasEvents } from './useCanvasEvents'
 import { useCanvasKeys } from './useCanvasKeys'
 import { useExportEvents } from './useExportEvents'
 import { useCollabCursor } from './useCollabCursor'
+import { useRevealEditing } from './useCameraFollow'
 
 export type FNode = Node<FlowNodeData>
 export type FEdge = Edge<FlowEdgeData>
@@ -36,6 +37,7 @@ export interface CanvasWiring {
     onDrop: React.DragEventHandler
     onDragOver: React.DragEventHandler
     onDoubleClick: React.MouseEventHandler
+    onPointerDown: React.PointerEventHandler
   }
   empty: boolean
 }
@@ -81,6 +83,7 @@ export function useCanvasWiring(doc: DiagramDoc, plugin: DiagramPlugin): CanvasW
   const drag = useDragGuards(doc, plugin, setNodes)
   const rf = useReactFlow()
   const fitOnMount = useFitOnOpen(doc, rf)
+  useRevealEditing(rf)
   useExportEvents()
   const cursor = useCollabCursor(rf)
   const conn = useConnectFlow(doc, plugin, wrapperRef)

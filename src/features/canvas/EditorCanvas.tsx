@@ -77,6 +77,7 @@ function FlowInner() {
       onDrop={drop.onDrop}
       onDragOver={drop.onDragOver}
       onDoubleClick={drop.onDoubleClick}
+      onPointerDownCapture={drop.onPointerDown}
     >
       <CanvasContextMenu>
         <div className="ds-canvas-flow">

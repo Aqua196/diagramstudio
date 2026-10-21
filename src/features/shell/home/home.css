@@ -265,3 +265,67 @@
     padding: 0 16px;
   }
 }
+
+/* —— 开场（每次会话首次进首页一次，见 HomePage useIntro）：标题浮起，三张新建卡依次落下，
+   卡里的示例缩略图节点逐个弹出、连线随后显现；最近的图表跟在后面。位移用独立 translate 属性，
+   与卡片悬停时的 transform 叠加互不覆盖。 —— */
+.ds-home[data-intro] .ds-hero-title {
+  --rise-y: 10px;
+  animation: ds-rise-in 420ms var(--ease-emph) backwards;
+}
+.ds-home[data-intro] .ds-hero-sub {
+  --rise-y: 8px;
+  animation: ds-rise-in 420ms 60ms var(--ease-emph) backwards;
+}
+.ds-new-grid > :nth-child(1) {
+  --card-delay: 120ms;
+}
+.ds-new-grid > :nth-child(2) {
+  --card-delay: 190ms;
+}
+.ds-new-grid > :nth-child(3) {
+  --card-delay: 260ms;
+}
+.ds-home[data-intro] .ds-new-card {
+  --rise-y: 14px;
+  animation: ds-rise-in 460ms var(--ease-emph) var(--card-delay, 0ms) backwards;
+}
+.ds-home[data-intro] .ds-new-mini .ds-mini-node {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ds-mini-pop 280ms var(--ease-spring) backwards;
+  animation-delay: calc(var(--card-delay, 0ms) + 180ms + min(var(--k, 0) * 26ms, 420ms));
+}
+.ds-home[data-intro] .ds-new-mini .ds-mini-edge {
+  animation: ds-fade-in 260ms var(--ease-out) backwards;
+  animation-delay: calc(var(--card-delay, 0ms) + 320ms + min(var(--k, 0) * 26ms, 420ms));
+}
+@keyframes ds-mini-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+.ds-home[data-intro] .ds-doc-card {
+  --rise-y: 10px;
+  animation: ds-rise-in 360ms var(--ease-out) backwards;
+  animation-delay: calc(420ms + min(var(--i, 0) * 40ms, 320ms));
+}
+.ds-doc-grid > :nth-child(2) {
+  --i: 1;
+}
+.ds-doc-grid > :nth-child(3) {
+  --i: 2;
+}
+.ds-doc-grid > :nth-child(4) {
+  --i: 3;
+}
+.ds-doc-grid > :nth-child(5) {
+  --i: 4;
+}
+.ds-doc-grid > :nth-child(6) {
+  --i: 5;
+}
+.ds-doc-grid > :nth-child(n + 7) {
+  --i: 6;
+}
