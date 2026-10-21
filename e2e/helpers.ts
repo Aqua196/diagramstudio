@@ -88,3 +88,31 @@ export async function paneCenter(page: Page): Promise<{ x: number; y: number }> 
   const box = (await page.locator('.react-flow__pane').boundingBox())!
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 }
+
+/** 等所有动效播完：页面/主题转场结束、画布动效空闲（html[data-motion]）、有限时长的动画都已停。
+ *  用定时轮询而非 rAF 轮询：在 rAF 回调里取样，总能碰上本帧刚开始的过渡，永远等不到「静止」 */
+export async function settle(page: Page): Promise<void> {
+  const quiet = () => {
+    const h = document.documentElement
+    if (h.classList.contains('ds-vt-page') || h.classList.contains('ds-vt-theme')) return false
+    if (h.dataset.motion === 'busy') return false
+    return document
+      .getAnimations()
+      .every((a) => a.playState !== 'running' || a.effect?.getComputedTiming().iterations === Infinity)
+  }
+  await page.waitForFunction(quiet, null, { polling: 50 })
+}
+
+/** 画面上的真实节点（不含退场残影） */
+export const NODE = '.react-flow__node:not(.ds-fx-ghost)'
+
+/**
+ * 不经页面转场进入编辑器后再打开动效：配置里为测真实帧耗加了 --disable-frame-rate-limit/--disable-gpu-vsync，
+ * 这种无头模式下一旦播过 View Transition，requestAnimationFrame 就再也不触发（默认参数与真实浏览器无此问题），
+ * 之后 Playwright 的点击稳定性检查会一直等下去。转场本身由 motion.spec m1 单独验证。
+ */
+export async function openWithoutTransition(page: Page, open: () => Promise<void>): Promise<void> {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await open()
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+}

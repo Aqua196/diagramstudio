@@ -105,9 +105,16 @@ export function useCanvasDrop(
     [addShape],
   )
 
-  // 双击空白放一个默认形状节点并直接编辑文字（RF 的双击缩放已关闭，见 useCanvasWiring）
+  // 双击空白放一个默认形状节点并直接编辑文字（RF 的双击缩放已关闭，见 useCanvasWiring）。
+  // 在首页双击卡片（文件管理器习惯）时第一下打开了编辑器、第二下落在新画布上，浏览器照样派发 dblclick：
+  // 画布上至少按下过两次才算真的双击画布
+  const presses = useRef(0)
+  const onPointerDown = useCallback(() => {
+    presses.current++
+  }, [])
   const onDoubleClick = useCallback(
     (e: MouseEvent) => {
+      if (presses.current < 2) return
       const t = e.target as HTMLElement
       if (!t.closest('.react-flow__pane')) return
       if (t.closest('.react-flow__node') || t.closest('.ds-connect-menu')) return
@@ -128,5 +135,5 @@ export function useCanvasDrop(
     [rf],
   )
 
-  return { onDragOver, onDrop, onDoubleClick }
+  return { onDragOver, onDrop, onDoubleClick, onPointerDown }
 }

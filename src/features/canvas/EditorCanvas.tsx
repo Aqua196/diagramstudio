@@ -65,6 +65,7 @@ function FlowInner() {
   const plugin = useMemo(() => getPlugin(doc.type), [doc.type])
   const tool = useUiStore((s) => s.tool)
   const minimapVisible = useUiStore((s) => s.minimapVisible)
+  const manySelected = useUiStore((s) => s.selection.nodeIds.length > 30)
   const { rfProps, wrapperRef, drop } = useCanvasWiring(doc, plugin)
 
   return (
@@ -72,9 +73,11 @@ function FlowInner() {
       ref={wrapperRef}
       className="ds-canvas"
       data-tool={tool}
+      data-many-selected={manySelected || undefined}
       onDrop={drop.onDrop}
       onDragOver={drop.onDragOver}
       onDoubleClick={drop.onDoubleClick}
+      onPointerDownCapture={drop.onPointerDown}
     >
       <CanvasContextMenu>
         <div className="ds-canvas-flow">

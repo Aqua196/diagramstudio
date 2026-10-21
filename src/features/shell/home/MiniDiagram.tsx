@@ -1,12 +1,14 @@
 // 文档缩略图：按节点形状/配色把整张图缩画成 SVG（首页新建卡与最近文档共用）。
 // 不画文字，用一条短横线示意，缩到很小也干净。
-import { memo, useMemo } from 'react'
+import { memo, useMemo, type CSSProperties } from 'react'
 import type { DiagramDoc, DiagramNode } from '@/core/model/types'
 import { getPlugin } from '@/plugins/registry'
 import { NODE_COLORS, resolveStroke, type NodeColorKey, type ThemeName } from '@/core/palette'
 import { useUiStore } from '@/store/uiStore'
 
 const PAD = 14
+/** 首页开场时缩略图「自己拼出来」用的次序变量（动画本身在 home.css，只在开场时生效） */
+const order = (k: number) => ({ '--k': k }) as CSSProperties
 
 function fillOf(n: DiagramNode, theme: ThemeName): string {
   if (n.kind === 'centerTopic') return 'var(--accent)'
@@ -138,6 +140,8 @@ function MiniDiagramInner({ doc: raw, className }: { doc: DiagramDoc; className?
         return (
           <line
             key={i}
+            className="ds-mini-edge"
+            style={order(i)}
             x1={x1}
             y1={y1}
             x2={x2}
@@ -149,8 +153,8 @@ function MiniDiagramInner({ doc: raw, className }: { doc: DiagramDoc; className?
           />
         )
       })}
-      {nodes.map((n) => (
-        <g key={n.id}>
+      {nodes.map((n, i) => (
+        <g key={n.id} className="ds-mini-node" style={order(i)}>
           <NodeShape n={n} theme={theme} />
           <TextBar n={n} />
           <FieldBars n={n} />

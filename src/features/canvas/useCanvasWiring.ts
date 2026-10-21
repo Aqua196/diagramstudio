@@ -23,6 +23,7 @@ import { useCanvasEvents } from './useCanvasEvents'
 import { useCanvasKeys } from './useCanvasKeys'
 import { useExportEvents } from './useExportEvents'
 import { useCollabCursor } from './useCollabCursor'
+import { useRevealEditing } from './useCameraFollow'
 
 export type FNode = Node<FlowNodeData>
 export type FEdge = Edge<FlowEdgeData>
@@ -36,6 +37,7 @@ export interface CanvasWiring {
     onDrop: React.DragEventHandler
     onDragOver: React.DragEventHandler
     onDoubleClick: React.MouseEventHandler
+    onPointerDown: React.PointerEventHandler
   }
   empty: boolean
 }
@@ -70,7 +72,10 @@ export function useCanvasWiring(doc: DiagramDoc, plugin: DiagramPlugin): CanvasW
     useFlowSync(doc, plugin)
   const nodesRef = useRef<FNode[]>(nodes)
   nodesRef.current = nodes
-  const visibleNodeIds = useCallback(() => nodesRef.current.map((n) => n.id), [])
+  const visibleNodeIds = useCallback(
+    () => nodesRef.current.filter((n) => !n.data.ghost).map((n) => n.id),
+    [],
+  )
 
   const setEditingNode = useCanvasStore((s) => s.setEditingNode)
   const setEditingEdge = useCanvasStore((s) => s.setEditingEdge)
@@ -78,11 +83,12 @@ export function useCanvasWiring(doc: DiagramDoc, plugin: DiagramPlugin): CanvasW
   const drag = useDragGuards(doc, plugin, setNodes)
   const rf = useReactFlow()
   const fitOnMount = useFitOnOpen(doc, rf)
+  useRevealEditing(rf)
   useExportEvents()
   const cursor = useCollabCursor(rf)
   const conn = useConnectFlow(doc, plugin, wrapperRef)
   const drop = useCanvasDrop(doc, plugin, wrapperRef)
-  useCanvasEvents(doc, plugin, { containerRef: wrapperRef, selectIds, visibleNodeIds })
+  useCanvasEvents(doc, plugin, { selectIds, visibleNodeIds })
   useCanvasKeys(doc, plugin, { selectIds })
 
   const startNodeEdit = useCallback(

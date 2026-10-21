@@ -6,8 +6,17 @@ import type { DiagramDoc, DiagramEdge, DiagramNode } from '@/core/model/types'
 import { isNodeColorKey } from '@/core/palette'
 import type { Selection } from './uiStore'
 
-export type FlowNodeData = { node: DiagramNode; plugin: DiagramPlugin }
-export type FlowEdgeData = { edge: DiagramEdge }
+export type FlowNodeData = {
+  node: DiagramNode
+  plugin: DiagramPlugin
+  /** 视图层退场残影（已删除/已折叠的节点正在收回），不可交互，动画结束即移除 */
+  ghost?: boolean
+}
+export type FlowEdgeData = {
+  edge: DiagramEdge
+  /** 视图层退场残影（连线淡出中），不可交互 */
+  ghost?: boolean
+}
 
 /** 文档 → React Flow nodes：按 zOrder 排序，后者在上 */
 export function selectFlowNodes(doc: DiagramDoc, plugin: DiagramPlugin): Node<FlowNodeData>[] {

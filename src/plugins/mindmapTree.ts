@@ -112,7 +112,10 @@ export function reparentCommand(doc: DiagramDoc, draggedId: string, targetId: st
 }
 
 export function mkChild(doc: DiagramDoc, parentId: string | null): Command {
-  const child = createNode('topic', { x: 0, y: 0 }, { w: 140, h: 40 }, zh.plugins.mindmap.newTopic)
+  // 先放在父节点处，随后的自动布局把它推到落点：画面上就是从父节点里长出来
+  const parent = parentId ? doc.nodes[parentId] : undefined
+  const at = parent ? { x: parent.position.x, y: parent.position.y } : { x: 0, y: 0 }
+  const child = createNode('topic', at, { w: 140, h: 40 }, zh.plugins.mindmap.newTopic)
   child.data = { parentId }
   const fill = colorForNewChild(doc, parentId)
   if (fill) child.style.fill = fill

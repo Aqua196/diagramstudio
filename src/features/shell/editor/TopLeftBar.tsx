@@ -7,6 +7,7 @@ import { useUiStore } from '@/store/uiStore'
 import { zh } from '@/i18n/zh'
 import { Tip } from '@/components/Tip'
 import { BrandMark } from '@/components/BrandMark'
+import { goHome } from '../docs/docNav'
 
 function DocTitle() {
   const title = useDocumentStore((s) => s.doc.title)
@@ -59,7 +60,6 @@ function SaveStatus() {
 }
 
 export function TopLeftBar() {
-  const setRoute = useUiStore((s) => s.setRoute)
   return (
     <div className="ds-float ds-corner ds-corner-tl">
       <Tip label={zh.editor.home}>
@@ -67,7 +67,7 @@ export function TopLeftBar() {
           type="button"
           className="ds-home-btn"
           aria-label={zh.editor.home}
-          onClick={() => setRoute('home')}
+          onClick={goHome}
         >
           <ChevronLeft size={16} className="ds-home-chev" />
           <BrandMark size={22} />

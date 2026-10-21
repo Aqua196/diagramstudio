@@ -41,10 +41,15 @@
   --r-lg: 12px;
   --r-xl: 16px;
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+  /* 动效：时长三档 + 曲线四种（详见 styles/motion.css） */
   --dur-fast: 120ms;
   --dur-med: 200ms;
   --dur-layout: 300ms;
+  --dur-slow: 420ms;
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-emph: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
   color-scheme: light;
 }
 

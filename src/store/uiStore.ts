@@ -10,6 +10,8 @@ export interface Toast {
   id: string
   kind: 'info' | 'success' | 'error'
   text: string
+  /** 退场动画中（160ms 后移除） */
+  leaving?: boolean
 }
 
 export interface Selection {
@@ -62,6 +64,7 @@ function applyThemeClass(theme: ThemeName) {
 }
 
 let toastSeq = 0
+const TOAST_EXIT_MS = 160
 
 export const useUiStore = create<UiStore>()((set, get) => ({
   route: 'editor',
@@ -98,7 +101,12 @@ export const useUiStore = create<UiStore>()((set, get) => ({
     // 提示条自动消退；错误停留更久
     setTimeout(() => get().dismissToast(id), kind === 'error' ? 6000 : 3000)
   },
-  dismissToast: (id) => set({ toasts: get().toasts.filter((t) => t.id !== id) }),
+  // 先标记退场让 CSS 播放下沉淡出，再真正移除
+  dismissToast: (id) => {
+    if (!get().toasts.some((t) => t.id === id && !t.leaving)) return
+    set({ toasts: get().toasts.map((t) => (t.id === id ? { ...t, leaving: true } : t)) })
+    setTimeout(() => set({ toasts: get().toasts.filter((t) => t.id !== id) }), TOAST_EXIT_MS)
+  },
   setShortcutsHelpOpen: (shortcutsHelpOpen) => set({ shortcutsHelpOpen }),
   setLastSavedAt: (lastSavedAt) => set({ lastSavedAt }),
 }))

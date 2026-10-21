@@ -1,6 +1,6 @@
 // EV.* 跨模块事件监听（IMPL_CONTRACT §5）：菜单/顶栏/快捷键只 dispatch，
 // 这里统一落成命令或视图操作。所有文档变更一律 execute(command)。
-import { useEffect, useRef, type RefObject } from 'react'
+import { useEffect, useRef } from 'react'
 import { useReactFlow } from '@xyflow/react'
 import { EV } from '@/core/events'
 import type { Command } from '@/core/commands/command'
@@ -18,10 +18,10 @@ import type { DiagramDoc } from '@/core/model/types'
 import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
 import { buildDuplicate, buildPaste, copySelection } from './clipboard'
-import { animateLayout, buildLayoutCommand } from './layout'
+import { buildLayoutCommand } from './layout'
+import { followLayout } from './useCameraFollow'
 
 interface Deps {
-  containerRef: RefObject<HTMLDivElement | null>
   selectIds: (nodeIds: string[], edgeIds: string[]) => void
   visibleNodeIds: () => string[]
 }
@@ -38,7 +38,7 @@ export function useCanvasEvents(doc: DiagramDoc, plugin: DiagramPlugin, deps: De
   useEffect(() => {
     const execute = (cmd: Command) => useDocumentStore.getState().execute(cmd)
     const sel = () => useUiStore.getState().selection
-    const { containerRef, selectIds, visibleNodeIds } = deps
+    const { selectIds, visibleNodeIds } = deps
 
     const handlers: Array<[string, (e: Event) => void]> = [
       [
@@ -138,10 +138,9 @@ export function useCanvasEvents(doc: DiagramDoc, plugin: DiagramPlugin, deps: De
           const dir = (e as CustomEvent).detail as 'TB' | 'LR' | undefined
           const d = docRef.current
           const cmd = buildLayoutCommand(d, pluginRef.current, dir ?? d.settings.layoutDirection)
-          if (cmd) {
-            execute(cmd)
-            animateLayout(containerRef.current)
-          }
+          if (!cmd) return
+          execute(cmd)
+          followLayout(rfRef.current, useDocumentStore.getState().doc)
         },
       ],
       [EV.FIT, () => rfRef.current.fitView({ duration: 200, padding: 0.2, maxZoom: 1.5 })],
@@ -185,10 +184,6 @@ export function useCanvasEvents(doc: DiagramDoc, plugin: DiagramPlugin, deps: De
       return
     }
     const cmd = buildLayoutCommand(d, p, d.settings.layoutDirection)
-    if (cmd) {
-      useDocumentStore.getState().execute({ ...cmd, mergeWithPrevious: true })
-      animateLayout(deps.containerRef.current)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (cmd) useDocumentStore.getState().execute({ ...cmd, mergeWithPrevious: true })
   }, [doc])
 }

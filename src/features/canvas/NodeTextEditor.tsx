@@ -7,12 +7,15 @@ import type { DiagramNode } from '@/core/model/types'
 import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
 import { zh } from '@/i18n/zh'
+import { enterRemaining } from './motion/hints'
 
 export function NodeTextEditor({ node, onDone }: { node: DiagramNode; onDone: () => void }) {
   const { x, y, zoom } = useViewport()
   const execute = useDocumentStore((s) => s.execute)
   const setTextEditing = useUiStore((s) => s.setTextEditing)
   const [value, setValue] = useState(node.text)
+  // 新节点还在从父/源节点长出时，编辑框等它快落位再浮现（焦点立即就绪，可以直接打字）
+  const [defer] = useState(() => Math.max(0, Math.round(enterRemaining(node.id) - 80)))
   const ref = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -45,6 +48,7 @@ export function NodeTextEditor({ node, onDone }: { node: DiagramNode; onDone: ()
         fontSize: node.style.fontSize * zoom,
         fontWeight: node.style.bold ? 700 : 400,
         textAlign: node.style.align,
+        animationDelay: defer ? `${defer}ms` : undefined,
       }}
       onChange={(e) => setValue(e.target.value)}
       onBlur={commit}

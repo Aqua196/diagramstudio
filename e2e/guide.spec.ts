@@ -62,7 +62,7 @@ test('g6 分享弹层（已开启协作）', async ({ page, browser }) => {
   await page.getByRole('button', { name: '分享' }).click()
   await page.getByRole('button', { name: '开启协作并生成链接' }).click()
   await expect(page.locator('.ds-status-dot.is-connected')).toBeVisible({ timeout: 15_000 })
-  const peerCtx = await browser.newContext()
+  const peerCtx = await browser.newContext({ reducedMotion: 'reduce' })
   const peer = await peerCtx.newPage()
   await peer.goto(page.url())
   await expect(peer.locator('.react-flow__node')).toHaveCount(1, { timeout: 15_000 })

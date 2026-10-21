@@ -62,8 +62,7 @@ export async function importJson(): Promise<void> {
     return
   }
   saveDoc(imported.doc)
-  openDocInEditor(imported.doc)
-  toast('success', zh.io.importDone)
+  openDocInEditor(imported.doc, { reveal: true, after: () => toast('success', zh.io.importDone) })
 }
 
 // Mermaid 导入（A3）：走 importer.ts 统一拼 doc（dagre 摆位），这里只管文件与提示
@@ -80,11 +79,8 @@ export async function importMermaid(): Promise<void> {
     return
   }
   saveDoc(r.doc)
-  openDocInEditor(r.doc)
-  toast(
-    'success',
-    r.skipped ? `${zh.io.importDone}（${r.skipped} ${zh.io.skippedLines}）` : zh.io.importDone,
-  )
+  const msg = r.skipped ? `${zh.io.importDone}（${r.skipped} ${zh.io.skippedLines}）` : zh.io.importDone
+  openDocInEditor(r.doc, { reveal: true, after: () => toast('success', msg) })
 }
 
 // 分享（A2）：share() 建房并把 ?room= 写进地址栏，链接进剪贴板

@@ -1,5 +1,5 @@
 // 首页：欢迎语 + 三种图的新建卡（真实示例缩略图）+ 最近的图表（缩略图网格）。
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { FileJson, Moon, Sun, Upload, Workflow } from 'lucide-react'
 import { emit, EV } from '@/core/events'
@@ -9,6 +9,7 @@ import { fmt, zh } from '@/i18n/zh'
 import { BrandMark } from '@/components/BrandMark'
 import { IconButton } from '@/components/IconButton'
 import { listStoredDocs } from '../docs/docsStore'
+import { themeTransition } from '../transition'
 import { DocCard } from './DocCard'
 import { NewCard } from './NewCard'
 
@@ -50,19 +51,40 @@ function Header() {
         <IconButton
           icon={theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
           label={zh.editor.theme}
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          onClick={(e) => {
+            const r = e.currentTarget.getBoundingClientRect()
+            const next = theme === 'dark' ? 'light' : 'dark'
+            themeTransition(() => setTheme(next), { x: r.left + r.width / 2, y: r.top + r.height / 2 })
+          }}
         />
       </div>
     </header>
   )
 }
 
+/** 首页开场动画每次会话只播一次；从编辑器形变回来时不播（卡片正是形变的落点） */
+let introPlayed = false
+function useIntro(): boolean {
+  // 初始化函数保持纯：StrictMode 会调用两次，「已播」标记放到 effect 里写
+  const [intro, setIntro] = useState(
+    () => !introPlayed && !document.documentElement.classList.contains('ds-vt-page'),
+  )
+  useEffect(() => {
+    introPlayed = true
+    if (!intro) return
+    const t = window.setTimeout(() => setIntro(false), 1400)
+    return () => window.clearTimeout(t)
+  }, [intro])
+  return intro
+}
+
 export default function HomePage() {
   const [, setTick] = useState(0)
   const refresh = () => setTick((n) => n + 1)
+  const intro = useIntro()
   const docs = listStoredDocs()
   return (
-    <div className="ds-home">
+    <div className="ds-home" data-intro={intro || undefined}>
       <Header />
       <main className="ds-home-main">
         <section className="ds-hero">

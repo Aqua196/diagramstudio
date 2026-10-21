@@ -98,6 +98,12 @@ export const zh = {
     connectMenuTitle: '接一个什么形状？',
     textPlaceholder: '输入文字…',
     quickAdd: '添加相连的节点',
+    quickAddSide: {
+      top: '在上方添加相连的节点',
+      right: '在右侧添加相连的节点',
+      bottom: '在下方添加相连的节点',
+      left: '在左侧添加相连的节点',
+    },
     cardAria: '基数',
   },
   toolbar: {

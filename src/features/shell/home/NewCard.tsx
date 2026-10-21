@@ -5,11 +5,18 @@ import type { DiagramType } from '@/core/model/types'
 import { getPlugin } from '@/plugins/registry'
 import { zh } from '@/i18n/zh'
 import { MiniDiagram } from './MiniDiagram'
+import { markSharedSource } from '../transition'
 
 const DESCS: Record<DiagramType, string> = {
   flowchart: zh.home.flowchartDesc,
   mindmap: zh.home.mindmapDesc,
   er: zh.home.erDesc,
+}
+
+/** 新建前登记形变起点：这张卡的缩略图将「长成」编辑器画布 */
+function create(e: React.MouseEvent, type: DiagramType, templateId?: string) {
+  markSharedSource(e.currentTarget.closest('.ds-new-card')?.querySelector('.ds-new-preview') ?? null)
+  emit(EV.NEW_DOC, templateId === undefined ? { type } : { type, templateId })
 }
 
 export function NewCard({ type }: { type: DiagramType }) {
@@ -22,7 +29,7 @@ export function NewCard({ type }: { type: DiagramType }) {
         className="ds-new-main"
         tabIndex={-1}
         aria-hidden
-        onClick={() => emit(EV.NEW_DOC, { type })}
+        onClick={(e) => create(e, type)}
       >
         <span className="ds-new-preview">
           {example && <MiniDiagram doc={example} className="ds-new-mini" />}
@@ -37,7 +44,7 @@ export function NewCard({ type }: { type: DiagramType }) {
           type="button"
           className="ds-btn ds-btn-primary ds-btn-sm"
           aria-label={`${zh.home.newBlank}${zh.plugins.typeNames[type]}`}
-          onClick={() => emit(EV.NEW_DOC, { type })}
+          onClick={(e) => create(e, type)}
         >
           {zh.home.newBlank}
         </button>
@@ -45,7 +52,7 @@ export function NewCard({ type }: { type: DiagramType }) {
           <button
             type="button"
             className="ds-btn ds-btn-ghost ds-btn-sm"
-            onClick={() => emit(EV.NEW_DOC, { type, templateId: '0' })}
+            onClick={(e) => create(e, type, '0')}
           >
             {zh.home.fromExample}
             <ArrowRight size={13} />

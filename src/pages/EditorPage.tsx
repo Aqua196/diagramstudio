@@ -29,6 +29,12 @@ function Narrow() {
 export default function EditorPage() {
   const [narrow, setNarrow] = useState(() => window.innerWidth < MIN_WIDTH)
   const title = useDocumentStore((s) => s.doc.title)
+  // 浮动条的入场动画只在进入编辑器时播一次（之后提示条等重新挂载不再重播）
+  const [entering, setEntering] = useState(true)
+  useEffect(() => {
+    const t = window.setTimeout(() => setEntering(false), 900)
+    return () => window.clearTimeout(t)
+  }, [])
 
   useEffect(() => {
     const onResize = () => setNarrow(window.innerWidth < MIN_WIDTH)
@@ -45,8 +51,9 @@ export default function EditorPage() {
 
   return (
     <ReactFlowProvider>
-      <div className="ds-editor">
-        <main className="ds-editor-canvas">
+      <div className="ds-editor" data-enter={entering || undefined}>
+        {/* tabIndex=-1：从首页切进来时焦点落在画布上（键盘用户不至于掉回 body） */}
+        <main className="ds-editor-canvas" tabIndex={-1}>
           <h1 className="sr-only">{title}</h1>
           <EditorCanvas />
         </main>

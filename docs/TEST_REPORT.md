@@ -18,14 +18,24 @@
 | --- | --- | --- | --- |
 | 单元测试 | Vitest + jsdom | `src/core` 全部纯函数：命令/历史、布局、zod 校验、Mermaid、协作 diff、配色对比度、i18n 骨架 | SPEC §8 |
 | 交互逻辑单测 | Vitest + jsdom（真实 zustand store） | 快捷加号、统一建节点/连线、焦点交接、多选改色、插件上手钩子、空白文档回收 | REDESIGN.md §7 |
-| 端到端 | Playwright + @axe-core/playwright | SPEC §8 的 8 个场景；两档视口 1440×900 / 1280×720 | `playwright.config.ts` |
+| 动效 | Vitest 假时钟 + Playwright（开启 / 减少动态效果两种偏好） | 动效规划、补间、对账→帧→清理全链路；页面转场、连线跟随、残影、不进历史、减少动态效果下零动效 | docs/MOTION.md §8 |
+| 端到端 | Playwright + @axe-core/playwright | SPEC §8 的 8 个场景；两档视口 1440×900 / 1280×720；默认以「减少动态效果」运行（截图/计数/axe 不受动画中间态影响） | `playwright.config.ts` |
 | 质量门 | eslint / tsc -b / vitest --coverage / vite build | lint 零警告、core 行/语句/函数/分支覆盖 ≥80% | `vitest.config.ts` 阈值 |
 
 设计原则：`src/core` 禁引 React/zustand/@xyflow（ESLint 强制），因此领域逻辑全部可在毫秒级单测中验证；UI 正确性交给 e2e 与视觉截图。
 
 ## 2. 单元测试清单（Vitest）
 
-实测（2026-10-21，UI 改版后）：**22 个测试文件，125 个用例**（`pnpm test`，jsdom）。
+实测（2026-10-21，动效批次后）：**26 个测试文件，152 个用例**（`pnpm test`，jsdom）。
+
+动效批次新增：
+
+| 文件 | 用例 | 覆盖点 |
+| --- | --- | --- |
+| `src/features/canvas/motion/plan.test.ts`（11） | 动效规划 | 位移补间起止、最小位移与拖动中不补间、子主题从父节点中心长出、展开多层子树沿父链散开、「+」从连线另一端飞出而撤销类原地出现、折叠收回父节点/删除原地淡出、撤销加子主题按旧父链收回、父链成环不死循环、自绘次序（含回边成环）、自绘延迟递增且总时长有上限 |
+| `src/features/canvas/motion/tween.test.ts`（5） | 位置补间（假时钟） | 插值与精确终点、拖动接管后不再写入、全部跳到终点与剩余时长、连续卡顿直接收尾、缓动端点与回弹 |
+| `src/features/canvas/motion/canvasMotion.test.ts`（8） | 动效编排（假时钟 + 假定时器） | 不允许动效时原样返回、示例自绘/普通打开不播、加子主题飞出并落在文档位置、两段式改目标不跳回、删除残影到期移除、撤销提示圈与微移直接到位、finish 跳到终点、StrictMode 重挂载 |
+| `src/features/canvas/derive.test.ts`（3） | 派生元素 | 未变节点/连线沿用上一帧对象、变了的保留 measured（尺寸变则不保留）、选中状态还原 |
 
 改版批次新增 / 更新：
 
@@ -141,8 +151,11 @@
 | `e2e/features.spec.ts` | SPEC §8 场景 1–7 + 1b「形状坞点击→打字→快捷加号→工具条改色」 |
 | `e2e/collab.spec.ts` | SPEC §8 场景 8：分享弹层开启协作，两 browser context 同 `?room=` 双向同步 |
 | `e2e/guide.spec.ts` | 用户手册 8 张配图（仅 1440 档） |
+| `e2e/motion.spec.ts` | 动效（开启动效）：m1 首页形变进编辑器 + 画布自绘、播完无残留类名/转场命名、焦点落在画布；m2 Tab 加子主题逐帧采样，连线终点相对节点锚点的偏移全程不变；m3 删除残影立即出现且 `aria-hidden`+`inert`、真实节点数立即正确；m4 自动布局一次撤销回到原位（动效不进历史）；m5 连线工具条改样式不重建不丢焦点；m6（减少动态效果）全程零转场、零动效类名、无在播动画 |
 
-共用助手：`e2e/helpers.ts`（新建/示例、拖入、把柄连线、选边）、`e2e/perf.ts`（CDP Trace 主线程统计）。实测（2026-10-21）：1440 档 33 个、1280 档 25 个（另 8 个手册配图在 1280 档跳过），全部通过。
+共用助手：`e2e/helpers.ts`（新建/示例、拖入、把柄连线、选边、`settle` 等动效播完、`openWithoutTransition`）、`e2e/perf.ts`（CDP Trace 主线程统计）。实测（2026-10-21，动效批次后）：1440 档 40 个、1280 档 32 个（另 8 个手册配图在 1280 档跳过），全部通过。
+
+> 测试环境注意：配置里为测真实帧耗加了 `--disable-frame-rate-limit --disable-gpu-vsync`。这种无头模式下一旦播过 View Transition，`requestAnimationFrame` 就不再触发（默认参数与真实浏览器无此问题），Playwright 的点击稳定性检查会一直等待；因此除 m1 外的动效用例与性能用例都「不经转场进入编辑器后再打开动效」。应用侧另有 1.5s 转场看门狗。
 
 SPEC §8 场景对照（全部已实现）：
 
