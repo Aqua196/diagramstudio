@@ -24,7 +24,6 @@ import { PeerCursors } from './PeerCursors'
 import { CanvasContextMenu } from './CanvasContextMenu'
 import { EmptyState } from './EmptyState'
 import { AlignmentGuides } from './AlignmentGuides'
-import { NodeTextEditor } from './NodeTextEditor'
 import { ConnectMenu } from './ConnectMenu'
 import { SelectionToolbar } from './toolbar/SelectionToolbar'
 
@@ -42,17 +41,13 @@ function GridLayer() {
 function Overlays() {
   const doc = useDocumentStore((s) => s.doc)
   const plugin = useMemo(() => getPlugin(doc.type), [doc.type])
-  const editingNodeId = useCanvasStore((s) => s.editingNodeId)
-  const setEditingNode = useCanvasStore((s) => s.setEditingNode)
   const connectMenu = useCanvasStore((s) => s.connectMenu)
   const setConnectMenu = useCanvasStore((s) => s.setConnectMenu)
   const empty = Object.keys(doc.nodes).length === 0
-  const editingNode = editingNodeId ? (doc.nodes[editingNodeId] ?? null) : null
   return (
     <>
       <AlignmentGuides />
       {empty && <EmptyState />}
-      {editingNode && <NodeTextEditor node={editingNode} onDone={() => setEditingNode(null)} />}
       {connectMenu && (
         <ConnectMenu menu={connectMenu} plugin={plugin} onClose={() => setConnectMenu(null)} />
       )}

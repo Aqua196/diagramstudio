@@ -7,6 +7,7 @@ import { collapsedDescendants, mindmapLayout, mindmapRootId } from '@/core/layou
 import { createDoc, createNode } from '@/core/model/factories'
 import type { DiagramDoc, DiagramNode } from '@/core/model/types'
 import type { DiagramPlugin, EditorContext, ShapeDef, ShapeRenderContext } from '@/core/plugin'
+import { nodeText } from './shapekit'
 import { zh } from '@/i18n/zh'
 import { shapeIcons } from './shapeIcons'
 import {
@@ -63,7 +64,7 @@ function MindText({ node, ctx, accent }: { node: DiagramNode; ctx: ShapeRenderCo
           wordBreak: 'break-word',
         }}
       >
-        {ctx.editing ? '' : node.text}
+        {nodeText(node, ctx)}
       </div>
     </foreignObject>
   )

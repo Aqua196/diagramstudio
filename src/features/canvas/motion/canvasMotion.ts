@@ -10,7 +10,7 @@ import { cascadeFx } from './cascade'
 import { browserEnv, type MotionEnv } from './env'
 import { FxBook } from './fxBook'
 import { isGhostEdge } from './ghosts'
-import { clearEnters, takeInstant, takeReveal } from './hints'
+import { takeInstant, takeReveal } from './hints'
 import { composeLists, plain, toView, type Lists } from './compose'
 import { planMotion, type Pt, type ViewNode } from './plan'
 import { stepChanged, stepDraws, stepEnters, stepExits, stepMoves, type Change, type StepCtx } from './steps'
@@ -99,7 +99,6 @@ export class CanvasMotion {
     const gone = new Set(this.book.ghosts.keys())
     const goneEdges = new Set(this.book.ghostEdges.keys())
     this.book.clear()
-    clearEnters()
     this.setNodes((ns) =>
       ns
         .filter((n) => !(n.data.ghost && gone.has(n.id)))
@@ -157,7 +156,6 @@ export class CanvasMotion {
   private reset(): void {
     this.tween.finishAll()
     this.book.clear()
-    clearEnters()
     if (this.timer) this.env.clearTimer(this.timer)
     this.timer = 0
     this.env.busy(false)
@@ -183,7 +181,6 @@ export class CanvasMotion {
   private sweep(): void {
     const now = this.env.clock.now()
     const { fxDone, gone, edgeFxDone, goneEdges } = this.book.expire(now)
-    clearEnters(now)
     for (const id of gone) this.tween.stop(id)
     if (fxDone.size || gone.size) {
       this.setNodes((ns) =>

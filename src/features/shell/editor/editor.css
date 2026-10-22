@@ -122,10 +122,76 @@
   transform: translateY(-50%);
   z-index: 30;
 }
-.ds-dock .ds-icon-btn {
-  width: 40px;
+.ds-dock {
+  align-items: stretch;
+}
+/* 坞的每一项：收起时 40×40 只露图标；展开时名称与快捷键从图标右侧滑出，整条坞随之变宽 */
+.ds-dock .ds-dock-item {
+  justify-content: flex-start;
+  width: auto;
+  min-width: 40px;
   height: 40px;
+  padding: 0 11px;
   border-radius: var(--r-md);
+  white-space: nowrap;
+}
+.ds-dock-item > svg {
+  flex-shrink: 0;
+}
+.ds-dock-label,
+.ds-dock-kbd,
+.ds-dock-hint {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  white-space: nowrap;
+  transition:
+    max-width var(--dur-layout) var(--ease-emph),
+    margin var(--dur-layout) var(--ease-emph),
+    opacity var(--dur-fast) ease-out;
+}
+.ds-dock-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.ds-dock-kbd {
+  margin-left: auto;
+  padding-left: 0;
+  font-size: 11px;
+  font-feature-settings: 'tnum';
+  color: var(--ink-3);
+}
+.ds-dock-hint {
+  display: block;
+  max-height: 0;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--ink-3);
+  transition:
+    max-width var(--dur-layout) var(--ease-emph),
+    max-height var(--dur-layout) var(--ease-emph),
+    opacity var(--dur-fast) ease-out;
+}
+/* 展开：鼠标停留 120ms 才展开（划过时不乱弹），离开立即收起；键盘移入同样展开 */
+.ds-dock:hover :is(.ds-dock-label, .ds-dock-kbd, .ds-dock-hint),
+.ds-dock:has(:focus-visible) :is(.ds-dock-label, .ds-dock-kbd, .ds-dock-hint) {
+  max-width: 160px;
+  opacity: 1;
+  transition-delay: 120ms;
+}
+.ds-dock:hover .ds-dock-label,
+.ds-dock:has(:focus-visible) .ds-dock-label {
+  margin-left: 10px;
+}
+.ds-dock:hover .ds-dock-kbd,
+.ds-dock:has(:focus-visible) .ds-dock-kbd {
+  padding-left: 16px;
+}
+.ds-dock:hover .ds-dock-hint,
+.ds-dock:has(:focus-visible) .ds-dock-hint {
+  max-height: 32px;
+  margin: 2px 11px 4px;
 }
 .ds-dock-shape {
   cursor: grab;

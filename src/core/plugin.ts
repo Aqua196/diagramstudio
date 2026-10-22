@@ -10,6 +10,8 @@ export interface ShapeRenderContext {
   dispatch: (cmd: Command) => void
   /** 当前文档（形状做结构性渲染时用，如判断有无子节点） */
   doc: DiagramDoc
+  /** 编辑中时画布提供的行内编辑框：形状把它放在原本显示文字的位置（类型由画布侧决定） */
+  editor?: unknown
 }
 
 export interface ShapeDef<R = unknown> {

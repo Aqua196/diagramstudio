@@ -425,30 +425,49 @@
   height: 1px;
 }
 
-/* 文字行内编辑 */
+/* 文字行内编辑：输入框长在形状自己的文字位里，继承形状的字号/字重/颜色/对齐，本身透明无框；
+   正在编辑的形状沿自身轮廓描主题色并发一圈柔光（菱形就是菱形、圆就是圆），不再盖统一的方框 */
 .ds-text-editor {
-  position: absolute;
-  z-index: 30;
-  resize: none;
-  padding: 6px 8px;
-  font-family: inherit;
-  line-height: 1.35;
-  color: var(--ink);
-  background: var(--surface);
+  display: block;
+  width: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
   border: none;
-  border-radius: var(--r-md);
-  box-shadow:
-    0 0 0 2px var(--accent),
-    0 0 0 6px var(--accent-wash);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  resize: none;
+  overflow: hidden auto;
   outline: none;
-  overflow: hidden;
-  animation: ds-editor-in 160ms var(--ease-out) backwards;
+  box-shadow: none;
+  caret-color: var(--accent);
+  pointer-events: auto;
+  cursor: text;
 }
-@keyframes ds-editor-in {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
+.ds-text-editor:focus-visible {
+  box-shadow: none;
+}
+.ds-text-editor::placeholder {
+  color: currentColor;
+  opacity: 0.45;
+}
+.ds-text-editor::selection {
+  background: var(--accent-wash-2);
+}
+/* 只有一个节点在编辑，滤镜不影响整图性能 */
+.ds-node.is-editing {
+  --node-stroke: var(--accent) !important;
+}
+.ds-node.is-editing .ds-node-body {
+  filter: drop-shadow(0 0 1px var(--accent)) drop-shadow(0 0 6px var(--accent-wash-2));
+}
+.ds-node.is-selected.is-editing {
+  outline-color: transparent;
+}
+.react-flow__node:has(.ds-node.is-editing) .ds-handle {
+  opacity: 0;
 }
 
 /* —— 上下文工具条 —— */

@@ -20,17 +20,25 @@ function svgShape(
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden>
       {body(w, h)}
-      <text
-        x={w / 2}
-        y={h / 2}
-        textAnchor="middle"
-        dominantBaseline="central"
-        fontSize={node.style.fontSize}
-        fontWeight={node.style.bold ? 700 : 400}
-        fill="var(--node-text)"
-      >
-        {ctx.editing ? '' : node.text}
-      </text>
+      {ctx.editing ? (
+        <foreignObject x={6} y={6} width={w - 12} height={h - 12}>
+          <div style={{ display: 'flex', alignItems: 'center', height: '100%', fontSize: node.style.fontSize, color: 'var(--node-text)' }}>
+            {ctx.editor as ReactNode}
+          </div>
+        </foreignObject>
+      ) : (
+        <text
+          x={w / 2}
+          y={h / 2}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={node.style.fontSize}
+          fontWeight={node.style.bold ? 700 : 400}
+          fill="var(--node-text)"
+        >
+          {node.text}
+        </text>
+      )}
     </svg>
   )
 }

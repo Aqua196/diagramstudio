@@ -4,6 +4,7 @@
 import type { ReactNode } from 'react'
 import type { DiagramNode } from '@/core/model/types'
 import type { ShapeRenderContext } from '@/core/plugin'
+import { nodeText } from './shapekit'
 import { entityHeight, FieldRows, fieldsOf, HEAD_H, ROW_H } from './erFields'
 
 export { ROW_H, HEAD_H }
@@ -32,7 +33,7 @@ export function entityRender(
       <line x1={0} y1={HEAD_H} x2={w} y2={HEAD_H} stroke="var(--node-stroke)" strokeWidth={node.style.strokeWidth} />
       <foreignObject x={0} y={0} width={w} height={HEAD_H}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: node.style.fontSize, fontWeight: 650, color: 'var(--node-text)', overflow: 'hidden', pointerEvents: 'none' }}>
-          {ctx.editing ? '' : node.text}
+          {nodeText(node, ctx)}
         </div>
       </foreignObject>
       <FieldRows node={node} ctx={ctx} />

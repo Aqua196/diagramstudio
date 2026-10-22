@@ -13,6 +13,7 @@ import { useCanvasStore } from './canvasStore'
 import { nodeTextColor, resolveNodeColor, resolveNodeStroke } from './color'
 import { ShapeHandles } from './ShapeHandles'
 import { QuickAdd } from './QuickAdd'
+import { NodeTextEditor } from './NodeTextEditor'
 
 // 交互层最小尺寸（命令层不约束，见 DECISIONS）
 const MIN_W = 32
@@ -26,6 +27,7 @@ function useShapeCtx(
   height: number | undefined,
 ) {
   const editing = useCanvasStore((s) => s.editingNodeId === id)
+  const setEditingNode = useCanvasStore((s) => s.setEditingNode)
   const execute = useDocumentStore((s) => s.execute)
   const doc = useDocumentStore((s) => s.doc)
   // 渲染期尺寸以 RF 实测为准（resize 拖动中即时反馈），文档尺寸是兜底
@@ -36,9 +38,16 @@ function useShapeCtx(
         : node,
     [node, width, height],
   )
+  // 编辑框交给插件放进形状自己的文字位（见 NodeTextEditor）
+  const editor = useMemo(
+    () => (editing ? <NodeTextEditor node={node} onDone={() => setEditingNode(null)} /> : null),
+    // 只在进入/退出编辑时创建：编辑中文档变化（协作、布局）不重建输入框
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [editing],
+  )
   const ctx: ShapeRenderContext = useMemo(
-    () => ({ editing, dispatch: execute, doc }),
-    [editing, execute, doc],
+    () => ({ editing, dispatch: execute, doc, editor }),
+    [editing, execute, doc, editor],
   )
   return { editing, liveNode, ctx, shape: plugin.shapes.find((s) => s.kind === node.kind) }
 }
@@ -63,6 +72,7 @@ function DsShapeNode({ id, data, selected, width, height, dragging }: NodeProps)
     'ds-node',
     selected ? 'is-selected' : '',
     isDropTarget ? 'is-drop-target' : '',
+    editing ? 'is-editing' : '',
     dragging ? 'is-dragging' : '',
   ]
     .filter(Boolean)

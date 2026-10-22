@@ -6,7 +6,6 @@ import type { DiagramDoc } from '@/core/model/types'
 import type { FlowEdgeData, FlowNodeData } from '@/store/selectors'
 import type { FxBook } from './fxBook'
 import { ghostEdge, ghostNode, isGhostEdge } from './ghosts'
-import { markEnter } from './hints'
 import type { MotionPlan, Pt } from './plan'
 import { easeOutBack, easeOutCubic, type Tweener } from './tween'
 import * as T from './timing'
@@ -48,11 +47,9 @@ export function stepEnters(c: StepCtx, enters: MotionPlan['enters'], nodes: FNod
       pos.set(e.id, e.origin)
       c.tween.start(e.id, e.origin, target.get(e.id)!, T.ENTER_MS, easeOutBack)
       c.book.node(e.id, 'ds-fx-enter', T.ENTER_MS)
-      markEnter(e.id, c.now + T.ENTER_MS)
     } else if (i < T.POPS_MAX) {
       popping.add(e.id)
       c.book.node(e.id, 'ds-fx-pop', T.POP_MS)
-      markEnter(e.id, c.now + T.POP_MS * 0.6)
     }
   })
   return popping

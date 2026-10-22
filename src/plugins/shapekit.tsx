@@ -3,6 +3,11 @@ import type { ReactNode } from 'react'
 import type { DiagramNode } from '@/core/model/types'
 import type { ShapeRenderContext } from '@/core/plugin'
 
+/** 形状文字位的内容：平时是文字，编辑中换成画布给的行内编辑框（同一位置、同一套字体与颜色） */
+export function nodeText(node: DiagramNode, ctx: ShapeRenderContext): ReactNode {
+  return ctx.editing ? ((ctx.editor ?? null) as ReactNode) : node.text
+}
+
 export function svgShell(
   node: DiagramNode,
   body: (w: number, h: number) => ReactNode,
@@ -32,7 +37,7 @@ export function svgShell(
             pointerEvents: 'none',
           }}
         >
-          {ctx.editing ? '' : node.text}
+          {nodeText(node, ctx)}
         </div>
       </foreignObject>
       {opts?.extra}
