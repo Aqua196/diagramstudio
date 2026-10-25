@@ -1,8 +1,10 @@
 // 分享弹层（A2）：说明协作是什么 → 一键开启并复制链接 → 显示连接状态与在线成员。
+// 没有协作服务（部署出去的静态站）时如实说明，不给开启按钮，免得生成一个谁也连不上的链接。
 import * as Popover from '@radix-ui/react-popover'
 import { Copy, Users } from 'lucide-react'
 import { emit, EV } from '@/core/events'
 import { useCollabStore } from '@/store/collabStore'
+import { collabServerUrl } from '@/core/collab/server'
 import { useUiStore } from '@/store/uiStore'
 import { zh } from '@/i18n/zh'
 
@@ -100,6 +102,8 @@ export function SharePopover() {
           <p className="ds-share-desc">{c.desc}</p>
           {room ? (
             <Joined room={room} />
+          ) : !collabServerUrl() ? (
+            <p className="ds-share-hint">{c.unavailable}</p>
           ) : (
             <button
               type="button"

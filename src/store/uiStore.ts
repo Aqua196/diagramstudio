@@ -67,7 +67,7 @@ let toastSeq = 0
 const TOAST_EXIT_MS = 160
 
 export const useUiStore = create<UiStore>()((set, get) => ({
-  route: 'editor',
+  route: 'home',
   theme: readStoredTheme(),
   resolvedTheme: 'light',
   tool: 'select',

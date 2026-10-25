@@ -1,7 +1,7 @@
 // 文档本地持久化（SPEC §5）：全部存 localStorage，完全离线。
 // 索引 ds.docIndex.v1 存元信息，正文 ds.docs.v1 按 id 存 JSON。
 import type { DiagramDoc, DiagramType } from '../model/types'
-import { createDoc } from '../model/factories'
+import { createDoc, createId } from '../model/factories'
 import { docToJson, jsonToDoc } from './serialize'
 
 const DOCS_KEY = 'ds.docs.v1'
@@ -67,7 +67,10 @@ export function saveDoc(doc: DiagramDoc): void {
 export function deleteDoc(id: string): void {
   const docs = readDocs()
   delete docs[id]
-  writeAll(docs, readIndex().filter((m) => m.id !== id))
+  writeAll(
+    docs,
+    readIndex().filter((m) => m.id !== id),
+  )
 }
 
 export function renameDoc(id: string, title: string): DiagramDoc | null {
@@ -83,7 +86,7 @@ export function duplicateDoc(id: string): DiagramDoc | null {
   if (!doc) return null
   const copy: DiagramDoc = {
     ...doc,
-    id: crypto.randomUUID(),
+    id: createId(),
     title: `${doc.title} 副本`,
     createdAt: Date.now(),
     updatedAt: Date.now(),

@@ -1,7 +1,6 @@
 // 导出（A1）：JSON/Mermaid 纯文本；PNG/SVG 共用一份最终 SVG —
 // composeExportSvg 统一拼背景（白/透明/方格纸）与图框标题栏，
 // PNG 只是把它栅格化，保证两种格式边框/背景表现一致。
-import { toSvg } from 'html-to-image'
 import { docToJson } from '@/core/io/serialize'
 import { docToMermaid } from '@/core/io/mermaid'
 import { frameSvg, TITLE_BLOCK_H, type FrameColors } from '@/core/io/titleblock'
@@ -104,6 +103,8 @@ async function captureContentSvg(
   element: HTMLElement,
   o: CaptureOptions,
 ): Promise<{ svg: string; width: number; height: number }> {
+  // 截图库只在导出时才用到，按需加载，不进首屏
+  const { toSvg } = await import('html-to-image')
   const dataUrl = await toSvg(element, {
     width: o.width,
     height: o.height,
@@ -124,7 +125,12 @@ async function captureContentSvg(
 }
 
 /** 最终 SVG → PNG 下载（栅格化用 Image+canvas，scale 倍率） */
-async function rasterize(svgText: string, width: number, height: number, scale: number): Promise<string> {
+async function rasterize(
+  svgText: string,
+  width: number,
+  height: number,
+  scale: number,
+): Promise<string> {
   // data URL（非 blob）：SVG 内含 foreignObject 时 blob 源会污染 canvas
   const img = new Image()
   await new Promise<void>((resolve, reject) => {

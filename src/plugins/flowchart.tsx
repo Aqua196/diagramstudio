@@ -5,7 +5,7 @@ import { createDoc, createEdge, createNode } from '@/core/model/factories'
 import type { DiagramDoc } from '@/core/model/types'
 import type { DiagramPlugin, ShapeDef } from '@/core/plugin'
 import { zh } from '@/i18n/zh'
-import { shapePaths } from './shapekit'
+import { shapePaths } from './shapePaths'
 import { shapeIcons } from './shapeIcons'
 
 const sh = zh.plugins.shapes

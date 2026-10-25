@@ -81,7 +81,7 @@ flowchart TB
 | collab | `src/core/collab/` | `CollabAdapter` 接口（adapter.ts）、yjs 实现（yjs.ts）、文档 diff 纯函数（diff.ts） | 不直接改 store（走回调） |
 | plugin/events/palette | `src/core/` | `DiagramPlugin` 契约（plugin.ts）、`EV.*` 事件名常量（events.ts）、节点配色与 WCAG 工具（palette.ts） | — |
 | store | `src/store/` | `documentStore`（文档唯一真相源）、`uiStore`（界面过程态）、`collabStore`（协作状态）、`selectors`（doc→React Flow 派生） | 不直接渲染 |
-| plugins | `src/plugins/` | 三种图的 `DiagramPlugin` 实现（flowchart/mindmap/er.tsx）、共享 SVG 件（shapekit.tsx）、基座插件（base.tsx）、注册表（registry.ts） | 不改文档数据（经 dispatch 命令） |
+| plugins | `src/plugins/` | 三种图的 `DiagramPlugin` 实现（flowchart/mindmap/er.tsx）、共享 SVG 件（shapekit.tsx 外壳、shapePaths.tsx 形状几何、mindmapNode.tsx 导图节点）、基座插件（base.tsx）、注册表（registry.ts） | 不改文档数据（经 dispatch 命令） |
 | features | `src/features/` | `canvas/`：EditorCanvas 与画布交互、快捷加号、统一建节点（nodeFactory）、焦点交接（focus）、上下文工具条（toolbar/）；`shell/editor/`：四角浮动条、形状坞、提示条、导出与分享；`shell/home|docs|shortcuts|toasts`：首页、文档存储与事件、快捷键、提示条 | 不写 `type === 'x'` 分支 |
 | server | `server/dev.mjs` | y-websocket 兼容 ws 服务（sync+awareness，房间存内存） | 不持久化、不鉴权 |
 
@@ -291,6 +291,6 @@ flowchart LR
 ## 10. 部署形态
 
 - **单机（默认）**：`pnpm install && pnpm dev` → Vite :5173。全部资源本地打包（字体 @fontsource-variable/inter、图标 lucide），离线可用；文档存 localStorage（`ds.docs.v1` + `ds.docIndex.v1`）。
-- **协作**：`pnpm dev:collab` 起 `server/dev.mjs`（ws :1234，`DS_COLLAB_PORT`/`VITE_COLLAB_WS` 可覆盖）+ Vite。房间存内存、无鉴权，定位为同机/内网演示。
+- **协作**：`pnpm dev:collab` 起 `server/dev.mjs`（ws :1234，`DS_COLLAB_PORT`/`VITE_COLLAB_WS` 可覆盖）+ Vite。房间存内存、无鉴权，定位为同机/内网演示。没配 `VITE_COLLAB_WS` 时只有本机（localhost）才连默认服务（`core/collab/server.ts`），部署出去的静态站界面上如实说明「未部署协作服务」；yjs 只在开启协作时按需加载。
 - **构建**：`pnpm build`（tsc -b + vite build）→ `dist/` 静态站。
 - **在线部署**：GitHub Pages（<https://aqua196.github.io/diagramstudio/>）。推送 main 触发 `.github/workflows/pages.yml`：lint → typecheck → 单测 → `pnpm build:pages`（`DS_BASE=/diagramstudio/` 子路径）→ 把 `dist/` 推到 `gh-pages` 分支。纯静态，无后端；协作服务不随站点部署。

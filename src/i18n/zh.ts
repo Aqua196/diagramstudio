@@ -5,6 +5,8 @@ export const zh = {
     name: 'DiagramStudio',
     windowTooNarrow: '窗口有点窄',
     windowTooNarrowHint: '请把浏览器窗口拉宽到 1024px 以上，再继续编辑图表。',
+    phoneTooNarrow: '手机屏幕放不下编辑器',
+    phoneTooNarrowHint: '请在电脑上打开这个网址继续编辑，作品会自动保存在那台电脑的浏览器里。',
   },
   common: {
     confirm: '确定',
@@ -204,7 +206,11 @@ export const zh = {
         selected: ['点节点四周的 + 一键接下一步', '双击节点编辑文字', '按 Delete 删除'],
       },
       mindmap: {
-        idle: ['按 Tab 给中心主题加子主题', '双击主题编辑文字', '把主题拖到另一个主题上可以改变层级'],
+        idle: [
+          '按 Tab 给中心主题加子主题',
+          '双击主题编辑文字',
+          '把主题拖到另一个主题上可以改变层级',
+        ],
         selected: ['Tab 添加子主题', 'Enter 添加同级主题', '双击编辑文字'],
       },
       er: {
@@ -300,6 +306,9 @@ export const zh = {
     copyLink: '复制链接',
     leave: '结束协作',
     serverHint: '需要先在本机运行 pnpm dev:collab 启动协作服务。',
+    unavailable:
+      '这个在线演示版没有部署协作服务器。下载源码后在电脑上运行 pnpm dev:collab，用两个浏览器窗口打开即可体验实时协作。',
+    unavailableRoom: '这个网址没有部署协作服务器，无法加入协作房间，已为你打开本机的图表。',
     group: '协作成员',
     connecting: '连接中',
     connected: '已连接',

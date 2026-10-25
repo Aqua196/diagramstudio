@@ -6,6 +6,7 @@ import { importMermaidText } from '@/core/io/importer'
 import { getPlugin } from '@/plugins/registry'
 import { useDocumentStore } from '@/store/documentStore'
 import { useCollabStore } from '@/store/collabStore'
+import { collabServerUrl } from '@/core/collab/server'
 import { zh } from '@/i18n/zh'
 import { openDocInEditor, toast } from './docNav'
 import { importDocJson, saveDoc } from './docsStore'
@@ -79,12 +80,15 @@ export async function importMermaid(): Promise<void> {
     return
   }
   saveDoc(r.doc)
-  const msg = r.skipped ? `${zh.io.importDone}（${r.skipped} ${zh.io.skippedLines}）` : zh.io.importDone
+  const msg = r.skipped
+    ? `${zh.io.importDone}（${r.skipped} ${zh.io.skippedLines}）`
+    : zh.io.importDone
   openDocInEditor(r.doc, { reveal: true, after: () => toast('success', msg) })
 }
 
 // 分享（A2）：share() 建房并把 ?room= 写进地址栏，链接进剪贴板
 export async function shareDoc(): Promise<void> {
+  if (!collabServerUrl()) return toast('info', zh.collab.unavailable)
   const link = useCollabStore.getState().share()
   window.history.replaceState(null, '', link)
   try {

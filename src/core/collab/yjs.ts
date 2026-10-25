@@ -5,10 +5,10 @@ import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import type { CollabAdapter, CollabCallbacks, CollabPeer } from './adapter'
 import { computeDocDiff } from './diff'
+import { collabServerUrl } from './server'
 import type { DiagramDoc } from '../model/types'
 
-const SERVER_URL = () =>
-  (import.meta.env.VITE_COLLAB_WS as string | undefined) ?? 'ws://127.0.0.1:1234'
+const SERVER_URL = () => collabServerUrl() ?? 'ws://127.0.0.1:1234'
 
 const PEER_COLORS = ['#E05D44', '#2E9E8F', '#3D7BE0', '#B8860B', '#8C5BBE', '#C94F7C', '#4C9F70']
 /** 本地写入的事务 origin：observe 回调据此过滤回声（本地 push 不再回灌 onRemoteDoc） */

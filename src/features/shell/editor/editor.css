@@ -588,6 +588,9 @@
   font-size: 13px;
   line-height: 20px;
 }
+.ds-narrow-back {
+  margin-top: 12px;
+}
 
 /* —— 快捷键面板 —— */
 .ds-sc-grid {

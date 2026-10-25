@@ -2,16 +2,15 @@
 // Tab 加子主题 / Enter 加同级、拖到节点上改父级、文档变化自动重排、删除整棵子树。
 import type { ReactNode } from 'react'
 import { CornerDownRight, ListPlus } from 'lucide-react'
-import { addNode, patchNode } from '@/core/commands/ops'
+import { addNode } from '@/core/commands/ops'
 import { collapsedDescendants, mindmapLayout, mindmapRootId } from '@/core/layout/mindmap'
 import { createDoc, createNode } from '@/core/model/factories'
 import type { DiagramDoc, DiagramNode } from '@/core/model/types'
-import type { DiagramPlugin, EditorContext, ShapeDef, ShapeRenderContext } from '@/core/plugin'
-import { nodeText } from './shapekit'
+import type { DiagramPlugin, EditorContext, ShapeDef } from '@/core/plugin'
+import { mindShape } from './mindmapNode'
 import { zh } from '@/i18n/zh'
 import { shapeIcons } from './shapeIcons'
 import {
-  childrenOf,
   expandMindmapDeletion,
   mindData,
   mindmapTemplate,
@@ -21,94 +20,6 @@ import {
 
 const sh = zh.plugins.shapes
 const mm = zh.plugins.mindmap
-
-function CollapseBtn({ node, ctx, count }: { node: DiagramNode; ctx: ShapeRenderContext; count: number }) {
-  const d = mindData(node)
-  return (
-    <button
-      type="button"
-      className="ds-mind-collapse ds-export-exclude nodrag nopan"
-      data-collapsed={d.collapsed ? 'true' : 'false'}
-      aria-label={d.collapsed ? mm.expand : mm.collapse}
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={(e) => {
-        e.stopPropagation()
-        ctx.dispatch(
-          patchNode(node.id, { data: { ...d, collapsed: !d.collapsed } }, mm.toggleCollapse),
-        )
-      }}
-    >
-      {d.collapsed ? count : '−'}
-    </button>
-  )
-}
-
-function MindText({ node, ctx, accent }: { node: DiagramNode; ctx: ShapeRenderContext; accent: boolean }) {
-  const { w, h } = node.size
-  return (
-    <foreignObject x={8} y={2} width={w - 16} height={h - 6}>
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: node.style.fontSize,
-          fontWeight: accent || node.style.bold ? 650 : 450,
-          lineHeight: 1.3,
-          color: accent ? 'var(--accent-ink)' : 'var(--node-text)',
-          overflow: 'hidden',
-          textAlign: 'center',
-          pointerEvents: 'none',
-          wordBreak: 'break-word',
-        }}
-      >
-        {nodeText(node, ctx)}
-      </div>
-    </foreignObject>
-  )
-}
-
-/** 节点在根的左侧时折叠钮放左边（朝外），否则放右边 */
-function isLeftOfRoot(doc: DiagramDoc, node: DiagramNode): boolean {
-  const root = doc.nodes[mindmapRootId(doc) ?? '']
-  if (!root || root.id === node.id) return false
-  return node.position.x + node.size.w / 2 < root.position.x + root.size.w / 2
-}
-
-/** 节点渲染：中心主题为强调色圆角块，其余为分支色胶囊；有子节点时外侧挂折叠钮（真 button） */
-function mindShape(accent: boolean) {
-  return (node: DiagramNode, ctx: ShapeRenderContext): ReactNode => {
-    const { w, h } = node.size
-    const kids = childrenOf(ctx.doc, node.id).length
-    const left = isLeftOfRoot(ctx.doc, node)
-    return (
-      <svg
-        width={w}
-        height={h}
-        viewBox={`0 0 ${w} ${h}`}
-        style={{ display: 'block', overflow: 'visible' }}
-        aria-hidden
-      >
-        <rect
-          width={w}
-          height={h}
-          rx={accent ? 14 : h / 2}
-          fill={accent ? 'var(--accent)' : 'var(--node-fill)'}
-          stroke={accent ? 'var(--accent)' : 'var(--node-stroke)'}
-          strokeWidth={accent ? 0 : node.style.strokeWidth}
-        />
-        <MindText node={node} ctx={ctx} accent={accent} />
-        {kids > 0 && (
-          <foreignObject x={left ? -22 : w + 4} y={h / 2 - 9} width={18} height={18}>
-            <CollapseBtn node={node} ctx={ctx} count={kids} />
-          </foreignObject>
-        )}
-      </svg>
-    )
-  }
-}
 
 export const mindmapShapes: ShapeDef<ReactNode>[] = [
   {
@@ -172,8 +83,20 @@ export const mindmapPlugin: DiagramPlugin<ReactNode> = {
   onDropOnNode: (doc, draggedId, targetId) => reparentCommand(doc, draggedId, targetId),
   keymap: { Tab: addChild, Enter: addSibling },
   nodeActions: [
-    { id: 'child', label: mm.addChild, kbd: 'Tab', icon: <CornerDownRight size={16} />, run: addChild },
-    { id: 'sibling', label: mm.addSibling, kbd: 'Enter', icon: <ListPlus size={16} />, run: addSibling },
+    {
+      id: 'child',
+      label: mm.addChild,
+      kbd: 'Tab',
+      icon: <CornerDownRight size={16} />,
+      run: addChild,
+    },
+    {
+      id: 'sibling',
+      label: mm.addSibling,
+      kbd: 'Enter',
+      icon: <ListPlus size={16} />,
+      run: addSibling,
+    },
   ],
   placeFromPalette: (doc, kind, selection) => {
     const root = mindmapRootId(doc)

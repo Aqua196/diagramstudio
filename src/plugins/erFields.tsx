@@ -22,9 +22,8 @@ interface RowApi {
   update: (next: ErField[], label?: string) => void
 }
 
-type GripSetDrag = (
-  d: { from: number; to: number } | null | ((p: { from: number; to: number } | null) => { from: number; to: number } | null),
-) => void
+type DragState = { from: number; to: number } | null // 拖动中：第 from 行 → 第 to 行
+type GripSetDrag = (d: DragState | ((p: DragState) => DragState)) => void
 
 function GripButton({
   origIdx,
@@ -123,7 +122,15 @@ function FieldRow({
   const y = HEAD_H + i * ROW_H
   return (
     <g>
-      <line x1={0} y1={y} x2={w} y2={y} stroke="var(--node-stroke)" strokeWidth={0.75} opacity={0.4} />
+      <line
+        x1={0}
+        y1={y}
+        x2={w}
+        y2={y}
+        stroke="var(--node-stroke)"
+        strokeWidth={0.75}
+        opacity={0.4}
+      />
       <foreignObject x={0} y={y} width={16} height={ROW_H}>
         <GripButton origIdx={origIdx} fields={fields} api={api} setDrag={setDrag} />
       </foreignObject>
@@ -143,7 +150,7 @@ export function FieldRows({ node, ctx }: { node: DiagramNode; ctx: ShapeRenderCo
   const fields = fieldsOf(node)
   const h = entityHeight(fields)
   // 拖动排序过程态：drag=被拖行→目标位；松手才提交命令（C1 保留原行为）
-  const [drag, setDrag] = useState<{ from: number; to: number } | null>(null)
+  const [drag, setDrag] = useState<DragState>(null)
   const update: RowApi['update'] = (next, label = er.updateField) =>
     ctx.dispatch(
       patchNode(
@@ -158,7 +165,13 @@ export function FieldRows({ node, ctx }: { node: DiagramNode; ctx: ShapeRenderCo
       ctx.dispatch(
         patchNode(
           node.id,
-          { data: { ...node.data, fields: fields.map((f) => (f.id === id ? { ...f, ...patch } : f)) }, size: { w: node.size.w, h } },
+          {
+            data: {
+              ...node.data,
+              fields: fields.map((f) => (f.id === id ? { ...f, ...patch } : f)),
+            },
+            size: { w: node.size.w, h },
+          },
           er.updateField,
           coalesce ? `field:${node.id}:${id}:${key}` : undefined,
         ),

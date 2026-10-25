@@ -1,31 +1,36 @@
 // zod 校验：导入的 JSON 只有过 schema 才允许进系统；错误信息转成中文可读原因。
-import { z } from 'zod'
+// 用 zod/mini（函数式写法、可摇树）：校验能力相同，体积只有完整版的一小部分，而它在首屏就要用（读本地文档）。
+import { z } from 'zod/mini'
 import type { DiagramDoc } from './types'
 
+const positive = () => z.number().check(z.positive())
+const nonEmpty = () => z.string().check(z.minLength(1))
+const dash = z.enum(['solid', 'dashed'])
+
 const pointSchema = z.object({ x: z.number(), y: z.number() })
-const sizeSchema = z.object({ w: z.number().positive(), h: z.number().positive() })
+const sizeSchema = z.object({ w: positive(), h: positive() })
 
 const nodeStyleSchema = z.object({
   fill: z.string(),
   stroke: z.string(),
-  strokeWidth: z.number().positive(),
-  dash: z.enum(['solid', 'dashed']),
-  fontSize: z.number().positive(),
+  strokeWidth: positive(),
+  dash,
+  fontSize: positive(),
   bold: z.boolean(),
   align: z.enum(['left', 'center', 'right']),
 })
 
 const edgeStyleSchema = z.object({
   stroke: z.string(),
-  strokeWidth: z.number().positive(),
-  dash: z.enum(['solid', 'dashed']),
+  strokeWidth: positive(),
+  dash,
 })
 
 const cardinalitySchema = z.enum(['1', '0..1', 'N', '0..N'])
 
 const nodeSchema = z.object({
-  id: z.string().min(1),
-  kind: z.string().min(1),
+  id: nonEmpty(),
+  kind: nonEmpty(),
   position: pointSchema,
   size: sizeSchema,
   text: z.string(),
@@ -34,24 +39,22 @@ const nodeSchema = z.object({
 })
 
 const edgeSchema = z.object({
-  id: z.string().min(1),
-  source: z.string().min(1),
-  target: z.string().min(1),
-  sourceHandle: z.string().optional(),
-  targetHandle: z.string().optional(),
+  id: nonEmpty(),
+  source: nonEmpty(),
+  target: nonEmpty(),
+  sourceHandle: z.optional(z.string()),
+  targetHandle: z.optional(z.string()),
   routing: z.enum(['bezier', 'step', 'straight']),
   arrowStart: z.enum(['none', 'arrow']),
   arrowEnd: z.enum(['none', 'arrow']),
-  label: z.string().optional(),
+  label: z.optional(z.string()),
   style: edgeStyleSchema,
-  cardinality: z
-    .object({ source: cardinalitySchema, target: cardinalitySchema })
-    .optional(),
+  cardinality: z.optional(z.object({ source: cardinalitySchema, target: cardinalitySchema })),
 })
 
 export const docSchema = z.object({
   schemaVersion: z.literal(1),
-  id: z.string().min(1),
+  id: nonEmpty(),
   title: z.string(),
   type: z.enum(['flowchart', 'mindmap', 'er']),
   nodes: z.record(z.string(), nodeSchema),

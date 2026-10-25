@@ -69,7 +69,7 @@ src/
     io/        JSON 序列化、Mermaid、localStorage 持久化、PNG/SVG 导出、图框标题栏
     collab/    CollabAdapter 接口、yjs 实现、文档 diff
     plugin.ts / events.ts / palette.ts
-  plugins/     flowchart / mindmap / er 三个插件 + registry + shapekit + shapeIcons + base
+  plugins/     flowchart / mindmap / er 三个插件 + registry + shapekit / shapePaths + shapeIcons + base
   store/       documentStore、uiStore、collabStore、selectors（zustand）
   io/          DOM 导出实现（PNG/SVG 合成、rasterize）
   features/

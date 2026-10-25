@@ -35,7 +35,7 @@
 
 - 接口 `src/core/plugin.ts`（`DiagramPlugin`、`ShapeDef<R>`、`ShapeRenderContext`、`EditorContext`）
 - 注册表 `src/plugins/registry.ts`（`registerPlugin/getPlugin/getAllPlugins`，预置 `basePlugin` 后被完整实现覆盖）
-- 三个策略实现 `src/plugins/flowchart.tsx`、`mindmap.tsx`、`er.tsx`，共享渲染件 `src/plugins/shapekit.tsx`
+- 三个策略实现 `src/plugins/flowchart.tsx`、`mindmap.tsx`、`er.tsx`，共享渲染件 `src/plugins/shapekit.tsx`（外壳与文字位）+ `shapePaths.tsx`（流程图形状几何）
 
 **为什么**：SPEC §4 要求「画布、工具条、历史、导入导出里不得出现 `type === 'mindmap'` 分支」。例如：连线工具条显示 ER 基数选择时查的是 `plugin.edgeFields === 'cardinality'`；思维导图的自动重排靠 `autoLayoutOnChange: true`；折叠子树靠 `hiddenNodeIds(doc)`。新增一种图类型 = 写一个插件并注册，引擎零改动（开闭原则）。
 
@@ -57,7 +57,7 @@
 
 **用到什么**：`createDoc/createNode/createEdge/createId` 集中生成带默认值的对象，避免各处手写缺字段。
 
-**在哪**：`src/core/model/factories.ts`（`createId` 用 `crypto.randomUUID()`；`DEFAULT_NODE_STYLE` 统一默认样式）。使用方遍布 `ops.ts`（剪贴板克隆 `cloneForPaste`）、`mermaid.ts`（解析建节点）、`persist.ts`（`newDoc`）、各插件模板。
+**在哪**：`src/core/model/factories.ts`（`createId` 用 `crypto.randomUUID()`，非安全上下文下退回 `getRandomValues` 拼 UUID v4；`DEFAULT_NODE_STYLE` 统一默认样式）。使用方遍布 `ops.ts`（剪贴板克隆 `cloneForPaste`）、`mermaid.ts`（解析建节点）、`persist.ts`（`newDoc`）、各插件模板。
 
 **为什么**：`DiagramDoc/DiagramNode/DiagramEdge` 的必填字段多（schemaVersion、zOrder、settings、style），工厂保证不变量成立——例如 `createDoc` 必给 `settings.layoutDirection`，`createEdge` 默认 `arrowEnd: 'arrow'`、`routing: 'bezier'`；zod schema 与工厂一一对应，导入校验只走 schema。
 
