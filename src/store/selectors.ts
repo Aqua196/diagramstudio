@@ -112,9 +112,10 @@ export function selectFlowEdges(doc: DiagramDoc, plugin: DiagramPlugin): Edge<Fl
       routing: d?.routing ?? 'bezier',
       arrowStart: 'none',
       arrowEnd: 'none',
-      style: isNodeColorKey(node.style.fill) && node.style.fill !== 'white'
-        ? { ...base, stroke: node.style.fill, strokeWidth: 2 }
-        : base,
+      style:
+        isNodeColorKey(node.style.fill) && node.style.fill !== 'white'
+          ? { ...base, stroke: node.style.fill, strokeWidth: 2 }
+          : base,
     }
     out.push({
       id: edge.id,

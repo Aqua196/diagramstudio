@@ -21,7 +21,9 @@ function QuickAddInner({ nodeId, plugin }: { nodeId: string; plugin: ReactPlugin
   const [hover, setHover] = useState<NodeSide | null>(null)
   const timer = useRef(0)
   useEffect(() => () => window.clearTimeout(timer.current), [])
-  const sides = (plugin.quickAddSides ?? ALL_SIDES).filter((side) => !used.split(',').includes(side))
+  const sides = (plugin.quickAddSides ?? ALL_SIDES).filter(
+    (side) => !used.split(',').includes(side),
+  )
   if (sides.length === 0) return null
 
   const preview = (side: NodeSide | null, delay = 0) => {

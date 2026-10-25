@@ -78,7 +78,11 @@ export function colorForNewChild(doc: DiagramDoc, parentId: string | null): stri
 }
 
 /** 改父级命令：若节点 fill 等于旧分支色，则换为新分支色并同步子树 */
-export function reparentCommand(doc: DiagramDoc, draggedId: string, targetId: string): Command | null {
+export function reparentCommand(
+  doc: DiagramDoc,
+  draggedId: string,
+  targetId: string,
+): Command | null {
   if (draggedId === targetId) return null
   const dragged = doc.nodes[draggedId]
   if (!dragged || !doc.nodes[targetId]) return null
@@ -86,10 +90,9 @@ export function reparentCommand(doc: DiagramDoc, draggedId: string, targetId: st
   if (isDescendant(doc, targetId, draggedId)) return null // 不能拖进自己的子树
 
   const oldColor = branchColorOf(doc, draggedId)
-  const targetIsRoot = mindData(doc.nodes[targetId]).parentId == null && targetId === mindmapRootId(doc)
-  const newColor = targetIsRoot
-    ? colorForNewChild(doc, targetId)
-    : doc.nodes[targetId].style.fill
+  const targetIsRoot =
+    mindData(doc.nodes[targetId]).parentId == null && targetId === mindmapRootId(doc)
+  const newColor = targetIsRoot ? colorForNewChild(doc, targetId) : doc.nodes[targetId].style.fill
 
   return {
     label: zh.plugins.mindmap.reparent,

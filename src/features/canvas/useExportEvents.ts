@@ -78,7 +78,14 @@ export function useExportEvents(): void {
         const bounds = rfRef.current.getNodesBounds(nodes)
         const width = Math.round(bounds.width + PAD * 2)
         const height = Math.round(bounds.height + PAD * 2)
-        const vp = getViewportForBounds(bounds, width, height, 0.1, 4, PAD / Math.max(bounds.width, bounds.height))
+        const vp = getViewportForBounds(
+          bounds,
+          width,
+          height,
+          0.1,
+          4,
+          PAD / Math.max(bounds.width, bounds.height),
+        )
         const opts = {
           width,
           height,

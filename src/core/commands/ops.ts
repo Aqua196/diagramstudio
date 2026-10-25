@@ -174,7 +174,11 @@ export function sendToBack(ids: string[]): Command {
 export type AlignMode = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom'
 
 /** 对齐计算（纯函数，便于单测）：返回各节点应到的新位置 */
-export function alignPositions(doc: DiagramDoc, ids: string[], mode: AlignMode): Record<string, Point> {
+export function alignPositions(
+  doc: DiagramDoc,
+  ids: string[],
+  mode: AlignMode,
+): Record<string, Point> {
   const nodes = ids.map((id) => doc.nodes[id]).filter((n): n is DiagramNode => !!n)
   if (nodes.length < 2) return {}
   const minX = Math.min(...nodes.map((n) => n.position.x))
@@ -246,7 +250,11 @@ export function distributeNodes(doc: DiagramDoc, ids: string[], axis: 'h' | 'v')
 }
 
 /** 粘贴/副本：调用方先克隆好新 id 的节点与连线（内部连线已重映射），这里整体落盘 */
-export function insertElements(nodes: DiagramNode[], edges: DiagramEdge[], label = '粘贴'): Command {
+export function insertElements(
+  nodes: DiagramNode[],
+  edges: DiagramEdge[],
+  label = '粘贴',
+): Command {
   return {
     label,
     apply(draft) {
@@ -302,7 +310,10 @@ export function setDocTitle(title: string): Command {
   }
 }
 
-export function setSettings(patch: Partial<DiagramDoc['settings']>, label = '修改画布设置'): Command {
+export function setSettings(
+  patch: Partial<DiagramDoc['settings']>,
+  label = '修改画布设置',
+): Command {
   return {
     label,
     apply(draft) {

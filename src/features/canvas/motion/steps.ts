@@ -20,10 +20,16 @@ export interface StepCtx {
   now: number
 }
 
-const samePt = (a: Pt | undefined, b: Pt) => !!a && Math.abs(a.x - b.x) < 0.5 && Math.abs(a.y - b.y) < 0.5
+const samePt = (a: Pt | undefined, b: Pt) =>
+  !!a && Math.abs(a.x - b.x) < 0.5 && Math.abs(a.y - b.y) < 0.5
 
 /** 位移补间：本地命令 320ms、撤销/重做 260ms、协作者改动 200ms；正在长出的节点改目标时保持弹出手感 */
-export function stepMoves(c: StepCtx, moves: MotionPlan['moves'], pos: Map<string, Pt>, change: Change) {
+export function stepMoves(
+  c: StepCtx,
+  moves: MotionPlan['moves'],
+  pos: Map<string, Pt>,
+  change: Change,
+) {
   if (moves.length > T.MOVES_MAX) {
     c.tween.finishAll()
     return
@@ -39,7 +45,12 @@ export function stepMoves(c: StepCtx, moves: MotionPlan['moves'], pos: Map<strin
 }
 
 /** 新节点：有来源的从源中心飞出并长大，没有的原地弹出；返回原地弹出的 id */
-export function stepEnters(c: StepCtx, enters: MotionPlan['enters'], nodes: FNode[], pos: Map<string, Pt>) {
+export function stepEnters(
+  c: StepCtx,
+  enters: MotionPlan['enters'],
+  nodes: FNode[],
+  pos: Map<string, Pt>,
+) {
   const target = new Map(nodes.map((n) => [n.id, n.position]))
   const popping = new Set<string>()
   enters.forEach((e, i) => {
@@ -57,7 +68,12 @@ export function stepEnters(c: StepCtx, enters: MotionPlan['enters'], nodes: FNod
 
 /** 新连线：一端是原地弹出的节点（粘贴、撤销删除、协作者新增）时沿路径画出；
  *  一端是飞出的节点时线随节点自然伸长；两端早已存在（手动连线，拖线时已画过）则直接出现 */
-export function stepDraws(c: StepCtx, shownEdges: FEdge[], nextEdges: FEdge[], popping: Set<string>) {
+export function stepDraws(
+  c: StepCtx,
+  shownEdges: FEdge[],
+  nextEdges: FEdge[],
+  popping: Set<string>,
+) {
   const shown = new Set(shownEdges.map((e) => e.id))
   const style = { '--ds-delay': '120ms', '--ds-dur': `${T.DRAW_MS}ms` } as CSSProperties
   for (const e of nextEdges) {
@@ -100,7 +116,10 @@ export function stepChanged(c: StepCtx, prevDoc: DiagramDoc, doc: DiagramDoc, pl
   const skip = new Set([...plan.enters.map((e) => e.id), ...plan.moves.map((m) => m.id)])
   const ids = Object.keys(doc.nodes).filter(
     (id) =>
-      prevDoc.nodes[id] && prevDoc.nodes[id] !== doc.nodes[id] && !skip.has(id) && !c.book.nodeFx.has(id),
+      prevDoc.nodes[id] &&
+      prevDoc.nodes[id] !== doc.nodes[id] &&
+      !skip.has(id) &&
+      !c.book.nodeFx.has(id),
   )
   if (ids.length > T.CHANGED_MAX) return
   for (const id of ids) c.book.node(id, 'ds-fx-changed', T.CHANGED_MS)

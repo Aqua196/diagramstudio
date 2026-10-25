@@ -18,13 +18,7 @@ import {
   renameStoredDoc,
   saveDoc,
 } from './docsStore'
-import {
-  exportJson,
-  exportMermaid,
-  importJson,
-  importMermaid,
-  shareDoc,
-} from './docIoHandlers'
+import { exportJson, exportMermaid, importJson, importMermaid, shareDoc } from './docIoHandlers'
 
 const SAVE_DEBOUNCE_MS = 500
 
@@ -39,7 +33,10 @@ export function useDocEvents(): void {
       const blank = detail.templateId === undefined
       saveDoc(doc)
       // 空白文档的登记必须在切换之后：切换时会先回收上一份没动过的空白文档
-      openDocInEditor(doc, { reveal: !blank, after: blank ? () => markPristine(doc.id) : undefined })
+      openDocInEditor(doc, {
+        reveal: !blank,
+        after: blank ? () => markPristine(doc.id) : undefined,
+      })
     }
     const openDoc = (e: Event) => {
       const { id } = (e as CustomEvent).detail as { id: string }

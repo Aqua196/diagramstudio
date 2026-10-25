@@ -30,7 +30,11 @@ function setup() {
 describe('ops 其余命令', () => {
   it('resizeNode 约束最小尺寸并撤销', () => {
     const { doc, a } = setup()
-    const r = executeCommand(doc, emptyHistory(), resizeNode(a.id, { x: 10, y: 10 }, { w: 5, h: 5 }))
+    const r = executeCommand(
+      doc,
+      emptyHistory(),
+      resizeNode(a.id, { x: 10, y: 10 }, { w: 5, h: 5 }),
+    )
     expect(r.doc.nodes[a.id].size).toEqual({ w: 5, h: 5 }) // 最小尺寸约束在 UI 拖拽层，不在命令
     expect(r.doc.nodes[a.id].position).toEqual({ x: 10, y: 10 })
     const u = executeCommand(r.doc, r.history, resizeNode(a.id, { x: 0, y: 0 }, { w: 200, h: 120 }))
@@ -41,7 +45,11 @@ describe('ops 其余命令', () => {
     const { doc, a, e } = setup()
     const r1 = executeCommand(doc, emptyHistory(), patchNode(a.id, { text: '新文本' }))
     expect(r1.doc.nodes[a.id].text).toBe('新文本')
-    const r2 = executeCommand(r1.doc, r1.history, patchNodeStyle(a.id, { fill: 'blue', fontSize: 16 }))
+    const r2 = executeCommand(
+      r1.doc,
+      r1.history,
+      patchNodeStyle(a.id, { fill: 'blue', fontSize: 16 }),
+    )
     expect(r2.doc.nodes[a.id].style.fill).toBe('blue')
     expect(r2.doc.nodes[a.id].style.fontSize).toBe(16)
     const r3 = executeCommand(r2.doc, r2.history, patchEdge(e.id, { label: '去', routing: 'step' }))
@@ -51,12 +59,16 @@ describe('ops 其余命令', () => {
 
   it('reconnectEdge 换端点并记录原端点', () => {
     const { doc, a, c, e } = setup()
-    const r = executeCommand(doc, emptyHistory(), reconnectEdge(e.id, {
-      source: c.id,
-      target: e.target,
-      sourceHandle: undefined,
-      targetHandle: undefined,
-    }))
+    const r = executeCommand(
+      doc,
+      emptyHistory(),
+      reconnectEdge(e.id, {
+        source: c.id,
+        target: e.target,
+        sourceHandle: undefined,
+        targetHandle: undefined,
+      }),
+    )
     expect(r.doc.edges[e.id].source).toBe(c.id)
     expect(r.doc.edges[e.id].target).toBe(e.target)
     void a

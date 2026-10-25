@@ -59,7 +59,9 @@ export function useFlowSync(doc: DiagramDoc, plugin: DiagramPlugin) {
         return n.selected === s ? n : { ...n, selected: s }
       }),
     )
-    setEdges((list) => list.map((e) => (e.selected === es.has(e.id) ? e : { ...e, selected: es.has(e.id) })))
+    setEdges((list) =>
+      list.map((e) => (e.selected === es.has(e.id) ? e : { ...e, selected: es.has(e.id) })),
+    )
   }, [selection])
 
   const onNodesChange = useCallback(

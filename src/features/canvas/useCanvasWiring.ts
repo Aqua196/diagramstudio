@@ -99,7 +99,15 @@ export function useCanvasWiring(doc: DiagramDoc, plugin: DiagramPlugin): CanvasW
     [setEditingNode, setTextEditing],
   )
   const onReconnect = useCallback(
-    (oldEdge: FEdge, c: { source: string; target: string; sourceHandle: string | null; targetHandle: string | null }) =>
+    (
+      oldEdge: FEdge,
+      c: {
+        source: string
+        target: string
+        sourceHandle: string | null
+        targetHandle: string | null
+      },
+    ) =>
       execute(
         reconnectEdge(oldEdge.id, {
           source: c.source,
@@ -156,9 +164,22 @@ export function useCanvasWiring(doc: DiagramDoc, plugin: DiagramPlugin): CanvasW
       disableKeyboardA11y: true,
     }),
     [
-      nodes, edges, onNodesChange, onEdgesChange, onSelectionChange, conn, drag,
-      startNodeEdit, setEditingEdge, onReconnect, theme, doc.settings.snap,
-      tool, setZoom, cursor, fitOnMount,
+      nodes,
+      edges,
+      onNodesChange,
+      onEdgesChange,
+      onSelectionChange,
+      conn,
+      drag,
+      startNodeEdit,
+      setEditingEdge,
+      onReconnect,
+      theme,
+      doc.settings.snap,
+      tool,
+      setZoom,
+      cursor,
+      fitOnMount,
     ],
   )
 

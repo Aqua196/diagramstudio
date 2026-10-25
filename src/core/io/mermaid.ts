@@ -35,9 +35,12 @@ const CONNECTOR = /^(<-->|<--|-->|-\.->|==>|---)(?:\|([^|]*)\|)?/
 
 /** 把 `-- 文字 -->` 形式统一改写成 `-->|文字|`，便于链式切分 */
 function normalizeInlineLabel(line: string): string {
-  return line.replace(/--\s+([^-|][^-]*?)\s+(---|-->|<--|<-->)/g, (_m, label: string, conn: string) => {
-    return `${conn}|${label.trim()}|`
-  })
+  return line.replace(
+    /--\s+([^-|][^-]*?)\s+(---|-->|<--|<-->)/g,
+    (_m, label: string, conn: string) => {
+      return `${conn}|${label.trim()}|`
+    },
+  )
 }
 
 function stripQuotes(s: string): string {
@@ -70,7 +73,11 @@ function parseNodeToken(raw: string): ParsedNode | null {
     ['[', ']', 'process'],
   ]
   for (const [open, close, kind] of pairs) {
-    if (rest.startsWith(open) && rest.endsWith(close) && rest.length >= open.length + close.length) {
+    if (
+      rest.startsWith(open) &&
+      rest.endsWith(close) &&
+      rest.length >= open.length + close.length
+    ) {
       const text = stripQuotes(rest.slice(open.length, rest.length - close.length))
       return { id, text: text || id, kind }
     }

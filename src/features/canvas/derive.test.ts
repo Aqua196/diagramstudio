@@ -21,7 +21,10 @@ function twoNodes() {
 describe('deriveNodes / deriveEdges', () => {
   it('内容与位置都没变的节点、连线沿用上一帧的对象', () => {
     const { doc } = twoNodes()
-    const nodes = deriveNodes(doc, plugin, [], NO_SEL).map((n) => ({ ...n, measured: { width: 120, height: 48 } }))
+    const nodes = deriveNodes(doc, plugin, [], NO_SEL).map((n) => ({
+      ...n,
+      measured: { width: 120, height: 48 },
+    }))
     const edges = deriveEdges(doc, plugin, [], NO_SEL)
     const again = deriveNodes(doc, plugin, nodes, NO_SEL)
     expect(again[0]).toBe(nodes[0])
@@ -30,7 +33,10 @@ describe('deriveNodes / deriveEdges', () => {
 
   it('改了的节点换新对象但保留 measured；尺寸变了则不保留', () => {
     const { doc, a, b } = twoNodes()
-    const nodes = deriveNodes(doc, plugin, [], NO_SEL).map((n) => ({ ...n, measured: { width: 120, height: 48 } }))
+    const nodes = deriveNodes(doc, plugin, [], NO_SEL).map((n) => ({
+      ...n,
+      measured: { width: 120, height: 48 },
+    }))
     const moved = { ...doc, nodes: { ...doc.nodes, [a.id]: { ...a, position: { x: 40, y: 0 } } } }
     const out = deriveNodes(moved, plugin, nodes, NO_SEL)
     expect(out[0]).not.toBe(nodes[0])

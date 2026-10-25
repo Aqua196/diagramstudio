@@ -59,7 +59,11 @@ export function useCanvasKeys(doc: DiagramDoc, plugin: DiagramPlugin, deps: Deps
         return
       }
 
-      if ((e.key === 'Enter' || e.key === 'F2') && sel.nodeIds.length === 1 && sel.edgeIds.length === 0) {
+      if (
+        (e.key === 'Enter' || e.key === 'F2') &&
+        sel.nodeIds.length === 1 &&
+        sel.edgeIds.length === 0
+      ) {
         e.preventDefault()
         startEditing(sel.nodeIds[0])
         return

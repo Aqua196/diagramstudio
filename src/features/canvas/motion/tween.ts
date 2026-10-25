@@ -36,7 +36,10 @@ export const browserClock: Clock = {
 /** 两帧间隔超过它记一次「卡顿」，连续两次就收尾 */
 const JANK_MS = 50
 
-const lerp = (a: Pt, b: Pt, k: number): Pt => ({ x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k })
+const lerp = (a: Pt, b: Pt, k: number): Pt => ({
+  x: a.x + (b.x - a.x) * k,
+  y: a.y + (b.y - a.y) * k,
+})
 
 export class Tweener {
   private anims = new Map<string, Anim>()

@@ -29,7 +29,11 @@ export function cascadeFx(
   const delay = new Map(order.map((id, i) => [id, Math.round(base + i * step)]))
   const nodes = new Map<string, FxSpec>()
   for (const [id, d] of delay) {
-    nodes.set(id, { cls: 'ds-fx-pop', style: { '--ds-delay': `${d}ms` } as CSSProperties, dur: d + POP_MS })
+    nodes.set(id, {
+      cls: 'ds-fx-pop',
+      style: { '--ds-delay': `${d}ms` } as CSSProperties,
+      dur: d + POP_MS,
+    })
   }
   const out = new Map<string, FxSpec>()
   for (const e of edges) {

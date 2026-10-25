@@ -55,7 +55,12 @@ function occupied(doc: DiagramDoc, n: DiagramNode): boolean {
 }
 
 /** 规划「新节点 + 连线」：该方向已被占用时继续往外找空位（最多 6 格）；悬停预览与点击共用 */
-export function planQuickAdd(doc: DiagramDoc, plugin: DiagramPlugin, fromId: string, side: NodeSide) {
+export function planQuickAdd(
+  doc: DiagramDoc,
+  plugin: DiagramPlugin,
+  fromId: string,
+  side: NodeSide,
+) {
   const from = doc.nodes[fromId]
   if (!from) return null
   const kind = plugin.nextKind?.(from.kind) ?? from.kind
@@ -68,7 +73,12 @@ export function planQuickAdd(doc: DiagramDoc, plugin: DiagramPlugin, fromId: str
   return node ? { from, node, edge: createPluginEdge(plugin, from.id, node.id) } : null
 }
 
-export function buildQuickAdd(doc: DiagramDoc, plugin: DiagramPlugin, fromId: string, side: NodeSide) {
+export function buildQuickAdd(
+  doc: DiagramDoc,
+  plugin: DiagramPlugin,
+  fromId: string,
+  side: NodeSide,
+) {
   const plan = planQuickAdd(doc, plugin, fromId, side)
   return plan ? insertElements([plan.node], [plan.edge], zh.canvas.quickAdd) : null
 }

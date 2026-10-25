@@ -77,7 +77,9 @@ test('g7 Mermaid 导入结果', async ({ page }) => {
   const fc = page.waitForEvent('filechooser')
   await page.getByRole('button', { name: '导入' }).click()
   await page.getByRole('menuitem', { name: '导入 Mermaid 流程图' }).click()
-  await (await fc).setFiles({
+  await (
+    await fc
+  ).setFiles({
     name: 'order.mmd',
     mimeType: 'text/plain',
     buffer: Buffer.from(

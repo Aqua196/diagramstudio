@@ -21,7 +21,12 @@ export const toView = (n: FNode, position: Pt = n.position): ViewNode => ({
 export const plain = <E extends FNode | FEdge>(e: E): E =>
   e.className ? { ...e, className: undefined, style: undefined } : e
 
-export function composeLists(book: FxBook, tween: Tweener, next: Lists, pos: Map<string, Pt>): Lists {
+export function composeLists(
+  book: FxBook,
+  tween: Tweener,
+  next: Lists,
+  pos: Map<string, Pt>,
+): Lists {
   if (book.size === 0 && pos.size === 0) return next
   const { nodeFx, edgeFx, ghosts, ghostEdges } = book
   const nodes: FNode[] = next.nodes.map((n) => {

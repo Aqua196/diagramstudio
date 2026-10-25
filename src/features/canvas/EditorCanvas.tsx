@@ -2,12 +2,7 @@
 // 文档→元素经 store 选择器派生；拖动/框选等瞬态在 RF 内部，松手才提交命令。
 // hook 接线在 useCanvasWiring（C1），这里只做 JSX 布局。
 import { useMemo } from 'react'
-import {
-  Background,
-  BackgroundVariant,
-  MiniMap,
-  ReactFlow,
-} from '@xyflow/react'
+import { Background, BackgroundVariant, MiniMap, ReactFlow } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import './canvas.css'
 
@@ -35,7 +30,9 @@ const edgeTypes = { dsEdge: DsEdge }
 function GridLayer() {
   const grid = useDocumentStore((s) => s.doc.settings.grid)
   if (!grid) return null
-  return <Background id="dots" variant={BackgroundVariant.Dots} gap={24} size={1.6} color="var(--dot)" />
+  return (
+    <Background id="dots" variant={BackgroundVariant.Dots} gap={24} size={1.6} color="var(--dot)" />
+  )
 }
 
 function Overlays() {
@@ -79,7 +76,13 @@ function FlowInner() {
           <ReactFlow {...rfProps} nodeTypes={nodeTypes} edgeTypes={edgeTypes}>
             <GridLayer />
             {minimapVisible && (
-              <MiniMap className="ds-minimap" pannable zoomable position="bottom-right" ariaLabel={zh.editor.minimap} />
+              <MiniMap
+                className="ds-minimap"
+                pannable
+                zoomable
+                position="bottom-right"
+                ariaLabel={zh.editor.minimap}
+              />
             )}
             <PeerCursors />
             <SelectionToolbar />

@@ -1,15 +1,7 @@
 // 持久化层：localStorage 读写的全部路径（SPEC §5，离线可用）。
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createNode } from '../model/factories'
-import {
-  deleteDoc,
-  duplicateDoc,
-  listDocs,
-  loadDoc,
-  newDoc,
-  renameDoc,
-  saveDoc,
-} from './persist'
+import { deleteDoc, duplicateDoc, listDocs, loadDoc, newDoc, renameDoc, saveDoc } from './persist'
 
 beforeEach(() => {
   localStorage.clear()

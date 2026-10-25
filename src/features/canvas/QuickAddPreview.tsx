@@ -6,7 +6,12 @@ import type { NodeSide } from '@/core/plugin'
 import type { ReactPlugin } from '@/plugins/registry'
 import { useDocumentStore } from '@/store/documentStore'
 
-const OPPOSITE: Record<NodeSide, NodeSide> = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' }
+const OPPOSITE: Record<NodeSide, NodeSide> = {
+  top: 'bottom',
+  bottom: 'top',
+  left: 'right',
+  right: 'left',
+}
 
 /** 节点某条边的中点（相对当前节点左上角） */
 function sideMid(n: DiagramNode, side: NodeSide, ox: number, oy: number) {

@@ -15,7 +15,10 @@ export function Toasts() {
   return (
     <div className="ds-toasts" role="status" aria-live="polite">
       {toasts.map((toast) => (
-        <div key={toast.id} className={`ds-toast ds-toast-${toast.kind}${toast.leaving ? ' is-leaving' : ''}`}>
+        <div
+          key={toast.id}
+          className={`ds-toast ds-toast-${toast.kind}${toast.leaving ? ' is-leaving' : ''}`}
+        >
           <span className="ds-toast-icon">{ICONS[toast.kind]}</span>
           <span>{toast.text}</span>
           <button

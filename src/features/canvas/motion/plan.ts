@@ -83,7 +83,12 @@ export function enterSource(
 
 /** 退场节点的收拢目标：仍可见的最近祖先——折叠时子树收回父节点；
  *  删除/撤销加子主题时新文档里已没有它，按旧文档的父链找；没有父子关系的图原地缩小 */
-function exitTarget(n: ViewNode, next: Map<string, ViewNode>, prevDoc: DiagramDoc, nextDoc: DiagramDoc) {
+function exitTarget(
+  n: ViewNode,
+  next: Map<string, ViewNode>,
+  prevDoc: DiagramDoc,
+  nextDoc: DiagramDoc,
+) {
   const doc = nextDoc.nodes[n.id] ? nextDoc : prevDoc
   const anc = ancestor(doc, n.id, (id) => next.has(id))
   return anc ? topLeftAt(next.get(anc)!, n) : null
@@ -113,7 +118,8 @@ export function planMotion(
     }
   }
   for (const n of prevView) {
-    if (!next.has(n.id)) plan.exits.push({ id: n.id, toward: exitTarget(n, next, prevDoc, nextDoc) })
+    if (!next.has(n.id))
+      plan.exits.push({ id: n.id, toward: exitTarget(n, next, prevDoc, nextDoc) })
   }
   return plan
 }

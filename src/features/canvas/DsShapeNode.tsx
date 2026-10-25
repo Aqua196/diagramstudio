@@ -58,7 +58,9 @@ function DsShapeNode({ id, data, selected, width, height, dragging }: NodeProps)
     plugin: ReactPlugin
   }
   const theme = useUiStore((s) => s.resolvedTheme)
-  const single = useUiStore((s) => s.selection.nodeIds.length === 1 && s.selection.edgeIds.length === 0)
+  const single = useUiStore(
+    (s) => s.selection.nodeIds.length === 1 && s.selection.edgeIds.length === 0,
+  )
   const isDropTarget = useCanvasStore((s) => s.dropTargetId === id)
   const execute = useDocumentStore((s) => s.execute)
   const { editing, liveNode, ctx, shape } = useShapeCtx(id, node, plugin, width, height)

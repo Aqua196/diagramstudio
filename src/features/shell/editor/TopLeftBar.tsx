@@ -63,12 +63,7 @@ export function TopLeftBar() {
   return (
     <div className="ds-float ds-corner ds-corner-tl">
       <Tip label={zh.editor.home}>
-        <button
-          type="button"
-          className="ds-home-btn"
-          aria-label={zh.editor.home}
-          onClick={goHome}
-        >
+        <button type="button" className="ds-home-btn" aria-label={zh.editor.home} onClick={goHome}>
           <ChevronLeft size={16} className="ds-home-chev" />
           <BrandMark size={22} />
         </button>

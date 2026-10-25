@@ -11,7 +11,11 @@ export function dagreLayout(
   opts: LayoutOptions,
 ): Record<string, { x: number; y: number }> {
   const g = new dagre.graphlib.Graph()
-  g.setGraph({ rankdir: opts.direction === 'LR' ? 'LR' : 'TB', nodesep: NODE_SEP, ranksep: RANK_SEP })
+  g.setGraph({
+    rankdir: opts.direction === 'LR' ? 'LR' : 'TB',
+    nodesep: NODE_SEP,
+    ranksep: RANK_SEP,
+  })
   g.setDefaultEdgeLabel(() => ({}))
 
   for (const id of doc.zOrder) {

@@ -54,7 +54,10 @@ function Header() {
           onClick={(e) => {
             const r = e.currentTarget.getBoundingClientRect()
             const next = theme === 'dark' ? 'light' : 'dark'
-            themeTransition(() => setTheme(next), { x: r.left + r.width / 2, y: r.top + r.height / 2 })
+            themeTransition(() => setTheme(next), {
+              x: r.left + r.width / 2,
+              y: r.top + r.height / 2,
+            })
           }}
         />
       </div>

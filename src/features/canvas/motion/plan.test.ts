@@ -92,7 +92,12 @@ describe('planMotion', () => {
 
 describe('cascadeOrder / cascadeFx', () => {
   it('从根广度优先，每个可见节点恰好一次', () => {
-    const d = doc([node('c2', 0, 0, 'r'), node('r', 0, 0), node('c1', 0, 0, 'r'), node('g', 0, 0, 'c1')])
+    const d = doc([
+      node('c2', 0, 0, 'r'),
+      node('r', 0, 0),
+      node('c1', 0, 0, 'r'),
+      node('g', 0, 0, 'c1'),
+    ])
     const order = cascadeOrder(d, ['c2', 'r', 'c1', 'g'])
     expect(order[0]).toBe('r')
     expect(order.indexOf('g')).toBeGreaterThan(order.indexOf('c1'))
@@ -109,7 +114,13 @@ describe('cascadeOrder / cascadeFx', () => {
       ],
     )
     expect(cascadeOrder(d, ['a', 'b', 'c'])).toEqual(['a', 'b', 'c'])
-    const ring = doc([node('a', 0, 0), node('b', 0, 0)], [['e1', 'a', 'b'], ['e2', 'b', 'a']])
+    const ring = doc(
+      [node('a', 0, 0), node('b', 0, 0)],
+      [
+        ['e1', 'a', 'b'],
+        ['e2', 'b', 'a'],
+      ],
+    )
     expect(cascadeOrder(ring, ['a', 'b']).sort()).toEqual(['a', 'b'])
   })
 
@@ -118,9 +129,13 @@ describe('cascadeOrder / cascadeFx', () => {
     const d = doc(ids.map((id, i) => node(id, 0, 0, i ? 'n0' : undefined)))
     const edges = ids.slice(1).map((id) => ({ id: `e-${id}`, source: 'n0', target: id }))
     const fx = cascadeFx(d, ids, edges, 120)
-    const delays = cascadeOrder(d, ids).map((id) => parseInt(String(fx.nodes.get(id)!.style!['--ds-delay' as never])))
+    const delays = cascadeOrder(d, ids).map((id) =>
+      parseInt(String(fx.nodes.get(id)!.style!['--ds-delay' as never])),
+    )
     expect(delays).toEqual([...delays].sort((a, b) => a - b))
-    expect(Math.max(...[...fx.nodes.values()].map((f) => f.dur))).toBeLessThanOrEqual(120 + 700 + 300)
+    expect(Math.max(...[...fx.nodes.values()].map((f) => f.dur))).toBeLessThanOrEqual(
+      120 + 700 + 300,
+    )
     for (const e of fx.edges.values()) {
       expect(parseInt(String(e.style!['--ds-delay' as never]))).toBeGreaterThanOrEqual(delays[0])
       expect(e.cls).toBe('ds-fx-draw')

@@ -35,7 +35,10 @@ export function docBounds(doc: DiagramDoc, ids?: string[]): Rect | null {
 }
 
 const overflow = (b: Rect, v: Rect, slack: number) =>
-  b.x < v.x - slack || b.y < v.y - slack || b.x + b.w > v.x + v.w + slack || b.y + b.h > v.y + v.h + slack
+  b.x < v.x - slack ||
+  b.y < v.y - slack ||
+  b.x + b.w > v.x + v.w + slack ||
+  b.y + b.h > v.y + v.h + slack
 
 const duration = (ms: number) => (motionAllowed() ? ms : 0)
 
@@ -70,10 +73,16 @@ function reveal(rf: ReactFlowInstance, id: string): void {
   const v = safeView(rf)
   if (!b || !v) return
   const pad = 16 / rf.getZoom()
-  const { dx, dy } = nudgeInto({ x: b.x - pad, y: b.y - pad, w: b.w + pad * 2, h: b.h + pad * 2 }, v)
+  const { dx, dy } = nudgeInto(
+    { x: b.x - pad, y: b.y - pad, w: b.w + pad * 2, h: b.h + pad * 2 },
+    v,
+  )
   if (dx === 0 && dy === 0) return
   const vp = rf.getViewport()
-  void rf.setViewport({ x: vp.x - dx * vp.zoom, y: vp.y - dy * vp.zoom, zoom: vp.zoom }, { duration: duration(280) })
+  void rf.setViewport(
+    { x: vp.x - dx * vp.zoom, y: vp.y - dy * vp.zoom, zoom: vp.zoom },
+    { duration: duration(280) },
+  )
 }
 
 /** 开始编辑的节点不在安全区内时平移镜头。稍等一下再算：思维导图加子主题后的自动布局

@@ -15,7 +15,9 @@ const DESCS: Record<DiagramType, string> = {
 
 /** 新建前登记形变起点：这张卡的缩略图将「长成」编辑器画布 */
 function create(e: React.MouseEvent, type: DiagramType, templateId?: string) {
-  markSharedSource(e.currentTarget.closest('.ds-new-card')?.querySelector('.ds-new-preview') ?? null)
+  markSharedSource(
+    e.currentTarget.closest('.ds-new-card')?.querySelector('.ds-new-preview') ?? null,
+  )
   emit(EV.NEW_DOC, templateId === undefined ? { type } : { type, templateId })
 }
 

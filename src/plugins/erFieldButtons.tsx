@@ -43,7 +43,10 @@ export function DelButton({ f, fields, api }: { f: ErField; fields: ErField[]; a
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation()
-        api.update(fields.filter((x) => x.id !== f.id), er.deleteField)
+        api.update(
+          fields.filter((x) => x.id !== f.id),
+          er.deleteField,
+        )
       }}
     >
       ×

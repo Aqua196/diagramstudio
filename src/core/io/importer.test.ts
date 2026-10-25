@@ -55,7 +55,9 @@ describe('importMermaidText', () => {
     const r = importMermaidText('graph TD\n  A --> B\n', {
       layout: (d) => Object.fromEntries(Object.keys(d.nodes).map((id) => [id, { x: 1, y: 2 }])),
     })
-    expect(Object.values(r.doc!.nodes).every((n) => n.position.x === 1 && n.position.y === 2)).toBe(true)
+    expect(Object.values(r.doc!.nodes).every((n) => n.position.x === 1 && n.position.y === 2)).toBe(
+      true,
+    )
   })
 
   it('注入的连线路由覆盖默认曲线；不注入保持原样', () => {

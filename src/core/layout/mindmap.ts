@@ -53,9 +53,7 @@ export function mindmapLayout(
   const root = doc.nodes[rootId]
 
   const childrenOf = (id: string): DiagramNode[] =>
-    doc.zOrder
-      .map((z) => doc.nodes[z])
-      .filter((n): n is DiagramNode => !!n && parentIdOf(n) === id)
+    doc.zOrder.map((z) => doc.nodes[z]).filter((n): n is DiagramNode => !!n && parentIdOf(n) === id)
 
   const subtree = (n: DiagramNode): TreeData => ({
     id: n.id,

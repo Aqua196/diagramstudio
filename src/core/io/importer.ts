@@ -25,7 +25,10 @@ export function importMermaidText(
     /** 文档标题与空内容错误文案由调用方注入（i18n 归外壳层） */
     title?: string
     emptyError?: string
-    layout?: (doc: DiagramDoc, o: { direction: 'TB' | 'LR' }) => Record<string, { x: number; y: number }>
+    layout?: (
+      doc: DiagramDoc,
+      o: { direction: 'TB' | 'LR' },
+    ) => Record<string, { x: number; y: number }>
     /** 连线路由：由外壳按流程图插件默认值注入（Mermaid 本身不描述路由） */
     edgeRouting?: EdgeRouting
   } = {},

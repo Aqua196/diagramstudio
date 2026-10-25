@@ -143,7 +143,11 @@ export function themeTransition(update: () => void, origin?: { x: number; y: num
     () =>
       root.animate(
         { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] },
-        { duration: 480, easing: 'cubic-bezier(0.2, 0, 0, 1)', pseudoElement: '::view-transition-new(root)' },
+        {
+          duration: 480,
+          easing: 'cubic-bezier(0.2, 0, 0, 1)',
+          pseudoElement: '::view-transition-new(root)',
+        },
       ),
     () => undefined,
   )

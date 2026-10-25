@@ -62,7 +62,10 @@ export function MoreMenu() {
           />
           <DropdownMenu.Separator className="ds-menu-sep" />
           <DropdownMenu.Label className="ds-menu-label">{e.theme}</DropdownMenu.Label>
-          <DropdownMenu.RadioGroup value={theme} onValueChange={(v) => themeTransition(() => setTheme(v as typeof theme))}>
+          <DropdownMenu.RadioGroup
+            value={theme}
+            onValueChange={(v) => themeTransition(() => setTheme(v as typeof theme))}
+          >
             {THEMES.map(([v, label]) => (
               <DropdownMenu.RadioItem key={v} value={v} className="ds-menu-item">
                 <span className="ds-menu-check-slot">

@@ -176,4 +176,3 @@ describe('YjsCollabAdapter', () => {
     adapter.pushLocal(createDoc('mindmap')) // 不抛错
   })
 })
-

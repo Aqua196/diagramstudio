@@ -37,7 +37,9 @@ function DocMenu({
           <DropdownMenu.Item
             className="ds-menu-item"
             onSelect={() => {
-              markSharedSource(document.querySelector(`[data-doc-id="${CSS.escape(doc.id)}"] .ds-doc-thumb`))
+              markSharedSource(
+                document.querySelector(`[data-doc-id="${CSS.escape(doc.id)}"] .ds-doc-thumb`),
+              )
               emit(EV.OPEN_DOC, { id: doc.id })
             }}
           >

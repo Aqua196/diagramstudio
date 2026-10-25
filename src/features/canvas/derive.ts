@@ -4,13 +4,23 @@
 import type { Edge, Node } from '@xyflow/react'
 import type { DiagramDoc } from '@/core/model/types'
 import type { DiagramPlugin } from '@/core/plugin'
-import { selectFlowEdges, selectFlowNodes, type FlowEdgeData, type FlowNodeData } from '@/store/selectors'
+import {
+  selectFlowEdges,
+  selectFlowNodes,
+  type FlowEdgeData,
+  type FlowNodeData,
+} from '@/store/selectors'
 import type { Selection } from '@/store/uiStore'
 
 type FNode = Node<FlowNodeData>
 type FEdge = Edge<FlowEdgeData>
 
-export function deriveNodes(doc: DiagramDoc, plugin: DiagramPlugin, shown: FNode[], sel: Selection): FNode[] {
+export function deriveNodes(
+  doc: DiagramDoc,
+  plugin: DiagramPlugin,
+  shown: FNode[],
+  sel: Selection,
+): FNode[] {
   const was = new Map(shown.map((n) => [n.id, n]))
   const picked = new Set(sel.nodeIds)
   return selectFlowNodes(doc, plugin).map((n) => {
@@ -32,7 +42,12 @@ export function deriveNodes(doc: DiagramDoc, plugin: DiagramPlugin, shown: FNode
   })
 }
 
-export function deriveEdges(doc: DiagramDoc, plugin: DiagramPlugin, shown: FEdge[], sel: Selection): FEdge[] {
+export function deriveEdges(
+  doc: DiagramDoc,
+  plugin: DiagramPlugin,
+  shown: FEdge[],
+  sel: Selection,
+): FEdge[] {
   const was = new Map(shown.map((e) => [e.id, e]))
   const picked = new Set(sel.edgeIds)
   return selectFlowEdges(doc, plugin).map((e) => {

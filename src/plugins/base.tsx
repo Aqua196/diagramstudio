@@ -22,7 +22,15 @@ function svgShape(
       {body(w, h)}
       {ctx.editing ? (
         <foreignObject x={6} y={6} width={w - 12} height={h - 12}>
-          <div style={{ display: 'flex', alignItems: 'center', height: '100%', fontSize: node.style.fontSize, color: 'var(--node-text)' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              height: '100%',
+              fontSize: node.style.fontSize,
+              color: 'var(--node-text)',
+            }}
+          >
             {ctx.editor as ReactNode}
           </div>
         </foreignObject>
@@ -49,21 +57,57 @@ const baseShapes: ShapeDef<ReactNode>[] = [
     name: sh.process,
     defaultSize: { w: 140, h: 56 },
     render: (n, ctx) =>
-      svgShape(n, (w, h) => <rect width={w} height={h} fill="var(--node-fill)" stroke="var(--node-stroke)" strokeWidth={n.style.strokeWidth} />, ctx),
+      svgShape(
+        n,
+        (w, h) => (
+          <rect
+            width={w}
+            height={h}
+            fill="var(--node-fill)"
+            stroke="var(--node-stroke)"
+            strokeWidth={n.style.strokeWidth}
+          />
+        ),
+        ctx,
+      ),
   },
   {
     kind: 'terminator',
     name: sh.terminator,
     defaultSize: { w: 140, h: 48 },
     render: (n, ctx) =>
-      svgShape(n, (w, h) => <rect width={w} height={h} rx={h / 2} fill="var(--node-fill)" stroke="var(--node-stroke)" strokeWidth={n.style.strokeWidth} />, ctx),
+      svgShape(
+        n,
+        (w, h) => (
+          <rect
+            width={w}
+            height={h}
+            rx={h / 2}
+            fill="var(--node-fill)"
+            stroke="var(--node-stroke)"
+            strokeWidth={n.style.strokeWidth}
+          />
+        ),
+        ctx,
+      ),
   },
   {
     kind: 'decision',
     name: sh.decision,
     defaultSize: { w: 140, h: 80 },
     render: (n, ctx) =>
-      svgShape(n, (w, h) => <polygon points={`${w / 2},0 ${w},${h / 2} ${w / 2},${h} 0,${h / 2}`} fill="var(--node-fill)" stroke="var(--node-stroke)" strokeWidth={n.style.strokeWidth} />, ctx),
+      svgShape(
+        n,
+        (w, h) => (
+          <polygon
+            points={`${w / 2},0 ${w},${h / 2} ${w / 2},${h} 0,${h / 2}`}
+            fill="var(--node-fill)"
+            stroke="var(--node-stroke)"
+            strokeWidth={n.style.strokeWidth}
+          />
+        ),
+        ctx,
+      ),
   },
   {
     kind: 'database',
@@ -74,8 +118,21 @@ const baseShapes: ShapeDef<ReactNode>[] = [
         n,
         (w, h) => (
           <>
-            <ellipse cx={w / 2} cy={12} rx={w / 2} ry={12} fill="var(--node-fill)" stroke="var(--node-stroke)" strokeWidth={n.style.strokeWidth} />
-            <path d={`M0,12 L0,${h - 12} A${w / 2},12 0 0 0 ${w},${h - 12} L${w},12`} fill="var(--node-fill)" stroke="var(--node-stroke)" strokeWidth={n.style.strokeWidth} />
+            <ellipse
+              cx={w / 2}
+              cy={12}
+              rx={w / 2}
+              ry={12}
+              fill="var(--node-fill)"
+              stroke="var(--node-stroke)"
+              strokeWidth={n.style.strokeWidth}
+            />
+            <path
+              d={`M0,12 L0,${h - 12} A${w / 2},12 0 0 0 ${w},${h - 12} L${w},12`}
+              fill="var(--node-fill)"
+              stroke="var(--node-stroke)"
+              strokeWidth={n.style.strokeWidth}
+            />
           </>
         ),
         ctx,
@@ -83,7 +140,10 @@ const baseShapes: ShapeDef<ReactNode>[] = [
   },
 ]
 
-function makeBasePlugin(type: DiagramType, layout: DiagramPlugin['layout']): DiagramPlugin<ReactNode> {
+function makeBasePlugin(
+  type: DiagramType,
+  layout: DiagramPlugin['layout'],
+): DiagramPlugin<ReactNode> {
   const template: DiagramDoc = createDoc(type, `${zh.plugins.typeNames[type]}示例`)
   const plugin: DiagramPlugin<ReactNode> = {
     type,

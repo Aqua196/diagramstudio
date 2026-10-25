@@ -13,7 +13,15 @@ import { isGhostEdge } from './ghosts'
 import { takeInstant, takeReveal } from './hints'
 import { composeLists, plain, toView, type Lists } from './compose'
 import { planMotion, type Pt, type ViewNode } from './plan'
-import { stepChanged, stepDraws, stepEnters, stepExits, stepMoves, type Change, type StepCtx } from './steps'
+import {
+  stepChanged,
+  stepDraws,
+  stepEnters,
+  stepExits,
+  stepMoves,
+  type Change,
+  type StepCtx,
+} from './steps'
 import { Tweener } from './tween'
 import * as T from './timing'
 
@@ -55,7 +63,8 @@ export class CanvasMotion {
   ) {
     this.book = new FxBook(env.clock.now)
     this.tween = new Tweener(
-      (f) => this.setNodes((ns) => ns.map((n) => (f.has(n.id) ? { ...n, position: f.get(n.id)! } : n))),
+      (f) =>
+        this.setNodes((ns) => ns.map((n) => (f.has(n.id) ? { ...n, position: f.get(n.id)! } : n))),
       env.clock,
     )
   }
@@ -115,7 +124,10 @@ export class CanvasMotion {
     if (active === this) setActive(null)
   }
 
-  private animate({ doc, change, shown, next }: ReconcileInput, prevDoc: DiagramDoc): Map<string, Pt> {
+  private animate(
+    { doc, change, shown, next }: ReconcileInput,
+    prevDoc: DiagramDoc,
+  ): Map<string, Pt> {
     const ids = new Set(next.nodes.map((n) => n.id))
     const byId = new Map<string, FNode>()
     const view: ViewNode[] = []
@@ -127,11 +139,17 @@ export class CanvasMotion {
       view.push(toView(n, this.tween.at(n.id) ?? n.position))
     }
     const dragging = new Set(shown.nodes.filter((n) => n.dragging).map((n) => n.id))
-    const plan = planMotion(view, next.nodes.map((n) => toView(n)), prevDoc, doc, {
-      dragging,
-      edgeSources: change === 'execute' || change === 'redo',
-      minMove: T.MIN_MOVE_PX,
-    })
+    const plan = planMotion(
+      view,
+      next.nodes.map((n) => toView(n)),
+      prevDoc,
+      doc,
+      {
+        dragging,
+        edgeSources: change === 'execute' || change === 'redo',
+        minMove: T.MIN_MOVE_PX,
+      },
+    )
     const at = new Map(view.map((v) => [v.id, v.position]))
     const pos = new Map<string, Pt>()
     // 正在被拖的节点保持手上的位置（协作者改动到达时不把它拽回文档位置）
@@ -148,7 +166,12 @@ export class CanvasMotion {
   /** 打开示例/导入：依次自绘；页面形变进行中则等卡片落地再开始 */
   private cascade(doc: DiagramDoc, next: Lists): void {
     const base = this.env.pageTransition() ? 340 : 120
-    const fx = cascadeFx(doc, next.nodes.map((n) => n.id), next.edges, base)
+    const fx = cascadeFx(
+      doc,
+      next.nodes.map((n) => n.id),
+      next.edges,
+      base,
+    )
     for (const [id, f] of fx.nodes) this.book.node(id, f.cls, f.dur, f.style)
     for (const [id, f] of fx.edges) this.book.edge(id, f.cls, f.dur, f.style)
   }

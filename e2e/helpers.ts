@@ -98,7 +98,9 @@ export async function settle(page: Page): Promise<void> {
     if (h.dataset.motion === 'busy') return false
     return document
       .getAnimations()
-      .every((a) => a.playState !== 'running' || a.effect?.getComputedTiming().iterations === Infinity)
+      .every(
+        (a) => a.playState !== 'running' || a.effect?.getComputedTiming().iterations === Infinity,
+      )
   }
   await page.waitForFunction(quiet, null, { polling: 50 })
 }
