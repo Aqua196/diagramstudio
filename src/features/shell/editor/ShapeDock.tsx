@@ -144,39 +144,41 @@ export function ShapeDock() {
   const plugin = getPlugin(type)
   const shapes = plugin.shapes.filter((s) => !s.paletteHidden)
   return (
-    <nav className="ds-float ds-float-col ds-dock" aria-label={e.shapes}>
-      <DockItem
-        icon={<MousePointer2 size={18} />}
-        label={e.toolSelect}
-        kbd="V"
-        active={tool === 'select'}
-        onClick={() => setTool('select')}
-      />
-      <DockItem
-        icon={<Hand size={18} />}
-        label={e.toolHand}
-        kbd="H"
-        active={tool === 'hand'}
-        onClick={() => setTool('hand')}
-      />
-      <span className="ds-sep" />
-      {shapes.slice(0, PRIMARY).map((s) => (
-        <ShapeButton key={s.kind} s={s} />
-      ))}
-      {shapes.length > PRIMARY && <MoreShapes shapes={shapes.slice(PRIMARY)} />}
-      <span className="ds-dock-hint" aria-hidden>
-        {e.shapeHint}
-      </span>
-      <span className="ds-sep" />
-      <Templates />
-      {!plugin.autoLayoutOnChange && (
+    <div className="ds-dock">
+      <nav className="ds-dock-panel" aria-label={e.shapes}>
         <DockItem
-          icon={<WandSparkles size={18} />}
-          label={e.autoLayout}
-          kbd="⇧L"
-          onClick={() => emit(EV.AUTO_LAYOUT, direction)}
+          icon={<MousePointer2 size={18} />}
+          label={e.toolSelect}
+          kbd="V"
+          active={tool === 'select'}
+          onClick={() => setTool('select')}
         />
-      )}
-    </nav>
+        <DockItem
+          icon={<Hand size={18} />}
+          label={e.toolHand}
+          kbd="H"
+          active={tool === 'hand'}
+          onClick={() => setTool('hand')}
+        />
+        <span className="ds-sep" />
+        {shapes.slice(0, PRIMARY).map((s) => (
+          <ShapeButton key={s.kind} s={s} />
+        ))}
+        {shapes.length > PRIMARY && <MoreShapes shapes={shapes.slice(PRIMARY)} />}
+        {/* 收起时是一条分隔线，展开时换成操作提示：占位不变，展开时不会把整条坞撑高、上下跳 */}
+        <span className="ds-dock-hint" aria-hidden>
+          <span>{e.shapeHint}</span>
+        </span>
+        <Templates />
+        {!plugin.autoLayoutOnChange && (
+          <DockItem
+            icon={<WandSparkles size={18} />}
+            label={e.autoLayout}
+            kbd="⇧L"
+            onClick={() => emit(EV.AUTO_LAYOUT, direction)}
+          />
+        )}
+      </nav>
+    </div>
   )
 }

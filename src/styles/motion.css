@@ -187,40 +187,40 @@ html.ds-vt-page .ds-editor {
   --rise-delay: 220ms;
 }
 /* 形状坞里的按钮跟着坞体再错开一点，像被依次摆上去（每个 18ms，最多 140ms） */
-.ds-editor[data-enter] .ds-dock > * {
+.ds-editor[data-enter] .ds-dock-panel > * {
   --rise-x: -6px;
   --rise-y: 0;
   animation: ds-rise-in 220ms var(--ease-out) backwards;
   animation-delay: calc(100ms + min(var(--i, 0) * 18ms, 140ms) + var(--enter-offset, 0ms));
 }
-.ds-editor .ds-dock > :nth-child(1) {
+.ds-editor .ds-dock-panel > :nth-child(1) {
   --i: 0;
 }
-.ds-editor .ds-dock > :nth-child(2) {
+.ds-editor .ds-dock-panel > :nth-child(2) {
   --i: 1;
 }
-.ds-editor .ds-dock > :nth-child(3) {
+.ds-editor .ds-dock-panel > :nth-child(3) {
   --i: 2;
 }
-.ds-editor .ds-dock > :nth-child(4) {
+.ds-editor .ds-dock-panel > :nth-child(4) {
   --i: 3;
 }
-.ds-editor .ds-dock > :nth-child(5) {
+.ds-editor .ds-dock-panel > :nth-child(5) {
   --i: 4;
 }
-.ds-editor .ds-dock > :nth-child(6) {
+.ds-editor .ds-dock-panel > :nth-child(6) {
   --i: 5;
 }
-.ds-editor .ds-dock > :nth-child(7) {
+.ds-editor .ds-dock-panel > :nth-child(7) {
   --i: 6;
 }
-.ds-editor .ds-dock > :nth-child(8) {
+.ds-editor .ds-dock-panel > :nth-child(8) {
   --i: 7;
 }
-.ds-editor .ds-dock > :nth-child(9) {
+.ds-editor .ds-dock-panel > :nth-child(9) {
   --i: 8;
 }
-.ds-editor .ds-dock > :nth-child(n + 10) {
+.ds-editor .ds-dock-panel > :nth-child(n + 10) {
   --i: 9;
 }
 

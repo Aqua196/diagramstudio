@@ -115,83 +115,147 @@
 }
 
 /* —— 左侧形状坞 —— */
+/* 展开只动「裁剪」与背景宽度，不逐帧排版：名称、快捷键、提示始终排在图标右边，
+   收起时坞体与按钮就是图标列那么宽（文字溢出在外、被 clip-path 裁掉，点不到）；
+   悬停时坞体一次性换成内容宽度，之后只有裁剪区和独立的背景板宽度在过渡。
+   这样展开时没有逐帧重排，也没有先跳一下再停顿。 */
 .ds-dock {
+  --dock-closed: 48px;
   position: absolute;
   top: 50%;
   left: 12px;
   transform: translateY(-50%);
   z-index: 30;
+  pointer-events: none;
 }
-.ds-dock {
-  align-items: stretch;
+.ds-dock::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--dock-closed);
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-float);
+  transition: width var(--dur-layout) var(--ease-emph);
 }
-/* 坞的每一项：收起时 40×40 只露图标；展开时名称与快捷键从图标右侧滑出，整条坞随之变宽 */
-.ds-dock .ds-dock-item {
+.ds-dock-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: var(--dock-closed);
+  padding: 4px;
+  pointer-events: auto;
+  clip-path: inset(0 calc(100% - var(--dock-closed)) 0 0 round var(--r-lg));
+  /* 收起时宽度等裁剪收完再变回去，否则背景板和裁剪区一下子就没了可过渡的余地 */
+  transition:
+    clip-path var(--dur-layout) var(--ease-emph),
+    width 0s var(--dur-layout) allow-discrete;
+}
+.ds-dock .ds-sep {
+  width: 20px;
+  height: 1px;
+  margin: 4px 10px;
+}
+/* 坞的每一项：底色画在 ::before 上，收起时同样只裁出 40px 的圆角方块，展开时随坞一起拉长 */
+.ds-dock .ds-dock-item.ds-icon-btn {
+  position: relative;
+  isolation: isolate;
   justify-content: flex-start;
   width: auto;
-  min-width: 40px;
   height: 40px;
   padding: 0 11px;
-  border-radius: var(--r-md);
   white-space: nowrap;
+  background: transparent;
+}
+.ds-dock-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: var(--r-md);
+  clip-path: inset(0 calc(100% - 40px) 0 0 round var(--r-md));
+  transition:
+    background var(--dur-fast),
+    clip-path var(--dur-layout) var(--ease-emph);
+}
+.ds-dock-item:hover::before {
+  background: var(--surface-2);
+}
+.ds-dock-item:active::before {
+  background: var(--surface-3);
+}
+.ds-dock-item.is-active::before,
+.ds-dock-item[data-state='open']::before,
+.ds-dock-item[aria-pressed='true']::before {
+  background: var(--accent-wash);
 }
 .ds-dock-item > svg {
   flex-shrink: 0;
 }
 .ds-dock-label,
 .ds-dock-kbd,
-.ds-dock-hint {
-  max-width: 0;
-  overflow: hidden;
+.ds-dock-hint > span {
+  flex-shrink: 0;
   opacity: 0;
-  white-space: nowrap;
-  transition:
-    max-width var(--dur-layout) var(--ease-emph),
-    margin var(--dur-layout) var(--ease-emph),
-    opacity var(--dur-fast) ease-out;
+  transition: opacity var(--dur-fast) ease-out;
 }
 .ds-dock-label {
+  margin-left: 10px;
   font-size: 13px;
   font-weight: 500;
   color: var(--ink);
 }
 .ds-dock-kbd {
   margin-left: auto;
-  padding-left: 0;
+  padding-left: 16px;
   font-size: 11px;
   font-feature-settings: 'tnum';
   color: var(--ink-3);
 }
+/* 提示行：收起时只显示中间一小段分隔线，展开时线淡出、文字淡入；高度始终不变 */
 .ds-dock-hint {
+  position: relative;
   display: block;
-  max-height: 0;
+  margin: 2px 0;
+  padding: 0 11px;
   font-size: 11px;
   line-height: 16px;
+  white-space: nowrap;
   color: var(--ink-3);
-  transition:
-    max-width var(--dur-layout) var(--ease-emph),
-    max-height var(--dur-layout) var(--ease-emph),
-    opacity var(--dur-fast) ease-out;
+}
+.ds-dock-hint::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  width: 20px;
+  height: 1px;
+  background: var(--line);
+  transition: opacity var(--dur-fast) ease-out;
 }
 /* 展开：鼠标停留 120ms 才展开（划过时不乱弹），离开立即收起；键盘移入同样展开 */
-.ds-dock:hover :is(.ds-dock-label, .ds-dock-kbd, .ds-dock-hint),
-.ds-dock:has(:focus-visible) :is(.ds-dock-label, .ds-dock-kbd, .ds-dock-hint) {
-  max-width: 160px;
-  opacity: 1;
+:is(.ds-dock:hover, .ds-dock:has(:focus-visible))::before {
+  width: 100%;
   transition-delay: 120ms;
 }
-.ds-dock:hover .ds-dock-label,
-.ds-dock:has(:focus-visible) .ds-dock-label {
-  margin-left: 10px;
+:is(.ds-dock:hover, .ds-dock:has(:focus-visible)) .ds-dock-panel {
+  width: max-content;
+  clip-path: inset(0 0 0 0 round var(--r-lg));
+  transition-delay: 120ms, 0s;
 }
-.ds-dock:hover .ds-dock-kbd,
-.ds-dock:has(:focus-visible) .ds-dock-kbd {
-  padding-left: 16px;
+:is(.ds-dock:hover, .ds-dock:has(:focus-visible)) .ds-dock-item::before {
+  clip-path: inset(0 0 0 0 round var(--r-md));
+  transition-delay: 0s, 120ms;
 }
-.ds-dock:hover .ds-dock-hint,
-.ds-dock:has(:focus-visible) .ds-dock-hint {
-  max-height: 32px;
-  margin: 2px 11px 4px;
+:is(.ds-dock:hover, .ds-dock:has(:focus-visible))
+  :is(.ds-dock-label, .ds-dock-kbd, .ds-dock-hint > span) {
+  opacity: 1;
+  transition-delay: 180ms;
+}
+:is(.ds-dock:hover, .ds-dock:has(:focus-visible)) .ds-dock-hint::before {
+  opacity: 0;
+  transition-delay: 120ms;
 }
 .ds-dock-shape {
   cursor: grab;
