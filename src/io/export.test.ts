@@ -1,6 +1,7 @@
 // composeExportSvg（A1）：三种背景与图框标题栏的合成结果。
 import { describe, expect, it } from 'vitest'
-import { composeExportSvg, type ExportColors } from './export'
+import { createDoc } from '@/core/model/factories'
+import { composeExportSvg, fileName, type ExportColors } from './export'
 
 const colors: ExportColors = {
   line: '#E4E4DF',
@@ -49,5 +50,15 @@ describe('composeExportSvg', () => {
     const svg = composeExportSvg(content, { ...base, background: 'white' })
     expect(svg).toContain('width="200"')
     expect(svg).toContain('height="100"')
+  })
+})
+
+describe('fileName', () => {
+  it('用标题命名；标题为空或全是空格时用默认名，不会得到「.png」这样的隐藏文件', () => {
+    const doc = createDoc('flowchart')
+    doc.title = '用户登录流程'
+    expect(fileName(doc, 'png')).toBe('用户登录流程.png')
+    doc.title = '   '
+    expect(fileName(doc, 'json')).toBe('diagram.json')
   })
 })

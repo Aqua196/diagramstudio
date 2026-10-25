@@ -1,26 +1,24 @@
-// 导出（A1）：JSON/Mermaid 纯文本；PNG/SVG 共用一份最终 SVG —
+// 导出（A1）：PNG/SVG 共用一份最终 SVG —
 // composeExportSvg 统一拼背景（白/透明/方格纸）与图框标题栏，
 // PNG 只是把它栅格化，保证两种格式边框/背景表现一致。
-import { docToJson } from '@/core/io/serialize'
-import { docToMermaid } from '@/core/io/mermaid'
+// 所有格式（含 JSON/Mermaid）都经 downloadBlob 落盘、经 fileName 命名。
 import { frameSvg, TITLE_BLOCK_H, type FrameColors } from '@/core/io/titleblock'
 import type { DiagramDoc } from '@/core/model/types'
+import { zh } from '@/i18n/zh'
 
-function download(name: string, url: string): void {
+/** 下载文件名：标题为空时用默认名，免得得到一个叫「.png」的隐藏文件 */
+export function fileName(doc: DiagramDoc, ext: string): string {
+  return `${doc.title.trim() || zh.io.fileDiagram}.${ext}`
+}
+
+/** 触发浏览器下载。blob 地址稍后再回收：立刻回收时 Firefox 可能取消下载，不回收则每次导出都泄漏一份 */
+export function downloadBlob(name: string, blob: Blob): void {
+  const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = name
   a.click()
-}
-
-export function exportJsonFile(doc: DiagramDoc): void {
-  const blob = new Blob([docToJson(doc)], { type: 'application/json;charset=utf-8' })
-  download(`${doc.title}.json`, URL.createObjectURL(blob))
-}
-
-export function exportMermaidFile(doc: DiagramDoc): void {
-  const blob = new Blob([docToMermaid(doc)], { type: 'text/plain;charset=utf-8' })
-  download(`${doc.title}.mmd`, URL.createObjectURL(blob))
+  window.setTimeout(() => URL.revokeObjectURL(url), 10_000)
 }
 
 /** grid = 与画布一致的点阵底 */
@@ -130,7 +128,7 @@ async function rasterize(
   width: number,
   height: number,
   scale: number,
-): Promise<string> {
+): Promise<Blob> {
   // data URL（非 blob）：SVG 内含 foreignObject 时 blob 源会污染 canvas
   const img = new Image()
   await new Promise<void>((resolve, reject) => {
@@ -148,9 +146,9 @@ async function rasterize(
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('无法创建画布上下文')
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-  return await new Promise<string>((resolve, reject) => {
+  return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((b) => {
-      if (b) resolve(URL.createObjectURL(b))
+      if (b) resolve(b)
       else reject(new Error('PNG 编码失败'))
     }, 'image/png')
   })
@@ -166,8 +164,7 @@ export async function exportPngFile(
   const finalSvg = composeExportSvg(c.svg, { ...o, frame: o.frame ?? null })
   const w = o.frame ? o.width + FRAME_MARGIN : o.width
   const h = o.frame ? o.height + FRAME_MARGIN + TITLE_BLOCK_H + FRAME_GAP : o.height
-  const url = await rasterize(finalSvg, w, h, o.scale ?? 2)
-  download(`${doc.title}.png`, url)
+  downloadBlob(fileName(doc, 'png'), await rasterize(finalSvg, w, h, o.scale ?? 2))
 }
 
 /** SVG 导出：与 PNG 同一份合成结果，直接落盘文本 */
@@ -178,6 +175,5 @@ export async function exportSvgFile(
 ): Promise<void> {
   const c = await captureContentSvg(element, o)
   const finalSvg = composeExportSvg(c.svg, { ...o, frame: o.frame ?? null })
-  const blob = new Blob([finalSvg], { type: 'image/svg+xml;charset=utf-8' })
-  download(`${doc.title}.svg`, URL.createObjectURL(blob))
+  downloadBlob(fileName(doc, 'svg'), new Blob([finalSvg], { type: 'image/svg+xml;charset=utf-8' }))
 }

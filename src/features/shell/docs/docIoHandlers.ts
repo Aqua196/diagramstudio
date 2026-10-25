@@ -8,16 +8,9 @@ import { useDocumentStore } from '@/store/documentStore'
 import { useCollabStore } from '@/store/collabStore'
 import { collabServerUrl } from '@/core/collab/server'
 import { zh } from '@/i18n/zh'
+import { downloadBlob, fileName } from '@/io/export'
 import { openDocInEditor, toast } from './docNav'
 import { importDocJson, saveDoc } from './docsStore'
-
-function download(filename: string, text: string, mime: string): void {
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(new Blob([text], { type: mime }))
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(a.href)
-}
 
 async function readFile(accept: string): Promise<string | null> {
   return new Promise((resolve) => {
@@ -35,7 +28,7 @@ async function readFile(accept: string): Promise<string | null> {
 
 export function exportJson(): void {
   const doc = useDocumentStore.getState().doc
-  download(`${doc.title || zh.io.fileDiagram}.json`, docToJson(doc), 'application/json')
+  downloadBlob(fileName(doc, 'json'), new Blob([docToJson(doc)], { type: 'application/json' }))
   toast('success', zh.io.exportedJson)
 }
 
@@ -45,7 +38,7 @@ export function exportMermaid(): void {
     toast('error', zh.io.mermaidFlowchartOnly)
     return
   }
-  download(`${doc.title || zh.io.fileDiagram}.mmd`, docToMermaid(doc), 'text/plain')
+  downloadBlob(fileName(doc, 'mmd'), new Blob([docToMermaid(doc)], { type: 'text/plain' }))
   toast('success', zh.io.exportedMermaid)
 }
 
