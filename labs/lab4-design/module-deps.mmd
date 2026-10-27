@@ -1,9 +1,6 @@
 flowchart TB
   APP([入口与页面 main / App / pages])
-  HOME[shell/home 首页]
-  ED[shell/editor 编辑器外壳]
-  SH[shell 快捷键 / 提示 / 转场]
-  DOCS[shell/docs 文档管理与导航]
+  SH[features/shell 外壳]
   CV[features/canvas 画布]
   PL[plugins 图类型插件]
   ST[store 状态层]
@@ -14,8 +11,8 @@ flowchart TB
   CIO[core/io 序列化与持久化]
   COL[core/collab 协作适配]
   MOD[(core/model 数据模型)]
-  APP --> ED
-  APP --> HOME
+  APP --> CV
+  APP --> SH
   CIO --> LAY
   CMD --> MOD
   COL --> MOD
@@ -23,13 +20,11 @@ flowchart TB
   CV --> IOX
   CV --> PL
   CV --> ST
-  DOCS --> CV
-  DOCS --> SH
-  ED --> DOCS
-  HOME --> DOCS
   IOX --> CIO
   LAY --> CT
   PL --> LAY
+  SH --> IOX
+  SH --> PL
   SH --> ST
   ST --> COL
   ST --> CT
