@@ -1,10 +1,11 @@
 // 派生选择器（IMPL_CONTRACT §3）：React Flow 用的 nodes/edges 由文档派生，不单独保存。
+// 产出的是画布库的类型，所以放在画布模块里：状态层只保存与界面库无关的数据。
 // 隐藏逻辑（折叠子树）由插件 hiddenNodeIds 提供，这里不判断图类型。
 import type { Edge, Node } from '@xyflow/react'
 import type { DiagramPlugin } from '@/core/plugin'
 import type { DiagramDoc, DiagramEdge, DiagramNode } from '@/core/model/types'
 import { isNodeColorKey } from '@/core/palette'
-import type { Selection } from './uiStore'
+import type { Selection } from '@/store/uiStore'
 
 export type FlowNodeData = {
   node: DiagramNode

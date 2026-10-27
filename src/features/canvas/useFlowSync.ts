@@ -12,7 +12,7 @@ import {
 } from '@xyflow/react'
 import type { DiagramPlugin } from '@/core/plugin'
 import type { DiagramDoc } from '@/core/model/types'
-import type { FlowEdgeData, FlowNodeData } from '@/store/selectors'
+import type { FlowEdgeData, FlowNodeData } from '@/features/canvas/selectors'
 import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
 import { deriveEdges, deriveNodes } from './derive'

@@ -81,6 +81,8 @@ export interface DiagramPlugin<R = unknown> {
   expandDeletion?(doc: DiagramDoc, nodeIds: string[]): string[]
   /** 声明连线有 ER 基数字段，工具条据此渲染基数选择（禁止判断 type） */
   edgeFields?: 'cardinality'
+  /** 能导出为 Mermaid 文本（目前只有流程图）；导出对话框与导出命令据此判断，不判断 type */
+  mermaid?: boolean
   /** 选中单节点时上下文工具条的额外动作 */
   nodeActions?: NodeAction<R>[]
   /** 形状坞点击创建：返回命令（思维导图=挂到所选/根下）；null=交给画布放到视口中心 */

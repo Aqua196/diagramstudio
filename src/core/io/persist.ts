@@ -1,102 +1,105 @@
 // 文档本地持久化（SPEC §5）：全部存 localStorage，完全离线。
-// 索引 ds.docIndex.v1 存元信息，正文 ds.docs.v1 按 id 存 JSON。
+// ds.docs.v1 按 id 存整份文档对象，ds.docIndex.v1 存首页列表用的元信息，ds.lastDoc.v1 记最近打开的文档。
+// 本模块是唯一的存储实现：外壳层（文档管理、导航、启动）都调这里，不各写一份。
 import type { DiagramDoc, DiagramType } from '../model/types'
-import { createDoc, createId } from '../model/factories'
-import { docToJson, jsonToDoc } from './serialize'
+import { createId } from '../model/factories'
 
-const DOCS_KEY = 'ds.docs.v1'
-const INDEX_KEY = 'ds.docIndex.v1'
+export const DOCS_KEY = 'ds.docs.v1'
+export const INDEX_KEY = 'ds.docIndex.v1'
+export const LAST_DOC_KEY = 'ds.lastDoc.v1'
 
-export interface DocMeta {
+export interface DocIndexEntry {
   id: string
   title: string
   type: DiagramType
   updatedAt: number
-  nodeCount: number
-  edgeCount: number
 }
 
-function readDocs(): Record<string, string> {
+type DocsMap = Record<string, DiagramDoc>
+
+/** 读不出来（被清理、写坏、隐私模式）一律当作空，不抛错 */
+function readMap(): DocsMap {
   try {
-    return JSON.parse(localStorage.getItem(DOCS_KEY) ?? '{}') as Record<string, string>
+    const raw = localStorage.getItem(DOCS_KEY)
+    if (!raw) return {}
+    const parsed: unknown = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? (parsed as DocsMap) : {}
   } catch {
     return {}
   }
 }
 
-function readIndex(): DocMeta[] {
+function writeMap(map: DocsMap): void {
+  localStorage.setItem(DOCS_KEY, JSON.stringify(map))
+  const index: DocIndexEntry[] = Object.values(map)
+    .map((d) => ({ id: d.id, title: d.title, type: d.type, updatedAt: d.updatedAt }))
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+  localStorage.setItem(INDEX_KEY, JSON.stringify(index))
+}
+
+/** 首页列表用的元信息，按最近修改倒序 */
+export function listDocs(): DocIndexEntry[] {
   try {
-    return JSON.parse(localStorage.getItem(INDEX_KEY) ?? '[]') as DocMeta[]
+    const raw = localStorage.getItem(INDEX_KEY)
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    return Array.isArray(parsed) ? (parsed as DocIndexEntry[]) : []
   } catch {
     return []
   }
 }
 
-function writeAll(docs: Record<string, string>, index: DocMeta[]): void {
-  localStorage.setItem(DOCS_KEY, JSON.stringify(docs))
-  localStorage.setItem(INDEX_KEY, JSON.stringify(index))
+export function getStoredDoc(id: string): DiagramDoc | null {
+  return readMap()[id] ?? null
 }
 
-export function listDocs(): DocMeta[] {
-  return readIndex().sort((a, b) => b.updatedAt - a.updatedAt)
+/** 全部已存文档，按最近修改倒序（首页缩略图一次读完，避免逐个解析整张表） */
+export function listStoredDocs(): DiagramDoc[] {
+  return Object.values(readMap()).sort((a, b) => b.updatedAt - a.updatedAt)
 }
 
-export function loadDoc(id: string): DiagramDoc | null {
-  const raw = readDocs()[id]
-  if (!raw) return null
-  const r = jsonToDoc(raw)
-  return r.ok ? r.doc : null
-}
-
+/** 保存文档并刷新索引 */
 export function saveDoc(doc: DiagramDoc): void {
-  const docs = readDocs()
-  docs[doc.id] = docToJson(doc)
-  const meta: DocMeta = {
-    id: doc.id,
-    title: doc.title,
-    type: doc.type,
-    updatedAt: doc.updatedAt,
-    nodeCount: Object.keys(doc.nodes).length,
-    edgeCount: Object.keys(doc.edges).length,
-  }
-  const index = readIndex().filter((m) => m.id !== doc.id)
-  index.push(meta)
-  writeAll(docs, index)
+  const map = readMap()
+  map[doc.id] = doc
+  writeMap(map)
 }
 
-export function deleteDoc(id: string): void {
-  const docs = readDocs()
-  delete docs[id]
-  writeAll(
-    docs,
-    readIndex().filter((m) => m.id !== id),
-  )
+export function deleteStoredDoc(id: string): void {
+  const map = readMap()
+  delete map[id]
+  writeMap(map)
+  if (localStorage.getItem(LAST_DOC_KEY) === id) localStorage.removeItem(LAST_DOC_KEY)
 }
 
-export function renameDoc(id: string, title: string): DiagramDoc | null {
-  const doc = loadDoc(id)
-  if (!doc) return null
-  const next = { ...doc, title, updatedAt: Date.now() }
-  saveDoc(next)
-  return next
+export function renameStoredDoc(id: string, title: string): void {
+  const map = readMap()
+  const doc = map[id]
+  if (!doc) return
+  map[id] = { ...doc, title, updatedAt: Date.now() }
+  writeMap(map)
 }
 
-export function duplicateDoc(id: string): DiagramDoc | null {
-  const doc = loadDoc(id)
-  if (!doc) return null
-  const copy: DiagramDoc = {
-    ...doc,
-    id: createId(),
-    title: `${doc.title} 副本`,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  }
-  saveDoc(copy)
+/** 创建副本：新 id、标题加「副本」；原文档不存在时返回 null */
+export function duplicateStoredDoc(id: string): DiagramDoc | null {
+  const map = readMap()
+  const src = map[id]
+  if (!src) return null
+  const copy = structuredClone(src)
+  copy.id = createId()
+  copy.title = `${src.title} 副本`
+  copy.createdAt = Date.now()
+  copy.updatedAt = Date.now()
+  map[copy.id] = copy
+  writeMap(map)
   return copy
 }
 
-export function newDoc(type: DiagramType, title?: string): DiagramDoc {
-  const doc = createDoc(type, title)
-  saveDoc(doc)
-  return doc
+export function lastOpenedId(): string | null {
+  return localStorage.getItem(LAST_DOC_KEY)
+}
+
+export function setLastOpened(id: string | null): void {
+  if (id) localStorage.setItem(LAST_DOC_KEY, id)
+  else localStorage.removeItem(LAST_DOC_KEY)
 }

@@ -34,6 +34,7 @@ export const EV = {
   SHARE: 'ds:share',
   ADD_SHAPE: 'ds:shape:add', // detail: { kind }（形状坞点击：放到视口中心）
   EDIT_TEXT: 'ds:edit-text', // 选中单节点进入文字编辑
+  REVEAL_DOC: 'ds:doc:reveal', // detail: docId（打开示例/导入时，画布把这份文档依次「自绘」出来）
 } as const
 
 export type EvName = (typeof EV)[keyof typeof EV]

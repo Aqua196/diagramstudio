@@ -24,7 +24,7 @@
 ```text
 features/   UI：画布(React Flow)、四角浮动条、上下文工具条、首页 —— 只发命令与事件，不直接改文档
    ↓ 订阅/调用
-store/      zustand：documentStore(文档+历史) uiStore(界面态) collabStore(协作) selectors(派生)
+store/      zustand：documentStore(文档+历史) uiStore(界面态) collabStore(协作)
    ↓ 执行
 plugins/    三个 DiagramPlugin：形状/连线默认/布局/键位/钩子/模板 —— 差异全在这里
    ↓ 依赖契约
@@ -78,7 +78,7 @@ core/       纯 TS：model · commands(命令+补丁历史) · layout · io · c
 | Observer | `src/store/*`、`src/core/collab/yjs.ts`、`src/core/events.ts` | 选择器订阅、observeDeep、EV.* 事件 |
 | Adapter | `src/core/collab/adapter.ts`、`yjs.ts` | yjs → 窄接口 |
 | Composite | `src/core/model/types.ts`、`src/core/layout/mindmap.ts` | Record 聚合 + parentId 子树 |
-| DTO | `src/core/io/persist.ts`、`src/core/collab/diff.ts` | `DocMeta` 索引、`DocDiff` 差异对象 |
+| DTO | `src/core/io/persist.ts`、`src/core/collab/diff.ts` | `DocIndexEntry` 索引、`DocDiff` 差异对象 |
 
 ## 8. 演示口述稿（约 200 字）
 
@@ -128,7 +128,7 @@ core/       纯 TS：model · commands(命令+补丁历史) · layout · io · c
    **追问：你们之前不是说帧耗 17.8ms 吗？** A：那个数字后来被我们自己推翻了——空白页的 rAF 间隔也是 17.8ms，说明测到的是无头浏览器的出帧节奏；合成的 pointermove 也没有真正触发拖拽。所以改成测主线程任务，并保留改版前后同口径对比。
 
 14. **Q：React Flow 的 nodes/edges 和文档什么关系？**
-    A：派生关系。文档是唯一真相源；`selectFlowNodes/selectFlowEdges(doc, plugin)` 纯函数把 doc 映射成 React Flow 结构（含 zIndex、hidden 过滤），不单独存一份状态——避免双真相源漂移。`src/store/selectors.ts`
+    A：派生关系。文档是唯一真相源；`selectFlowNodes/selectFlowEdges(doc, plugin)` 纯函数把 doc 映射成 React Flow 结构（含 zIndex、hidden 过滤），不单独存一份状态——避免双真相源漂移。`src/features/canvas/selectors.ts`
 
 15. **Q：主题怎么做到「换肤不换文档」？**
     A：颜色不存色值存 palette key。`node.style.fill` 是 `'teal'` 这类键，`resolveFill(key, theme)` 按当前主题查表；界面色走 `tokens.css` CSS 变量，`.dark` class 整体切换。导出时把解析后的颜色传进去。`src/core/palette.ts`、`src/styles/tokens.css`
@@ -149,7 +149,7 @@ core/       纯 TS：model · commands(命令+补丁历史) · layout · io · c
     A：125 个单测，core 行覆盖 98.78%。连网络边界也覆盖了——`collab/yjs` 用假 WebsocketProvider 驱动真 Y.Doc 与 Awareness，sync/pushLocal/observeDeep/awareness/节流全路径有断言。`plugin.ts`/`adapter.ts`/`command.ts`/`types.ts` 是纯类型声明文件无可执行行。TEST_REPORT §4。
 
 21. **Q：localStorage 方案有什么风险？**
-    A：容量 ~5MB、清浏览器数据即丢、无多端同步——这是刻意的取舍（个人作业、离线优先）。索引（`DocMeta`）与正文分键存储，列表页不读全文；导出 JSON 是备份通道。`src/core/io/persist.ts`
+    A：容量 ~5MB、清浏览器数据即丢、无多端同步——这是刻意的取舍（个人作业、离线优先）。索引（`DocIndexEntry`）与正文分键存储，列表页不读全文；导出 JSON 是备份通道。`src/core/io/persist.ts`
 
 22. **Q：如果再加一种图（如时序图）要改哪些文件？**
     A：只加一个插件文件 + `registerPlugin`：声明 shapes（含图标）、edgeDefaults、layout（可复用 dagre 或另写）、需要的话加 keymap/钩子、tips、templates。画布/工具条/形状坞/历史/导入导出零改动——这正是插件架构要证明的点。

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { addNode } from '@/core/commands/ops'
 import { createDoc, createNode } from '@/core/model/factories'
 import { useDocumentStore } from '@/store/documentStore'
-import { getStoredDoc, saveDoc } from './docsStore'
+import { getStoredDoc, saveDoc } from '@/core/io/persist'
 import { discardPristine, markPristine, watchPristine } from './pristine'
 
 beforeEach(() => localStorage.clear())

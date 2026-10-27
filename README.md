@@ -70,7 +70,7 @@ src/
     collab/    CollabAdapter 接口、yjs 实现、文档 diff
     plugin.ts / events.ts / palette.ts
   plugins/     flowchart / mindmap / er 三个插件 + registry + shapekit / shapePaths + shapeIcons + base
-  store/       documentStore、uiStore、collabStore、selectors（zustand）
+  store/       documentStore、uiStore、collabStore（zustand；画布派生的 selectors 在 features/canvas）
   io/          DOM 导出实现（PNG/SVG 合成、rasterize）
   features/
     canvas/    画布交互：节点/连线渲染、快捷加号、拖入/双击/形状坞放置、右键菜单

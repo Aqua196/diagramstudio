@@ -15,7 +15,7 @@ import { EV } from '@/core/events'
 import type { DiagramPlugin } from '@/core/plugin'
 import type { DiagramDoc, DiagramNode, Point } from '@/core/model/types'
 import { useUiStore } from '@/store/uiStore'
-import { getShapeDragData, DND_SHAPE_MIME } from './dnd'
+import { getShapeDragData, DND_SHAPE_MIME } from '@/components/shapeDrag'
 import { executeAndFocus } from './focus'
 import { createShapeNode } from './nodeFactory'
 

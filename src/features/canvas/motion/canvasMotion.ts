@@ -5,7 +5,7 @@
 import type { CSSProperties } from 'react'
 import type { Edge, Node } from '@xyflow/react'
 import type { DiagramDoc } from '@/core/model/types'
-import type { FlowEdgeData, FlowNodeData } from '@/store/selectors'
+import type { FlowEdgeData, FlowNodeData } from '@/features/canvas/selectors'
 import { cascadeFx } from './cascade'
 import { browserEnv, type MotionEnv } from './env'
 import { FxBook } from './fxBook'

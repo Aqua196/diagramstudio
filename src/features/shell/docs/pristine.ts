@@ -1,7 +1,7 @@
 // 「没动过的空白文档」回收：点了「新建空白」又直接离开时，不在首页留下一堆空的未命名图表。
 // 新建空白时登记；一旦有编辑就注销；离开（回首页/打开别的/新建别的）时若仍未动过则删除。
 import { useDocumentStore } from '@/store/documentStore'
-import { deleteStoredDoc } from './docsStore'
+import { deleteStoredDoc } from '@/core/io/persist'
 
 let pristineId: string | null = null
 

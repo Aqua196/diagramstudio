@@ -1,7 +1,7 @@
 // 连线的附属部件：起止箭头 marker、中点标注（双击编辑；自绘时延后浮现，退场时随线淡出）。
 import { useState } from 'react'
 import { patchEdge } from '@/core/commands/ops'
-import type { FlowEdgeData } from '@/store/selectors'
+import type { FlowEdgeData } from '@/features/canvas/selectors'
 import { useDocumentStore } from '@/store/documentStore'
 import { zh } from '@/i18n/zh'
 import { useCanvasStore } from './canvasStore'

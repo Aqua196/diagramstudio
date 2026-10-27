@@ -1,7 +1,7 @@
 // 退场残影：已删除/已折叠的节点与连线在画面上多留一小会儿播收回/淡出，然后由 CanvasMotion 移除。
 // 残影不可交互、不进读屏（aria-hidden + inert）、不进导出，也不计入全选/拖放目标。
 import type { Edge, Node } from '@xyflow/react'
-import type { FlowEdgeData, FlowNodeData } from '@/store/selectors'
+import type { FlowEdgeData, FlowNodeData } from '@/features/canvas/selectors'
 import type { Pt } from './plan'
 
 type FNode = Node<FlowNodeData>

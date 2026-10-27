@@ -5,7 +5,7 @@ import { createDoc, createNode } from '../model/factories'
 import { importJsonText, importMermaidText } from './importer'
 
 describe('importJsonText', () => {
-  it('合法 JSON 往返成功', () => {
+  it('合法 JSON 往返成功，并换新 id（导入总是新建一份）', () => {
     const doc = createDoc('flowchart', 'T')
     const n = createNode('process', { x: 5, y: 5 })
     doc.nodes[n.id] = n
@@ -13,6 +13,7 @@ describe('importJsonText', () => {
     const r = importJsonText(docToJson(doc))
     expect(r.ok).toBe(true)
     expect(r.doc!.title).toBe('T')
+    expect(r.doc!.id).not.toBe(doc.id)
     expect(r.errors).toEqual([])
   })
 

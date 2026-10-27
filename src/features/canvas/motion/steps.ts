@@ -3,7 +3,7 @@
 import type { CSSProperties } from 'react'
 import type { Edge, Node } from '@xyflow/react'
 import type { DiagramDoc } from '@/core/model/types'
-import type { FlowEdgeData, FlowNodeData } from '@/store/selectors'
+import type { FlowEdgeData, FlowNodeData } from '@/features/canvas/selectors'
 import type { FxBook } from './fxBook'
 import { ghostEdge, ghostNode, isGhostEdge } from './ghosts'
 import type { MotionPlan, Pt } from './plan'

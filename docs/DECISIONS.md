@@ -103,3 +103,11 @@
 - **首屏瘦身**：yjs（约 90KB）只在开启协作时加载；截图库只在导出时加载；数据校验从完整版 zod 换成 `zod/mini`（同样的校验与中文报错，体积小得多）。首屏 JS 由 888KB（gzip 284KB）降到 715KB（gzip 233KB）。zod 包里不规范的注释警告在构建配置里按类别过滤，构建恢复零警告。
 - **代码格式统一**：56 个文件与 `.prettierrc` 不一致（部分是为卡 200 行上限把代码挤成长行）。统一格式后超限的三个文件按职责拆分：流程图形状几何移到 `shapePaths.tsx`（填充/描边/线宽/虚线由外层 `<g>` 统一给，像素级对比与旧版一致），思维导图节点渲染移到 `mindmapNode.tsx`，ER 字段拖动状态抽出类型。
 - **下载统一走 `downloadBlob`**（`src/io/export.ts`）：原来有两份下载函数——JSON/Mermaid 点击后立刻回收 blob 地址（Firefox 上可能取消下载），PNG/SVG 从不回收（每次导出泄漏一份图片）；现在统一延后 10 秒回收。文件名统一走 `fileName`，标题为空时用默认名（以前 PNG/SVG 会得到「.png」这样的隐藏文件）。`export.ts` 里从没被调用的 `exportJsonFile`/`exportMermaidFile` 删除。
+
+## 2026-10-27 概要设计检查发现的问题（已修复）
+写实验 4（概要设计）时用脚本分析了模块依赖（`labs/lab4-design/module-deps.mjs`），找出几处设计上不干净的地方，一并修掉：
+- **存储只留一份实现**：`core/io/persist.ts` 与 `features/shell/docs/docsStore.ts` 各实现了一遍本地存储，键名相同、格式不同（前者存 JSON 字符串，后者存对象），应用只用后者，前者只被自己的单测引用。现在 `core/io/persist.ts` 是唯一实现（采用应用一直在用的格式，所以用户已有数据不受影响）；外壳层只剩依赖插件注册表的 `newDoc.ts`（从模板新建）。JSON 导入原来先 `jsonToDoc` 校验一次、再 `importDocJson` 校验一次只为换 id，现在统一由 `importJsonText` 校验并换新 id。
+- **Mermaid 改为插件能力位**：“只有流程图能导出 Mermaid”原来写成外壳层的 `type === 'flowchart'` 判断，现在是 `DiagramPlugin.mermaid`，与“画布、外壳不判断图类型”的原则一致；外壳与画布里已没有按图类型分支的代码。
+- **文档导航不再引用画布内部**：打开示例 / 导入时的“依次自绘”提示原来由 `shell/docs/docNav.ts` 直接调用画布动效模块，现在发 `EV.REVEAL_DOC` 事件，画布动效模块加载时即监听。形状坞与画布共用的拖放约定从 `features/canvas/dnd.ts` 移到 `components/shapeDrag.ts`，外壳不再依赖画布模块。
+- **状态层不依赖画布库**：`selectors`（文档 → React Flow 节点/连线）产出的是画布库类型，从 `store/` 移到 `features/canvas/`，`src/store` 不再引用 `@xyflow/react`。
+- **思维导图导出不再带出折叠钮**：截图库遇到 `<svg>` 会整棵复制、不逐个过滤子元素，所以放在形状 svg 里的折叠钮（即使标了 `ds-export-exclude`）会被导出，而且没有样式。折叠钮改放在 svg 之外的绝对定位元素里，导出时被正常过滤；顺带解决了它处在 `aria-hidden` 的 svg 内、读屏读不到的问题。

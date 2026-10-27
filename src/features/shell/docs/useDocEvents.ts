@@ -11,13 +11,13 @@ import { zh } from '@/i18n/zh'
 import { openDocInEditor, toast } from './docNav'
 import { discardPristine, markPristine, watchPristine } from './pristine'
 import {
-  buildNewDoc,
   deleteStoredDoc,
   duplicateStoredDoc,
   getStoredDoc,
   renameStoredDoc,
   saveDoc,
-} from './docsStore'
+} from '@/core/io/persist'
+import { buildNewDoc } from './newDoc'
 import { exportJson, exportMermaid, importJson, importMermaid, shareDoc } from './docIoHandlers'
 
 const SAVE_DEBOUNCE_MS = 500

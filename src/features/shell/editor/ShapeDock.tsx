@@ -8,7 +8,7 @@ import type { ShapeDef } from '@/core/plugin'
 import { getPlugin } from '@/plugins/registry'
 import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
-import { setShapeDragData } from '@/features/canvas/dnd'
+import { setShapeDragData } from '@/components/shapeDrag'
 import { zh } from '@/i18n/zh'
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
 

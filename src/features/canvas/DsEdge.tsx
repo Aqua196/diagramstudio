@@ -4,7 +4,7 @@
 // data.ghost 为退场残影（随节点收回/淡出，不挂工具条）。
 import { memo, useMemo } from 'react'
 import { BaseEdge, EdgeLabelRenderer, EdgeToolbar, type EdgeProps } from '@xyflow/react'
-import type { FlowEdgeData } from '@/store/selectors'
+import type { FlowEdgeData } from '@/features/canvas/selectors'
 import type { EdgeFxStyle } from './motion/canvasMotion'
 import { useUiStore } from '@/store/uiStore'
 import { useCanvasStore } from './canvasStore'

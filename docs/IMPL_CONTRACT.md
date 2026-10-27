@@ -20,7 +20,7 @@
 | --- | --- | --- |
 | package.json、tsconfig、vite/eslint/tailwind/postcss/playwright 配置、index.html、src/main.tsx、src/styles/、src/i18n/zh.ts(骨架) | 阶段1 脚手架 | 工程基建；zh.ts 之后各阶段只追加自己的命名空间 |
 | src/core/** | 阶段2 核心 | 纯 TS：model、commands/history、layout、io、palette、events、plugin 接口、collab 接口 |
-| src/store/documentStore.ts、src/store/uiStore.ts、src/store/selectors.ts | 阶段2 核心 | store 公共 API 在本文件冻结，后续阶段只调用不改签名 |
+| src/store/documentStore.ts、src/store/uiStore.ts、src/features/canvas/selectors.ts（2026-10-27 从 store 移入画布模块） | 阶段2 核心 | store 公共 API 在本文件冻结，后续阶段只调用不改签名 |
 | src/plugins/** | 阶段5 插件 | registry 与各插件实现（阶段2 预置 registry 与最小基座插件） |
 | src/features/canvas/** | 阶段3 画布 | EditorCanvas 及画布内一切交互；可在本目录建局部 store |
 | src/features/topbar/ palette/ inspector/ menus/ shortcuts/、src/App.tsx、src/components/** | 阶段4 外壳 | 顶栏、面板、检查器、菜单、快捷键、主题、提示条 |
@@ -112,6 +112,7 @@ window.dispatchEvent(new CustomEvent(EV.X, { detail }))
 | EV.SHARE | — | collab | 右上「分享」弹层里的「开启协作并生成链接」 |
 | EV.ADD_SHAPE (detail: {kind}) | 形状 kind | canvas | 形状坞点击：先问 plugin.placeFromPalette，否则放到视口中心（2026-10-21 新增） |
 | EV.EDIT_TEXT | — | canvas | 工具条/右键「编辑文字」：选中单节点进入编辑（2026-10-21 新增） |
+| EV.REVEAL_DOC (detail: docId) | 文档 id | canvas（motion/hints 模块加载即监听） | 打开示例/导入时让画布依次「自绘」；文档导航发出，不直接引用画布模块（2026-10-27 新增） |
 
 ## 6. 组件契约
 
@@ -150,7 +151,7 @@ window.dispatchEvent(new CustomEvent(EV.X, { detail }))
 - `DiagramDoc/DiagramNode/DiagramEdge/ErField` — src/core/model/types.ts
 - zod schemas — src/core/model/schema.ts
 - `Command`、`History` 行为 — src/core/commands/
-- `DocumentStore`/`UiStore`/`selectors` — src/store/
+- `DocumentStore`/`UiStore` — src/store/；`selectors` — src/features/canvas/（产出画布库类型，不放状态层）
 - `DiagramPlugin`/`ShapeDef`/`getPlugin`/能力位与钩子 — src/core/plugin.ts、src/plugins/registry.ts
 - `EV.*` 事件名 — src/core/events.ts
 - `<EditorCanvas/>`、`<HomePage/>` — features/canvas、features/home
@@ -163,7 +164,7 @@ window.dispatchEvent(new CustomEvent(EV.X, { detail }))
 - 服务器：`pnpm dev:collab` → ws://127.0.0.1:1234（`VITE_COLLAB_WS` 可覆盖）。
 
 ## §9 持久化与导入导出（阶段6 已实现，供外壳调用）
-- `src/core/io/persist.ts`：listDocs/loadDoc/saveDoc/deleteDoc/renameDoc/duplicateDoc/newDoc（localStorage `ds.docs.v1` + `ds.docIndex.v1`）。
+- `src/core/io/persist.ts`（唯一的存储实现）：listDocs/getStoredDoc/listStoredDocs/saveDoc/deleteStoredDoc/renameStoredDoc/duplicateStoredDoc/lastOpenedId/setLastOpened（localStorage `ds.docs.v1` + `ds.docIndex.v1` + `ds.lastDoc.v1`）。
 - `src/core/io/importer.ts`：importJsonText / importMermaidText（自动 dagre 摆位，返回 {ok,doc,errors,skipped}）。
 - `src/io/export.ts`：exportJsonFile / exportMermaidFile / exportPngFile / exportSvgFile（element=画布容器；PNG 背景按主题；SVG 可带 frame 标题栏）。
 - 编辑器进入/变更时应 saveDoc(doc)（建议 debounce 500ms）；首页用 listDocs 渲染列表。

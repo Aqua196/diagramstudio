@@ -1,5 +1,5 @@
 // 导入（SPEC §5）：JSON 严格校验；Mermaid 解析后用布局器摆位（默认 dagre）。
-import { createDoc } from '../model/factories'
+import { createDoc, createId } from '../model/factories'
 import type { DiagramDoc, DiagramEdge, DiagramNode, EdgeRouting } from '../model/types'
 import { dagreLayout } from '../layout/dagre'
 import { parseMermaid } from './mermaid'
@@ -13,10 +13,11 @@ export interface ImportResult {
   skipped?: number
 }
 
+/** JSON 工程文件 → 文档。导入总是新建一份：换新 id，免得覆盖本机已有的同一份文档 */
 export function importJsonText(text: string): ImportResult {
   const r = jsonToDoc(text)
   if (!r.ok) return { ok: false, errors: r.errors }
-  return { ok: true, doc: r.doc, errors: [] }
+  return { ok: true, doc: { ...r.doc, id: createId() }, errors: [] }
 }
 
 export function importMermaidText(

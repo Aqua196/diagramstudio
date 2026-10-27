@@ -1,7 +1,7 @@
 // 把动效账本叠到「由文档派生的元素」上：起始位置覆盖、动画类名/CSS 变量、追加退场残影。
 // 空闲时（账本为空、没有覆盖）原样返回派生结果，拖动等高频路径零额外分配。
 import type { Edge, Node } from '@xyflow/react'
-import type { FlowEdgeData, FlowNodeData } from '@/store/selectors'
+import type { FlowEdgeData, FlowNodeData } from '@/features/canvas/selectors'
 import type { FxBook } from './fxBook'
 import type { Pt, ViewNode } from './plan'
 import type { Tweener } from './tween'

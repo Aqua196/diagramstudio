@@ -1,5 +1,8 @@
 // 动效的一次性提示：调用方在执行命令/打开文档前声明意图，画布同步时消费。
 // 都是模块级瞬态，不进文档、不进历史。
+// 画布以外的模块（文档导航）不直接调用这里，而是发 EV.REVEAL_DOC 事件：
+// 本模块加载时就挂好监听（画布未挂载时也在），事件同步派发，所以在切换文档之前就已登记。
+import { EV } from '@/core/events'
 let instantNext = false
 let reveal: { id: string; until: number } | null = null
 /** 自绘提示的有效期：打开动作到画布挂载之间隔着页面转场（≈ 一帧 + 40ms），留足余量 */
@@ -19,6 +22,9 @@ export function takeInstant(): boolean {
  *  不是一次性消费：StrictMode 的模拟卸载/重挂载会对同一份文档对账两次，第二次也要播 */
 export function revealNext(docId: string): void {
   reveal = { id: docId, until: performance.now() + REVEAL_WINDOW_MS }
+}
+if (typeof window !== 'undefined') {
+  window.addEventListener(EV.REVEAL_DOC, (e) => revealNext((e as CustomEvent<string>).detail))
 }
 export function takeReveal(docId: string): boolean {
   if (!reveal) return false

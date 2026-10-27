@@ -8,7 +8,7 @@ import { collabServerUrl } from '@/core/collab/server'
 import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
 import { zh } from '@/i18n/zh'
-import { getStoredDoc, lastOpenedId } from './docsStore'
+import { getStoredDoc, lastOpenedId } from '@/core/io/persist'
 import { onEditorEntry, openDocInEditor, pushEditorEntry, showHome } from './docNav'
 
 function lastDoc() {

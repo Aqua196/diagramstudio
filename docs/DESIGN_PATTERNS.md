@@ -47,7 +47,7 @@
 | `nodeActions[]` | 单选工具条（`toolbar/NodeToolbarContent.tsx`） | 无额外按钮 |
 | `placeFromPalette(doc, kind, sel)` | 形状坞点击、双击空白（`useCanvasDrop.ts`） | 放到视口中心 / 落点 |
 | `quickAddSides` / `nextKind(kind)` | 四周「+」（`QuickAdd.tsx`） | 四向 / 同形状 |
-| `createBlank(title)` | 新建空白（`docsStore.buildNewDoc`） | 空文档 |
+| `createBlank(title)` | 新建空白（`features/shell/docs/newDoc.ts` 的 `buildNewDoc`） | 空文档 |
 | `tips` | 底部提示条（`shell/editor/HintBar.tsx`） | 不显示 |
 | `edgeDefaults.cardinality` | 所有建连线路径（`nodeFactory.createPluginEdge`） | 无基数 |
 
@@ -57,7 +57,7 @@
 
 **用到什么**：`createDoc/createNode/createEdge/createId` 集中生成带默认值的对象，避免各处手写缺字段。
 
-**在哪**：`src/core/model/factories.ts`（`createId` 用 `crypto.randomUUID()`，非安全上下文下退回 `getRandomValues` 拼 UUID v4；`DEFAULT_NODE_STYLE` 统一默认样式）。使用方遍布 `ops.ts`（剪贴板克隆 `cloneForPaste`）、`mermaid.ts`（解析建节点）、`persist.ts`（`newDoc`）、各插件模板。
+**在哪**：`src/core/model/factories.ts`（`createId` 用 `crypto.randomUUID()`，非安全上下文下退回 `getRandomValues` 拼 UUID v4；`DEFAULT_NODE_STYLE` 统一默认样式）。使用方遍布 `ops.ts`（剪贴板克隆 `cloneForPaste`）、`mermaid.ts`（解析建节点）、`persist.ts`（`duplicateStoredDoc`）、各插件模板。
 
 **为什么**：`DiagramDoc/DiagramNode/DiagramEdge` 的必填字段多（schemaVersion、zOrder、settings、style），工厂保证不变量成立——例如 `createDoc` 必给 `settings.layoutDirection`，`createEdge` 默认 `arrowEnd: 'arrow'`、`routing: 'bezier'`；zod schema 与工厂一一对应，导入校验只走 schema。
 
@@ -117,7 +117,7 @@
 
 - 序列化 `src/core/io/serialize.ts`：`docToJson(doc)` / `jsonToDoc(text)`。
 - 校验 `src/core/model/schema.ts`：`docSchema`（zod）+ `semanticCheck`（引用完整性），错误经 `describeIssue` 翻成中文。
-- 持久化 `src/core/io/persist.ts`：`ds.docs.v1` 存 JSON 正文、`ds.docIndex.v1` 存 `DocMeta` 索引（id/title/type/updatedAt/nodeCount/edgeCount——列表页只读索引不读全文，是典型的轻量 DTO）。
+- 持久化 `src/core/io/persist.ts`（唯一的存储实现）：`ds.docs.v1` 按 id 存整份文档、`ds.docIndex.v1` 存 `DocIndexEntry` 索引（id/title/type/updatedAt——列表页只读索引不读全文，是典型的轻量 DTO）。
 - 协作传输 `src/core/collab/yjs.ts`：`readDoc` 从 Y.Map 重建 DTO；`computeDocDiff`（diff.ts）产出 `DocDiff{setNodes,delNodes,setEdges,delEdges,metaChanged}`——差异本身也是一个 DTO。
 
 **为什么**：DTO 与行为分离让「同一份数据」可以被磁盘（JSON）、网络（Yjs）、校验器（zod）三种通道复用；`DocMeta` 索引让首页列表的开销与文档大小解耦。
@@ -133,4 +133,4 @@
 | Adapter | `CollabAdapter`、`YjsCollabAdapter` | `src/core/collab/adapter.ts`、`yjs.ts` |
 | Snapshot/Memento | `produceWithPatches/applyPatches`、`HistoryEntry` | `src/core/commands/history.ts` |
 | Composite | `DiagramDoc` 聚合、`data.parentId` 子树 | `src/core/model/types.ts`、`src/core/layout/mindmap.ts` |
-| DTO | `DiagramDoc`、`DocMeta`、`DocDiff` | `src/core/model/types.ts`、`src/core/io/persist.ts`、`src/core/collab/diff.ts` |
+| DTO | `DiagramDoc`、`DocIndexEntry`、`DocDiff` | `src/core/model/types.ts`、`src/core/io/persist.ts`、`src/core/collab/diff.ts` |

@@ -1,8 +1,8 @@
 // IO 事件处理器（C1 从 useDocEvents 拆出）：JSON/Mermaid 导入导出、分享。
-// 与文档管理解耦：仅依赖 docsStore/序列化/importer + toast/openDocInEditor。
-import { docToJson, jsonToDoc } from '@/core/io/serialize'
+// 与文档管理解耦：仅依赖 core 的存储/序列化/导入器 + toast/openDocInEditor。
+import { docToJson } from '@/core/io/serialize'
 import { docToMermaid } from '@/core/io/mermaid'
-import { importMermaidText } from '@/core/io/importer'
+import { importJsonText, importMermaidText } from '@/core/io/importer'
 import { getPlugin } from '@/plugins/registry'
 import { useDocumentStore } from '@/store/documentStore'
 import { useCollabStore } from '@/store/collabStore'
@@ -10,7 +10,7 @@ import { collabServerUrl } from '@/core/collab/server'
 import { zh } from '@/i18n/zh'
 import { downloadBlob, fileName } from '@/io/export'
 import { openDocInEditor, toast } from './docNav'
-import { importDocJson, saveDoc } from './docsStore'
+import { saveDoc } from '@/core/io/persist'
 
 async function readFile(accept: string): Promise<string | null> {
   return new Promise((resolve) => {
@@ -34,7 +34,7 @@ export function exportJson(): void {
 
 export function exportMermaid(): void {
   const doc = useDocumentStore.getState().doc
-  if (doc.type !== 'flowchart') {
+  if (!getPlugin(doc.type).mermaid) {
     toast('error', zh.io.mermaidFlowchartOnly)
     return
   }
@@ -45,18 +45,14 @@ export function exportMermaid(): void {
 export async function importJson(): Promise<void> {
   const text = await readFile('.json,application/json')
   if (text === null) return
-  const parsed = jsonToDoc(text)
-  if (!parsed.ok) {
-    toast('error', `${zh.io.importFailed}：${parsed.errors[0] ?? zh.errors.importInvalid}`)
+  const r = importJsonText(text)
+  if (!r.ok || !r.doc) {
+    toast('error', `${zh.io.importFailed}：${r.errors[0] ?? zh.errors.importInvalid}`)
     return
   }
-  const imported = importDocJson(parsed.doc)
-  if (!imported.ok) {
-    toast('error', `${zh.io.importFailed}：${imported.errors[0]}`)
-    return
-  }
-  saveDoc(imported.doc)
-  openDocInEditor(imported.doc, { reveal: true, after: () => toast('success', zh.io.importDone) })
+  const doc = r.doc
+  saveDoc(doc)
+  openDocInEditor(doc, { reveal: true, after: () => toast('success', zh.io.importDone) })
 }
 
 // Mermaid 导入（A3）：走 importer.ts 统一拼 doc（dagre 摆位），这里只管文件与提示

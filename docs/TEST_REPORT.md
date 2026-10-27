@@ -58,12 +58,12 @@
 || `src/core/io/persist.test.ts`（4） | localStorage 持久化全路径 | newDoc/save/load 往返、listDocs 排序与计数、rename/duplicate/delete、损坏数据回退 |
 || `src/core/io/importer.test.ts`（7） | 导入器 | JSON 往返、非法输入报错、Mermaid 建图/skipped 计数/方向/自定义布局器、schema 自洽 |
 || `src/core/events.test.ts`（2） | 事件总线 | emit 派发 CustomEvent、detail 透传 |
-|| `src/store/selectors.test.ts`（4+1） | 边默认选边 + 显式 handle | pickEdgeSides 四向、selectFlowEdges 显式 handle 保留 |
+|| `src/features/canvas/selectors.test.ts`（4+1） | 边默认选边 + 显式 handle | pickEdgeSides 四向、selectFlowEdges 显式 handle 保留 |
 || `src/core/commands/history.test.ts`（+1） | mergeWithPrevious | 同类命令合并且一次撤销整组（思维导图加节点+布局=一条历史） |
 || `src/core/model/schema.test.ts`（+） | zOrder 语义校验 | zOrder 与 nodes 不一致报错 |
 || `src/features/canvas/clipboard.test.ts`（5） | 剪贴板 | 复制内部连线、粘贴新 id/偏移、剪贴板内容 |
 || `src/io/export.test.ts`（5） | composeExportSvg | 背景三态、图框标题栏出现、标题栏预留空间 |
-|| `src/features/shell/docs/docsStore.test.ts`（6） | 文档索引 | 索引/正文读写 |
+|| `src/features/shell/docs/newDoc.test.ts`（2） | 新建文档 | 模板实例化、空白文档 |
 || `src/features/canvas/guides.test.ts`（5） | 对齐参考线 | 纯函数测算 |
 || `src/plugins/mindmap.test.ts`（11） | 思维导图树 | Tab/Enter 命令、整支删除、分支色、折叠 |
 
@@ -222,7 +222,7 @@ SPEC §8 场景对照（全部已实现）：
 | D-02 | flaky test（已修复）| 空命令不再入栈；96 用例全绿无 flaky | `src/core/commands/history.ts` |
 | D-03 | coverage（已修复）| core 行覆盖 98.43% ≥80% | 见 §4 |
 | D-04 | 待测（已修复）| 性能实测通过（PERFORMANCE.md）；SPEC §8 八场景 e2e 与 axe 已实现 | `e2e/features.spec.ts`、`collab.spec.ts`、`stage8.spec.ts` |
-| D-09 | 功能边界（已修复）| 无显式 handle 的边曾统一从顶部把柄引出穿过节点——现按节点中心方位自动选边 | `src/store/selectors.ts` pickEdgeSides |
+| D-09 | 功能边界（已修复）| 无显式 handle 的边曾统一从顶部把柄引出穿过节点——现按节点中心方位自动选边 | `src/features/canvas/selectors.ts` pickEdgeSides |
 | D-10 | 功能边界（已修复）| 导出图框标题栏曾覆盖图内容——合成时预留 TITLE_BLOCK_H+间距 | `src/io/export.ts` |
 | D-05 | 功能边界 | 协作撤销对「目标元素已被他人删除」的情况跳过该补丁（immer 对不存在路径的 replace 不生效），表现为该元素无法恢复 | 已在 SPEC §7 声明 |
 | D-06 | 功能边界 | 协作房间存内存、无鉴权、无持久化（服务重启文档丢失）；昵称为 `用户{clientID%100}` 自动生成，不可改 | `server/dev.mjs`、`yjs.ts` |

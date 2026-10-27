@@ -67,35 +67,39 @@ function isLeftOfRoot(doc: DiagramDoc, node: DiagramNode): boolean {
   return node.position.x + node.size.w / 2 < root.position.x + root.size.w / 2
 }
 
-/** 节点渲染：中心主题为强调色圆角块，其余为分支色胶囊；有子节点时外侧挂折叠钮（真 button） */
+/** 节点渲染：中心主题为强调色圆角块，其余为分支色胶囊；有子节点时外侧挂折叠钮（真 button，在 svg 外） */
 export function mindShape(accent: boolean) {
   return (node: DiagramNode, ctx: ShapeRenderContext): ReactNode => {
     const { w, h } = node.size
     const kids = childrenOf(ctx.doc, node.id).length
     const left = isLeftOfRoot(ctx.doc, node)
     return (
-      <svg
-        width={w}
-        height={h}
-        viewBox={`0 0 ${w} ${h}`}
-        style={{ display: 'block', overflow: 'visible' }}
-        aria-hidden
-      >
-        <rect
+      <>
+        <svg
           width={w}
           height={h}
-          rx={accent ? 14 : h / 2}
-          fill={accent ? 'var(--accent)' : 'var(--node-fill)'}
-          stroke={accent ? 'var(--accent)' : 'var(--node-stroke)'}
-          strokeWidth={accent ? 0 : node.style.strokeWidth}
-        />
-        <MindText node={node} ctx={ctx} accent={accent} />
+          viewBox={`0 0 ${w} ${h}`}
+          style={{ display: 'block', overflow: 'visible' }}
+          aria-hidden
+        >
+          <rect
+            width={w}
+            height={h}
+            rx={accent ? 14 : h / 2}
+            fill={accent ? 'var(--accent)' : 'var(--node-fill)'}
+            stroke={accent ? 'var(--accent)' : 'var(--node-stroke)'}
+            strokeWidth={accent ? 0 : node.style.strokeWidth}
+          />
+          <MindText node={node} ctx={ctx} accent={accent} />
+        </svg>
+        {/* 折叠钮放在 svg 之外：导出截图把 svg 整棵复制、不逐个过滤子元素，放在里面会被一起导出；
+            svg 是 aria-hidden，按钮放在里面读屏也读不到 */}
         {kids > 0 && (
-          <foreignObject x={left ? -22 : w + 4} y={h / 2 - 9} width={18} height={18}>
+          <div style={{ position: 'absolute', left: left ? -22 : w + 4, top: h / 2 - 9 }}>
             <CollapseBtn node={node} ctx={ctx} count={kids} />
-          </foreignObject>
+          </div>
         )}
-      </svg>
+      </>
     )
   }
 }

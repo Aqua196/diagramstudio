@@ -3,6 +3,7 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { useDocumentStore } from '@/store/documentStore'
+import { getPlugin } from '@/plugins/registry'
 import { zh } from '@/i18n/zh'
 import { FormatCards, ImageOptions, useExportForm } from './ExportOptions'
 
@@ -28,7 +29,11 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
               </button>
             </Dialog.Close>
           </div>
-          <FormatCards value={f.format} onChange={f.setFormat} mermaidOk={type === 'flowchart'} />
+          <FormatCards
+            value={f.format}
+            onChange={f.setFormat}
+            mermaidOk={getPlugin(type).mermaid === true}
+          />
           {(f.format === 'png' || f.format === 'svg') && <ImageOptions f={f} />}
           <div className="ds-dialog-actions">
             <Dialog.Close asChild>

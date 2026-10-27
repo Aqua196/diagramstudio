@@ -2,7 +2,7 @@
 import { insertElements } from '@/core/commands/ops'
 import type { DiagramDoc, DiagramNode, Point } from '@/core/model/types'
 import type { DiagramPlugin, NodeSide } from '@/core/plugin'
-import { pickEdgeSides } from '@/store/selectors'
+import { pickEdgeSides } from '@/features/canvas/selectors'
 import { zh } from '@/i18n/zh'
 import { createPluginEdge, createShapeNode } from './nodeFactory'
 

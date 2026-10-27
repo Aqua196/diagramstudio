@@ -3,11 +3,11 @@
 // 转场会把真正的切换推迟到下一帧，所以「切换之后才该做的事」一律放进 after，在切换的同一刻执行。
 // 两页共用一个网址，但进编辑器时压一条浏览器历史：浏览器「返回」回到首页，而不是直接离开网站。
 import type { DiagramDoc } from '@/core/model/types'
-import { revealNext } from '@/features/canvas/motion/hints'
+import { emit, EV } from '@/core/events'
 import { useDocumentStore } from '@/store/documentStore'
 import { useUiStore } from '@/store/uiStore'
 import { pageTransition } from '../transition'
-import { getStoredDoc, saveDoc, setLastOpened } from './docsStore'
+import { getStoredDoc, saveDoc, setLastOpened } from '@/core/io/persist'
 import { discardPristine } from './pristine'
 
 /** 离开当前文档前立即落盘：自动保存有 500ms 防抖，刚改的内容否则会丢（只存已在列表里的文档） */
@@ -49,7 +49,7 @@ export interface OpenOptions {
 
 /** 打开文档进编辑器；离开的那份先落盘，若是没动过的空白文档则顺手回收 */
 export function openDocInEditor(doc: DiagramDoc, opts: OpenOptions = {}): void {
-  if (opts.reveal) revealNext(doc.id)
+  if (opts.reveal) emit(EV.REVEAL_DOC, doc.id)
   const fromHome = useUiStore.getState().route === 'home'
   const apply = () => {
     if (useDocumentStore.getState().doc.id !== doc.id) {

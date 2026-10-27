@@ -1,7 +1,7 @@
 // 动效账本：哪些节点/连线挂着动画类名、哪些残影还在退场，各自何时到期。
 import type { CSSProperties } from 'react'
 import type { Edge, Node } from '@xyflow/react'
-import type { FlowEdgeData, FlowNodeData } from '@/store/selectors'
+import type { FlowEdgeData, FlowNodeData } from '@/features/canvas/selectors'
 
 type FNode = Node<FlowNodeData>
 type FEdge = Edge<FlowEdgeData>

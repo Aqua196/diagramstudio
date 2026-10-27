@@ -85,6 +85,7 @@ const AFTER_TO_PROCESS = new Set(['terminator', 'terminator2', 'decision', 'conn
 
 export const flowchartPlugin: DiagramPlugin<ReactNode> = {
   type: 'flowchart',
+  mermaid: true,
   shapes: flowchartShapes,
   edgeDefaults: {
     routing: 'step',

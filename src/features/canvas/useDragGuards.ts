@@ -8,7 +8,7 @@ import type { DiagramDoc, Point } from '@/core/model/types'
 import { useDocumentStore } from '@/store/documentStore'
 import { useCanvasStore } from './canvasStore'
 import { computeSnap, type SnapRect } from './guides'
-import type { FlowNodeData } from '@/store/selectors'
+import type { FlowNodeData } from '@/features/canvas/selectors'
 
 type SetNodes = (fn: (ns: Node<FlowNodeData>[]) => Node<FlowNodeData>[]) => void
 

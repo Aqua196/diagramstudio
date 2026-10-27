@@ -9,7 +9,7 @@ import {
   selectFlowNodes,
   type FlowEdgeData,
   type FlowNodeData,
-} from '@/store/selectors'
+} from '@/features/canvas/selectors'
 import type { Selection } from '@/store/uiStore'
 
 type FNode = Node<FlowNodeData>

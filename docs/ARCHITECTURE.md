@@ -27,7 +27,7 @@
 ```mermaid
 flowchart TB
     subgraph UI["界面层 features/ + components/"]
-        canvas["features/canvas<br/>EditorCanvas、快捷加号、上下文工具条 toolbar/"]
+        canvas["features/canvas<br/>EditorCanvas、快捷加号、上下文工具条 toolbar/<br/>selectors：doc → React Flow nodes/edges"]
         shell["features/shell/editor<br/>四角浮动条 · 形状坞 · 提示条 · 导出/分享"]
         home["features/shell/home · docs · shortcuts<br/>首页、文档存储、快捷键"]
     end
@@ -44,7 +44,6 @@ flowchart TB
         docS["documentStore<br/>doc + history，execute/undo/redo/setDoc"]
         uiS["uiStore<br/>route/theme/tool/selection/toasts…"]
         clbS["collabStore<br/>join/leave/share/pushCursor"]
-        sel["selectors<br/>doc → React Flow nodes/edges"]
     end
 
     subgraph CORE["领域层 src/core/（纯 TS，禁 UI 依赖）"]
@@ -77,12 +76,12 @@ flowchart TB
 | model | `src/core/model/` | `DiagramDoc` 等类型（types.ts）、`createDoc/createNode/createEdge/createId`（factories.ts）、zod 校验与引用完整性（schema.ts） | 不感知渲染与 UI |
 | commands | `src/core/commands/` | `Command` 契约（command.ts）、补丁历史栈（history.ts）、全部通用命令工厂与纯函数（ops.ts，配套 ops.test/ops2.test） | 不碰 DOM、不发事件 |
 | layout | `src/core/layout/` | dagre 布局（dagre.ts）、思维导图左右交替布局与折叠子树集合（mindmap.ts） | 不做动画（动画是画布职责） |
-| io | `src/core/io/` | JSON 序列化（serialize.ts）、localStorage 持久化（persist.ts）、Mermaid 解析/导出（mermaid.ts）、PNG/SVG 文件导出（export.ts）、图框标题栏（titleblock.ts） | 不保存 React Flow 内部状态 |
+| io | `src/core/io/` | JSON 序列化（serialize.ts）、localStorage 持久化（persist.ts，唯一的存储实现）、Mermaid 解析/导出（mermaid.ts）、PNG/SVG 文件导出（export.ts）、图框标题栏（titleblock.ts） | 不保存 React Flow 内部状态 |
 | collab | `src/core/collab/` | `CollabAdapter` 接口（adapter.ts）、yjs 实现（yjs.ts）、文档 diff 纯函数（diff.ts） | 不直接改 store（走回调） |
 | plugin/events/palette | `src/core/` | `DiagramPlugin` 契约（plugin.ts）、`EV.*` 事件名常量（events.ts）、节点配色与 WCAG 工具（palette.ts） | — |
-| store | `src/store/` | `documentStore`（文档唯一真相源）、`uiStore`（界面过程态）、`collabStore`（协作状态）、`selectors`（doc→React Flow 派生） | 不直接渲染 |
+| store | `src/store/` | `documentStore`（文档唯一真相源）、`uiStore`（界面过程态）、`collabStore`（协作状态） | 不直接渲染；不依赖画布库 |
 | plugins | `src/plugins/` | 三种图的 `DiagramPlugin` 实现（flowchart/mindmap/er.tsx）、共享 SVG 件（shapekit.tsx 外壳、shapePaths.tsx 形状几何、mindmapNode.tsx 导图节点）、基座插件（base.tsx）、注册表（registry.ts） | 不改文档数据（经 dispatch 命令） |
-| features | `src/features/` | `canvas/`：EditorCanvas 与画布交互、快捷加号、统一建节点（nodeFactory）、焦点交接（focus）、上下文工具条（toolbar/）；`shell/editor/`：四角浮动条、形状坞、提示条、导出与分享；`shell/home|docs|shortcuts|toasts`：首页、文档存储与事件、快捷键、提示条 | 不写 `type === 'x'` 分支 |
+| features | `src/features/` | `canvas/`：EditorCanvas 与画布交互、快捷加号、统一建节点（nodeFactory）、焦点交接（focus）、上下文工具条（toolbar/）、文档到画布元素的派生（selectors）；`shell/editor/`：四角浮动条、形状坞、提示条、导出与分享；`shell/home|docs|shortcuts|toasts`：首页、文档导航与事件（存储在 core/io/persist）、快捷键、提示条；形状坞与画布共用的拖放约定在 `components/shapeDrag.ts` | 不写 `type === 'x'` 分支 |
 | server | `server/dev.mjs` | y-websocket 兼容 ws 服务（sync+awareness，房间存内存） | 不持久化、不鉴权 |
 
 ## 4. 数据模型
@@ -140,7 +139,7 @@ classDiagram
 
 关键设计：
 
-- `zOrder` 是节点 id 数组，靠后者在上；派生 React Flow nodes 时按它排 `zIndex`（`selectors.ts`）。
+- `zOrder` 是节点 id 数组，靠后者在上；派生 React Flow nodes 时按它排 `zIndex`（`features/canvas/selectors.ts`）。
 - `style.fill/stroke` 存 **palette key**（`white/teal/…` 或 `ink`），渲染时经 `resolveFill(key, theme)` 按主题解析——同一份文档在明暗主题下都正确。
 - React Flow 的 `nodes/edges` **不单独存储**，由 `selectFlowNodes/selectFlowEdges(doc, plugin)` 纯函数派生，保证文档是唯一真相源。
 - `plugin.hiddenNodeIds?(doc)`（思维导图折叠子树）在选择器层过滤，UI 不判断图类型。
@@ -213,7 +212,7 @@ flowchart LR
 要点：
 
 - `ShapeDef.render(node, ctx)` 返回渲染结果；core 用泛型 `R` 隔离类型，`plugins/` 以 `R=ReactNode` 实例化——契约在 core、渲染在插件。`ctx.dispatch` 是形状行内编辑（ER 字段、折叠圆钮）提交命令的唯一通道。
-- 画布/工具条查能力位而非判断类型：连线工具条靠 `plugin.edgeFields === 'cardinality'` 决定显示 ER 基数；单选工具条渲染 `plugin.nodeActions`；形状坞点击先问 `plugin.placeFromPalette`；思维导图 `autoLayoutOnChange=true` 使画布在文档变化后自动重排。
+- 画布/工具条查能力位而非判断类型：连线工具条靠 `plugin.edgeFields === 'cardinality'` 决定显示 ER 基数；单选工具条渲染 `plugin.nodeActions`；导出对话框与 Mermaid 导出命令看 `plugin.mermaid`（只有流程图为 true）；形状坞点击先问 `plugin.placeFromPalette`；思维导图 `autoLayoutOnChange=true` 使画布在文档变化后自动重排。
 - `templates` 挂在插件上，首页/空画布经 `getPlugin(type).templates` 取模板，不出现图类型分支。
 
 ## 7. 协作架构
@@ -280,13 +279,13 @@ sequenceDiagram
 ```mermaid
 flowchart LR
     KB[快捷键/菜单/浮动条/工具条] -- "emit(EV.ALIGN,{detail:'left'})" --> BUS((window 事件))
-    BUS --> CV3[features/canvas<br/>剪贴板/对齐/视图/自动布局<br/>形状坞放置 ADD_SHAPE/编辑 EDIT_TEXT]
+    BUS --> CV3[features/canvas<br/>剪贴板/对齐/视图/自动布局<br/>形状坞放置 ADD_SHAPE/编辑 EDIT_TEXT/示例自绘 REVEAL_DOC]
     BUS --> HOME2[features/home+io<br/>文档管理/导入导出]
     BUS --> UIS[uiStore 消费方<br/>工具切换/快捷键面板]
     BUS --> CLB[collab<br/>EV.SHARE → 复制链接]
 ```
 
-所有权表（IMPL_CONTRACT §5）：canvas 消费 `SELECT_ALL/COPY/…/ALIGN/DISTRIBUTE/AUTO_LAYOUT/FIT/ZOOM_*`，以及改版新增的 `ADD_SHAPE`（形状坞点击，画布按视口中心放置）与 `EDIT_TEXT`（工具条/右键「编辑文字」）；home/io 消费 `NEW_DOC/OPEN_DOC/…/SAVE/EXPORT_*/IMPORT_*`；collab 消费 `SHARE`。
+所有权表（IMPL_CONTRACT §5）：canvas 消费 `SELECT_ALL/COPY/…/ALIGN/DISTRIBUTE/AUTO_LAYOUT/FIT/ZOOM_*`，以及改版新增的 `ADD_SHAPE`（形状坞点击，画布按视口中心放置）与 `EDIT_TEXT`（工具条/右键「编辑文字」），以及 `REVEAL_DOC`（文档导航打开示例/导入时通知画布自绘，避免外壳直接引用画布动效模块）；home/io 消费 `NEW_DOC/OPEN_DOC/…/SAVE/EXPORT_*/IMPORT_*`；collab 消费 `SHARE`。
 
 ## 10. 部署形态
 
