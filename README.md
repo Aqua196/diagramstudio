@@ -57,6 +57,8 @@ pnpm dev:collab     # 需要协作时：同时起协作服务 ws://127.0.0.1:123
 | `pnpm test:coverage` | 单测 + core 覆盖率（阈值 80%） |
 | `pnpm e2e` | Playwright 端到端（1440/1280 双视口；同时重生成 docs/screenshots 下的截图） |
 | `pnpm lint` / `pnpm typecheck` / `pnpm format` | ESLint / tsc -b / Prettier |
+| `pnpm lab6:build` / `pnpm lab6 <文件.mmd>` | 构建并运行命令行工具 mmd2json：Mermaid → 工程文件（见 `labs/lab6-module`） |
+| `pnpm lab6:quality` | Mermaid 导入导出模块的可维护性检查（圈复杂度、函数长度、嵌套、参数个数） |
 
 ## 目录结构
 
@@ -98,6 +100,7 @@ docs/          规格、实施契约、决策记录与课程文档
 | `docs/REQUIREMENTS.md` | 需求分析（用例、功能/非功能需求） |
 | `docs/ARCHITECTURE.md` | 架构设计（分层、数据流、插件、协作，含 Mermaid 图） |
 | `docs/DESIGN_PATTERNS.md` | 设计模式对照文件说明 |
+| `docs/CODING_STANDARDS.md` | 编码规范（命名、注释、格式、规模阈值、分层边界、提交信息） |
 | `docs/TEST_REPORT.md` | 测试报告（用例、覆盖率、质量门、已知缺陷） |
 | `docs/PERFORMANCE.md` | 性能测试报告（500 节点真实拖拽、主线程任务耗时、改版前后对比） |
 | `docs/REDESIGN.md` | 前端改版说明（问题清单、设计原则、前后截图对比） |

@@ -8,6 +8,7 @@ export default tseslint.config(
   {
     ignores: [
       'dist',
+      'labs/**/dist',
       'dist-e2e',
       'coverage',
       'playwright-report',
@@ -67,7 +68,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['e2e/**/*.ts', 'server/**/*.{js,mjs,ts}', 'labs/**/*.{js,mjs}'],
+    files: ['e2e/**/*.ts', 'server/**/*.{js,mjs,ts}', 'labs/**/*.{js,mjs,ts}'],
     languageOptions: {
       globals: { ...globals.node },
     },
