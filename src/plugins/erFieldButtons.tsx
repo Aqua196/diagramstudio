@@ -10,18 +10,24 @@ export interface RowApiLike {
   update: (next: ErField[], label?: string) => void
 }
 
-/** 键位循环：无 → PK → FK → 无 */
+/** 键位循环：无 → PK → FK → PK+FK → 无（复合主键里的外键列，如 node.doc_id，需要同时标两个） */
 export function nextKey(f: ErField): Partial<ErField> {
+  if (f.pk && f.fk) return { pk: false, fk: false }
   if (f.pk) return { pk: false, fk: true }
-  if (f.fk) return { pk: false, fk: false }
+  if (f.fk) return { pk: true, fk: true }
   return { pk: true, fk: false }
+}
+
+/** 键位格里显示的标记；两个都有时上下两行 */
+export function keyLabel(f: ErField): string {
+  return [f.pk && 'PK', f.fk && 'FK'].filter(Boolean).join('\n')
 }
 
 export function KeyButton({ f, api }: { f: ErField; api: RowApiLike }) {
   return (
     <button
       type="button"
-      className="ds-er-key"
+      className={f.pk && f.fk ? 'ds-er-key ds-er-key-both' : 'ds-er-key'}
       aria-label={er.keyButton}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => {
@@ -29,7 +35,7 @@ export function KeyButton({ f, api }: { f: ErField; api: RowApiLike }) {
         api.setField(f.id, nextKey(f), 'key')
       }}
     >
-      {f.pk ? 'PK' : f.fk ? 'FK' : ''}
+      {keyLabel(f)}
     </button>
   )
 }
