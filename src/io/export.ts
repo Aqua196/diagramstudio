@@ -5,6 +5,7 @@
 import { frameSvg, TITLE_BLOCK_H, type FrameColors } from '@/core/io/titleblock'
 import type { DiagramDoc } from '@/core/model/types'
 import { zh } from '@/i18n/zh'
+import { isExcluded, prepareSvgSubtrees } from './svgSubtree'
 
 /** 下载文件名：标题为空时用默认名，免得得到一个叫「.png」的隐藏文件 */
 export function fileName(doc: DiagramDoc, ext: string): string {
@@ -103,6 +104,8 @@ async function captureContentSvg(
 ): Promise<{ svg: string; width: number; height: number }> {
   // 截图库只在导出时才用到，按需加载，不进首屏
   const { toSvg } = await import('html-to-image')
+  // <svg> 子树里的 HTML 不经过下面的 filter，也不内联样式：截图期间临时补上（Issue #1）
+  const restore = prepareSvgSubtrees(element, EXCLUDE)
   const dataUrl = await toSvg(element, {
     width: o.width,
     height: o.height,
@@ -113,11 +116,8 @@ async function captureContentSvg(
       transform: o.transform,
     },
     // 交互件不进成品：显式标记的、连接点、缩放夹点
-    filter: (node) => {
-      const cl = (node as HTMLElement).classList
-      return !cl || !EXCLUDE.some((c) => cl.contains(c))
-    },
-  })
+    filter: (node) => !(node instanceof Element) || !isExcluded(node, EXCLUDE),
+  }).finally(restore)
   // toSvg 返回 data:image/svg+xml;charset=utf-8,<encoded>
   return { svg: decodeURIComponent(dataUrl.split(',')[1] ?? ''), width: o.width, height: o.height }
 }

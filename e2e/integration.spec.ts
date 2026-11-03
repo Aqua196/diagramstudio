@@ -17,20 +17,28 @@ test('I12 ER 图导出 SVG：字段行的编辑控件不进成品，输入框保
 
   const report = await page.evaluate((text) => {
     const d = new DOMParser().parseFromString(text, 'image/svg+xml')
-    const style = (el: Element) => el.getAttribute('style') ?? ''
+    // 用浏览器自己解析内联样式（浏览器会把逐边属性合并成 border-style 等简写，不能按文本匹配）
+    const probe = document.createElement('div')
+    const style = (el: Element) => {
+      probe.setAttribute('style', el.getAttribute('style') ?? '')
+      return probe.style
+    }
     const inputs = [...d.querySelectorAll('input.ds-er-input')]
     return {
       inputs: inputs.length,
       // 拖动柄、删除、添加字段：成品里应不可见
       visibleControls: [...d.querySelectorAll('.ds-er-grip, .ds-er-del, .ds-er-add')].filter(
-        (el) => !/display:\s*none/.test(style(el)),
+        (el) => style(el).display !== 'none',
       ).length,
       // 输入框在画布上无边框、透明背景；成品里丢了样式就会变成浏览器默认的带边框输入框
-      unstyledInputs: inputs.filter((el) => !/border-top-style:\s*none/.test(style(el))).length,
+      unstyledInputs: inputs.filter((el) => style(el).borderTopStyle !== 'none').length,
+      bytes: text.length,
     }
   }, svg)
   expect(report.inputs).toBeGreaterThan(0)
   expect(report.visibleControls).toBe(0)
   expect(report.unstyledInputs).toBe(0)
+  // 只内联决定外观的样式：修复前约 560 KB，若复制全部计算样式会膨胀到约 1.2 MB
+  expect(report.bytes).toBeLessThan(800_000)
   expect(problems).toEqual([])
 })
