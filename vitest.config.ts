@@ -8,7 +8,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'labs/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       // SPEC §8：core 目录行覆盖率不低于 80%
