@@ -732,6 +732,12 @@
   letter-spacing: 0.02em;
   cursor: pointer;
 }
+/* 既是主键又是外键：两个标记上下两行，保持 30px 键位格宽度不变 */
+.ds-er-key-both {
+  font-size: 8px;
+  line-height: 9px;
+  white-space: pre-line;
+}
 .ds-er-key:empty::before {
   content: '·';
   color: var(--ink-3);
