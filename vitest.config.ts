@@ -5,6 +5,8 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  // 组件测试（.test.tsx）用 React 17+ 的自动 JSX 运行时，与应用构建一致，不必在测试里 import React
+  esbuild: { jsx: 'automatic' },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
