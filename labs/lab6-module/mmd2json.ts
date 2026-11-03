@@ -9,6 +9,7 @@ import { docToJson } from '../../src/core/io/serialize'
 import type { DiagramDoc } from '../../src/core/model/types'
 
 const USAGE = '用法：mmd2json <输入.mmd>   （JSON 写到标准输出，摘要写到标准错误）'
+const EMPTY_ERROR = '没有可识别的流程图内容'
 
 /** 流程图插件的默认连线路由；CLI 不加载插件（插件依赖 React），这里与它保持一致 */
 const EDGE_ROUTING = 'step'
@@ -30,7 +31,7 @@ export function main(argv: string[]): number {
   }
   const text = readFileSync(input, 'utf8')
   const title = basename(input, extname(input))
-  const r = importMermaidText(text, { title, edgeRouting: EDGE_ROUTING })
+  const r = importMermaidText(text, { title, edgeRouting: EDGE_ROUTING, emptyError: EMPTY_ERROR })
   if (!r.ok || !r.doc) {
     console.error(`导入失败：${r.errors.join('；')}`)
     return 1
