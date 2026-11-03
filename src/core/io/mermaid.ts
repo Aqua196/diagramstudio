@@ -1,6 +1,7 @@
-// Mermaid 子集导入导出（SPEC §5）：手写解析器，不认识的行跳过并计数。
-// 支持：graph/flowchart + TD/TB/LR/RL/BT；A[]、A()、A{}、A([])、A[()]、A[[]]、A[/]、A(()）
+// Mermaid 子集导入导出（SPEC §5）：手写解析器，不认识的语句跳过并计数。
+// 支持：graph/flowchart [TD/TB/LR/RL/BT]；A[]、A()、A{}、A([])、A[()]、A[[]]、A[/]、A(()）
 // 连线：-->、---、-.->、==>、<--、<-->；标签 -->|文字| 与 -- 文字 -->；链式 A --> B --> C
+// 语句可用分号分隔；引号内的文字可含括号、连接器与 #quot; 等实体；subgraph / end 跳过（子图内节点照常导入）
 import { createEdge, createId, createNode } from '../model/factories'
 import type { DiagramDoc, DiagramEdge, DiagramNode, EdgeArrow, EdgeRouting } from '../model/types'
 
@@ -29,9 +30,49 @@ const KIND_TO_SHAPE: Record<string, { open: string; close: string }> = {
   note: { open: '[', close: ']' },
 }
 
-const HEADER = /^(?:graph|flowchart)\s+(TB|TD|LR|RL|BT)\s*$/i
+const HEADER = /^(?:graph|flowchart)(?:\s+(TB|TD|LR|RL|BT))?$/i
 const NODE_ID = /^[A-Za-z0-9_一-龥]+/
-const CONNECTOR = /^(<-->|<--|-->|-\.->|==>|---)(?:\|([^|]*)\|)?/
+/** 行首的连接器，可带 |标签|；标签可以用引号包住以容纳竖线 */
+const CONNECTOR = /^(<-->|<--|-->|-\.->|==>|---)(?:\|("[^"]*"|[^|]*)\|)?/
+const ANY_CONNECTOR = /<-->|<--|-->|-\.->|==>|---/g
+/** 结构语句：子图不支持（其中的节点按普通节点导入），end 不能被当成名为 end 的节点 */
+const STRUCTURE = /^(?:end|subgraph\b.*)$/
+
+/** 每个位置是否在引号与括号之外：分语句、找连接器时只认外层的符号 */
+function outerMask(line: string): boolean[] {
+  const mask: boolean[] = []
+  let quoted = false
+  let depth = 0
+  for (const ch of line.split('')) {
+    if (ch === '"') quoted = !quoted
+    else if (!quoted && '[({'.includes(ch)) depth += 1
+    else if (!quoted && '])}'.includes(ch)) depth = Math.max(0, depth - 1)
+    mask.push(!quoted && depth === 0 && ch !== '"')
+  }
+  return mask
+}
+
+/** 按外层的分号切分语句：Mermaid 允许 `graph TD;`、`A --> B;` 与一行多条语句 */
+function splitStatements(line: string): string[] {
+  const mask = outerMask(line)
+  const parts: string[] = []
+  let start = 0
+  mask.forEach((outer, i) => {
+    if (outer && line[i] === ';') {
+      parts.push(line.slice(start, i))
+      start = i + 1
+    }
+  })
+  parts.push(line.slice(start))
+  return parts.map((p) => p.trim()).filter(Boolean)
+}
+
+/** 第一个位于引号与括号之外的连接器位置；没有返回 -1 */
+function findConnector(s: string): number {
+  const mask = outerMask(s)
+  for (const m of s.matchAll(ANY_CONNECTOR)) if (mask[m.index]) return m.index
+  return -1
+}
 
 /** 把 `-- 文字 -->` 形式统一改写成 `-->|文字|`，便于链式切分 */
 function normalizeInlineLabel(line: string): string {
@@ -43,11 +84,31 @@ function normalizeInlineLabel(line: string): string {
   )
 }
 
-function stripQuotes(s: string): string {
+/** 去掉外层引号，并还原 Mermaid 的实体写法 #quot; 与 #数字; */
+function unquote(s: string): { text: string; quoted: boolean } {
   const t = s.trim()
-  if (t.length >= 2 && t.startsWith('"') && t.endsWith('"')) return t.slice(1, -1)
-  return t
+  const quoted = t.length >= 2 && t.startsWith('"') && t.endsWith('"')
+  const inner = quoted ? t.slice(1, -1) : t
+  const text = inner
+    .replace(/#quot;/g, '"')
+    .replace(/#(\d+);/g, (_m, code: string) => String.fromCharCode(Number(code)))
+  return { text, quoted }
 }
+
+/** 节点记号的括号形式 → 形状；顺序有意义：先匹配两个字符的括号 */
+const SHAPE_PAIRS: Array<[open: string, close: string, kind: string]> = [
+  ['[(', ')]', 'database'],
+  ['[[', ']]', 'subprocess'],
+  ['[/', '/]', 'io'],
+  ['[\\', '\\]', 'io'],
+  ['[/', '\\]', 'io'],
+  ['[\\', '/]', 'io'],
+  ['([', '])', 'terminator'],
+  ['((', '))', 'connector'],
+  ['{', '}', 'decision'],
+  ['(', ')', 'process'],
+  ['[', ']', 'process'],
+]
 
 /** 解析 `A[文字]` / `A([起止])` 等节点记号；返回 null 表示该行看不懂 */
 function parseNodeToken(raw: string): ParsedNode | null {
@@ -59,30 +120,15 @@ function parseNodeToken(raw: string): ParsedNode | null {
   const rest = s.slice(id.length).trim()
   if (!rest) return { id, text: id, kind: 'process' }
 
-  const pairs: Array<[string, string, string]> = [
-    ['[(', ')]', 'database'],
-    ['[[', ']]', 'subprocess'],
-    ['[/', '/]', 'io'],
-    ['[\\', '\\]', 'io'],
-    ['[/', '\\]', 'io'],
-    ['[\\', '/]', 'io'],
-    ['([', '])', 'terminator'],
-    ['((', '))', 'connector'],
-    ['{', '}', 'decision'],
-    ['(', ')', 'process'],
-    ['[', ']', 'process'],
-  ]
-  for (const [open, close, kind] of pairs) {
-    if (
-      rest.startsWith(open) &&
-      rest.endsWith(close) &&
-      rest.length >= open.length + close.length
-    ) {
-      const text = stripQuotes(rest.slice(open.length, rest.length - close.length))
-      return { id, text: text || id, kind }
-    }
-  }
-  return null
+  const pair = SHAPE_PAIRS.find(
+    ([open, close]) =>
+      rest.startsWith(open) && rest.endsWith(close) && rest.length >= open.length + close.length,
+  )
+  if (!pair) return null
+  const [open, close, kind] = pair
+  const { text, quoted } = unquote(rest.slice(open.length, rest.length - close.length))
+  // A[] 显示 id；A[""] 是有意留空的文字
+  return { id, text: text || (quoted ? '' : id), kind }
 }
 
 interface ParsedEdge {
@@ -110,7 +156,7 @@ function tokenize(line: string): {
       rest = rest.slice(connMatch[0].length)
       continue
     }
-    const nextConn = rest.search(/<-->|<--|-->|-\.->|==>|---/)
+    const nextConn = findConnector(rest)
     const end = nextConn === -1 ? rest.length : nextConn
     tokens.push(rest.slice(0, end))
     rest = rest.slice(end)
@@ -127,7 +173,7 @@ function toEdge(c: { raw: string; label?: string }, i: number, nodes: ParsedNode
     arrowEnd: c.raw.includes('>') ? 'arrow' : 'none',
     dash: c.raw === '-.->' ? 'dashed' : 'solid',
     thick: c.raw === '==>',
-    label: c.label?.trim() || undefined,
+    label: c.label === undefined ? undefined : unquote(c.label).text || undefined,
   }
 }
 
@@ -145,11 +191,15 @@ function parseChain(line: string): { nodes: ParsedNode[]; edges: ParsedEdge[] } 
   return { nodes: typed, edges: conns.map((c, i) => toEdge(c, i, typed)) }
 }
 
-/** 解析过程中的累积状态：Mermaid 记号 id → 文档节点 id 的映射，以及已建好的节点与连线 */
+/** 解析过程中的累积状态：Mermaid 记号 id → 文档节点 id 的映射、已建好的节点与连线、方向与跳过数 */
 interface ParseState {
   nodes: Record<string, DiagramNode>
   edges: Record<string, DiagramEdge>
   idMap: Map<string, string>
+  direction: 'TB' | 'LR'
+  /** 是否已读到 graph / flowchart 声明；之前的语句都不属于流程图 */
+  header: boolean
+  skipped: number
 }
 
 function nodeIdOf(st: ParseState, mermaidId: string): string {
@@ -182,24 +232,35 @@ function addChain(st: ParseState, chain: { nodes: ParsedNode[]; edges: ParsedEdg
   }
 }
 
-export function parseMermaid(text: string): MermaidImport {
-  const st: ParseState = { nodes: {}, edges: {}, idMap: new Map() }
-  let direction: 'TB' | 'LR' = 'TB'
-  let skipped = 0
-  for (const raw of text.split('\n')) {
-    const line = raw.trim()
-    if (!line || line.startsWith('%%')) continue
-    const header = line.match(HEADER)
-    if (header) {
-      const d = header[1].toUpperCase()
-      direction = d === 'LR' || d === 'RL' ? 'LR' : 'TB'
-      continue
-    }
-    const chain = parseChain(normalizeInlineLabel(line))
-    if (chain) addChain(st, chain)
-    else skipped += 1
+/** 处理一条语句：方向声明、结构语句、节点与连线；看不懂的计入跳过数 */
+function parseStatement(st: ParseState, stmt: string): void {
+  const header = stmt.match(HEADER)
+  if (header) {
+    st.header = true
+    st.direction = /^(LR|RL)$/i.test(header[1] ?? '') ? 'LR' : 'TB'
+    return
   }
-  return { nodes: st.nodes, edges: st.edges, direction, skipped }
+  const chain = st.header && !STRUCTURE.test(stmt) ? parseChain(normalizeInlineLabel(stmt)) : null
+  if (chain) addChain(st, chain)
+  else st.skipped += 1
+}
+
+export function parseMermaid(text: string): MermaidImport {
+  const st: ParseState = {
+    nodes: {},
+    edges: {},
+    idMap: new Map(),
+    direction: 'TB',
+    header: false,
+    skipped: 0,
+  }
+  const statements = text
+    .split('\n')
+    .map((raw) => raw.trim())
+    .filter((line) => line && !line.startsWith('%%'))
+    .flatMap(splitStatements)
+  for (const stmt of statements) parseStatement(st, stmt)
+  return { nodes: st.nodes, edges: st.edges, direction: st.direction, skipped: st.skipped }
 }
 
 function kindDefaultSize(kind: string): { w: number; h: number } {
@@ -219,8 +280,9 @@ function kindDefaultSize(kind: string): { w: number; h: number } {
   }
 }
 
+/** 含括号、竖线、尖括号、引号或分号的文字用引号包住，内部的引号写成 #quot; */
 function esc(text: string): string {
-  return /[[\]{}()|<>]/.test(text) ? `"${text.replace(/"/g, '#quot;')}"` : text
+  return /[[\]{}()|<>";]/.test(text) ? `"${text.replace(/"/g, '#quot;')}"` : text
 }
 
 /** 连线 → Mermaid 连接器：双向 / 反向 / 无箭头 / 虚线 / 粗线 / 普通，按此优先级取第一个符合的 */
@@ -244,7 +306,9 @@ export function docToMermaid(doc: DiagramDoc): string {
     const node = doc.nodes[id]
     if (!node) continue
     const shape = KIND_TO_SHAPE[node.kind] ?? KIND_TO_SHAPE.process
-    lines.push(`  ${idOf.get(id)}${shape.open}${esc(node.text || node.kind)}${shape.close}`)
+    // 没有文字的节点导出为 ""，不能用形状名顶替（否则读回后凭空多出 process 等文字）
+    const label = node.text ? esc(node.text) : '""'
+    lines.push(`  ${idOf.get(id)}${shape.open}${label}${shape.close}`)
   }
   for (const edge of Object.values(doc.edges)) {
     const s = idOf.get(edge.source)
