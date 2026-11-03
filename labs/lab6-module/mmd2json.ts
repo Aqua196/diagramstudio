@@ -2,13 +2,13 @@
 // 直接调用领域层的导入模块 importMermaidText（解析 + dagre 自动布局 + 组装文档），
 // 不经过任何界面代码：能在 Node.js 里单独编译、运行，说明 src/core 与浏览器、React 互相独立。
 // 构建：pnpm lab6:build    运行：pnpm lab6 <输入.mmd> > 输出.json
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { basename, extname } from 'node:path'
 import { importMermaidText } from '../../src/core/io/importer'
 import { docToJson } from '../../src/core/io/serialize'
 import type { DiagramDoc } from '../../src/core/model/types'
 
-const USAGE = '用法：mmd2json <输入.mmd>   （JSON 写到标准输出，摘要写到标准错误）'
+const USAGE = '用法：mmd2json <输入.mmd> [-o 输出.json]   （不给 -o 时 JSON 写到标准输出）'
 const EMPTY_ERROR = '没有可识别的流程图内容'
 
 /** 流程图插件的默认连线路由；CLI 不加载插件（插件依赖 React），这里与它保持一致 */
@@ -24,8 +24,10 @@ export function summarize(doc: DiagramDoc, skipped: number): string {
 
 /** 返回进程退出码：0 成功，1 内容无法导入，2 参数错误 */
 export function main(argv: string[]): number {
-  const input = argv[0]
-  if (!input) {
+  const o = argv.indexOf('-o')
+  const output = o >= 0 ? argv[o + 1] : undefined
+  const input = argv.find((a, i) => !a.startsWith('-') && i !== o + 1)
+  if (!input || (o >= 0 && !output)) {
     console.error(USAGE)
     return 2
   }
@@ -36,7 +38,9 @@ export function main(argv: string[]): number {
     console.error(`导入失败：${r.errors.join('；')}`)
     return 1
   }
-  process.stdout.write(`${docToJson(r.doc)}\n`)
+  const json = `${docToJson(r.doc)}\n`
+  if (output) writeFileSync(output, json)
+  else process.stdout.write(json)
   console.error(summarize(r.doc, r.skipped ?? 0))
   return 0
 }

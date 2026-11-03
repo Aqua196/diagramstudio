@@ -31,6 +31,7 @@ src/core/io/serialize.ts          docToJson(doc)：工程文件格式
 ```bash
 pnpm lab6:build                                   # 生成 labs/lab6-module/dist/mmd2json.mjs（约 120 KB，依赖已打包）
 pnpm lab6 labs/lab6-module/login.mmd > login.json # 摘要写到标准错误：节点 8 个，连线 9 条，方向 TB，跳过 0 行
+pnpm lab6 labs/lab6-module/login.mmd -o login.json  # 直接写入文件，不经过重定向
 ```
 
 退出码：0 成功；1 内容里没有可识别的流程图；2 缺少参数。生成的 `login.json` 可以在 DiagramStudio 首页用“导入 JSON”直接打开。
