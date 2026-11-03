@@ -62,8 +62,9 @@ core/       纯 TS：model · commands(命令+补丁历史) · layout · io · c
 
 - **类型**：TS strict；禁 `any` 与 `@ts-ignore`（确需绕过用带说明的 `@ts-expect-error`）。
 - **边界**：ESLint `no-restricted-imports` 强制 core 无 UI 依赖；`pnpm lint` 0 error 0 warning。
-- **测试**：125 个 Vitest 单测（命令/历史/布局/校验/Mermaid/diff/yjs/persist/importer/对比度/i18n，以及改版新增的快捷添加、焦点交接、插件钩子、空白文档回收）；Playwright e2e 覆盖 SPEC §8 全部 8 场景（含双上下文协作同步）与上手流程，axe 无障碍检查，1440×900 与 1280×720 双视口。
-- **覆盖率**：core 行/语句 98.78%、分支 87.40%、函数 99.08%，门槛 80% 已在 `vitest.config.ts` 固化。
+- **测试**：192 个 Vitest 用例（命令/历史/布局/校验/Mermaid/diff/yjs/persist/importer/对比度/i18n，改版新增的快捷添加、焦点交接、插件钩子、空白文档回收，以及课程实验 8 的 21 个 Mermaid 异常与边界用例、实验 9 的 13 个集成用例——协作用例在随机端口启动真实服务）；Playwright e2e 覆盖 SPEC §8 全部 8 场景（含双上下文协作同步）与上手流程，axe 无障碍检查，1440×900 与 1280×720 双视口。
+- **覆盖率**：core 语句 98.92%、分支 90.57%、函数 99.17%，门槛 80% 已在 `vitest.config.ts` 固化。
+- **缺陷跟踪**：集成测试发现的缺陷登记为 GitHub Issue（#1–#3），在 `fix/<编号>-<主题>` 分支修复，提交写 `Fixes #编号`，合入 main 自动关闭。
 - **测量要可信**：发现旧性能用例测的是浏览器帧时钟后，改用 CDP Trace 测主线程任务，并给出改版前后同口径对比（PERFORMANCE.md）。
 - **一致性**：文档（本套 docs）与实现同仓演进；`docs/IMPL_CONTRACT.md` 冻结公共接口；`docs/DECISIONS.md` 记录取舍。
 
@@ -146,7 +147,9 @@ core/       纯 TS：model · commands(命令+补丁历史) · layout · io · c
     A：不违反——形状 `render` 拿到 `ctx.dispatch`，字段增删改都是 `patchNode` 命令进历史，只是命令的发起方从工具条换成了节点自己。`src/plugins/er.tsx`、`ShapeRenderContext.dispatch`
 
 20. **Q：测试覆盖了多少？哪里没覆盖？**
-    A：125 个单测，core 行覆盖 98.78%。连网络边界也覆盖了——`collab/yjs` 用假 WebsocketProvider 驱动真 Y.Doc 与 Awareness，sync/pushLocal/observeDeep/awareness/节流全路径有断言。`plugin.ts`/`adapter.ts`/`command.ts`/`types.ts` 是纯类型声明文件无可执行行。TEST_REPORT §4。
+    A：192 个 Vitest 用例，core 语句覆盖 98.92%、分支 90.57%。网络边界有两层：单元测试里 `collab/yjs` 用假 WebsocketProvider 驱动真 Y.Doc 与 Awareness；集成测试（I9–I11）在随机端口启动真实的 `server/dev.mjs`，两个真实适配器经 WebSocket 交互。`plugin.ts`/`adapter.ts`/`command.ts`/`types.ts` 是纯类型声明文件无可执行行。TEST_REPORT §4。
+
+    **追问：覆盖率这么高，为什么还有缺陷？** A：语句覆盖率只说明代码被执行过。实验 8 前 mermaid.ts 语句覆盖已近 98%，但分支只有 80%，补了 21 个异常与边界用例后一下发现 7 个缺陷；实验 9 的集成测试又发现「房间有文档但没节点」这个两个模块都没考虑的中间状态（Issue #2）。所以现在同时看分支覆盖率，并对照接口表检查集成用例是否覆盖每个接口。
 
 21. **Q：localStorage 方案有什么风险？**
     A：容量 ~5MB、清浏览器数据即丢、无多端同步——这是刻意的取舍（个人作业、离线优先）。索引（`DocIndexEntry`）与正文分键存储，列表页不读全文；导出 JSON 是备份通道。`src/core/io/persist.ts`
@@ -165,7 +168,8 @@ core/       纯 TS：model · commands(命令+补丁历史) · layout · io · c
 **当前局限**（不掩饰）：
 
 - 协作是「演示级」：房间存内存、无鉴权、无持久化；同 key 冲突 LWW 整节点覆盖；协作撤销跳过已被删元素。
-- Mermaid 仅为子集；不做 subgraph/样式指令。
+- Mermaid 仅为子集：subgraph 只把其中节点平铺导入，样式指令跳过。
+- 编码规范的「函数 ≤50 行」在界面层没有做到（27 处，多为 React 钩子），已记为技术债。
 - 桌面优先：<1024 宽仅提示，无移动端/触屏精细适配。
 - 性能：500n/800e 局部视口拖拽主线程任务 p95 约 12–14ms；但全览（500 节点全可见）拖拽每步主线程约 137ms，受控模式下每帧全量处理节点数组（PERFORMANCE.md §5）。
 
@@ -174,4 +178,5 @@ core/       纯 TS：model · commands(命令+补丁历史) · layout · io · c
 1. 协作升级：Hocuspocus/持久化后端、字段级冲突合并、可选昵称。
 2. 全览场景：拖动期间改为只更新被拖节点（非受控/增量更新），去掉每帧全量节点处理。
 3. Mermaid 子集扩语法（subgraph、注释、更多节点形状）。
-4. 组件级渲染测试补齐（features/ 的交互逻辑已有单测，渲染目前靠 e2e 与截图覆盖）。
+4. 组件级渲染测试补齐（已有第一个组件测试 erFieldButtons.test.tsx，测试环境已支持；其余渲染目前靠 e2e 与截图覆盖）。
+5. 把界面层的长钩子拆成独立的事件处理模块，纳入 `lab6:quality` 同样的检查。
