@@ -95,71 +95,97 @@ interface ParsedEdge {
   label?: string
 }
 
-function parseChain(line: string): { nodes: ParsedNode[]; edges: ParsedEdge[] } | null {
+/** 把一行切成「节点记号」与「连接器」两组，二者应交错出现：token, conn, token, … */
+function tokenize(line: string): {
+  tokens: string[]
+  conns: Array<{ raw: string; label?: string }>
+} {
   const tokens: string[] = []
   const conns: Array<{ raw: string; label?: string }> = []
   let rest = line
   while (rest.length > 0) {
     const connMatch = rest.match(CONNECTOR)
-    if (connMatch && connMatch.index !== undefined) {
-      const before = rest.slice(0, connMatch.index)
-      if (before.trim()) tokens.push(before)
+    if (connMatch) {
       conns.push({ raw: connMatch[1], label: connMatch[2] })
-      rest = rest.slice(connMatch.index + connMatch[0].length)
-    } else {
-      const nextConn = rest.search(/<-->|<--|-->|-\.->|==>|---/)
-      if (nextConn === -1) {
-        tokens.push(rest)
-        rest = ''
-      } else {
-        tokens.push(rest.slice(0, nextConn))
-        rest = rest.slice(nextConn)
-      }
+      rest = rest.slice(connMatch[0].length)
+      continue
     }
+    const nextConn = rest.search(/<-->|<--|-->|-\.->|==>|---/)
+    const end = nextConn === -1 ? rest.length : nextConn
+    tokens.push(rest.slice(0, end))
+    rest = rest.slice(end)
   }
-  // tokens 与 conns 应呈 token, conn, token, conn, token 交错；
+  return { tokens: tokens.map((t) => t.trim()).filter(Boolean), conns }
+}
+
+/** 第 i 个连接器连起第 i 与第 i+1 个节点 */
+function toEdge(c: { raw: string; label?: string }, i: number, nodes: ParsedNode[]): ParsedEdge {
+  return {
+    source: nodes[i],
+    target: nodes[i + 1],
+    arrowStart: c.raw.startsWith('<') ? 'arrow' : 'none',
+    arrowEnd: c.raw.includes('>') ? 'arrow' : 'none',
+    dash: c.raw === '-.->' ? 'dashed' : 'solid',
+    thick: c.raw === '==>',
+    label: c.label?.trim() || undefined,
+  }
+}
+
+function parseChain(line: string): { nodes: ParsedNode[]; edges: ParsedEdge[] } | null {
+  const { tokens, conns } = tokenize(line)
   // 无连接器的单行（如 `A[文本]`）是合法的节点声明
-  const nodeTokens = tokens.map((t) => t.trim()).filter(Boolean)
-  if (nodeTokens.length === 1 && conns.length === 0) {
-    const single = parseNodeToken(nodeTokens[0])
-    if (!single) return null
-    return { nodes: [single], edges: [] }
+  if (tokens.length === 1 && conns.length === 0) {
+    const single = parseNodeToken(tokens[0])
+    return single ? { nodes: [single], edges: [] } : null
   }
-  if (nodeTokens.length < 2 || conns.length !== nodeTokens.length - 1) return null
-  const nodes = nodeTokens.map(parseNodeToken)
+  if (tokens.length < 2 || conns.length !== tokens.length - 1) return null
+  const nodes = tokens.map(parseNodeToken)
   if (nodes.some((n) => n === null)) return null
   const typed = nodes as ParsedNode[]
-  const edges: ParsedEdge[] = conns.map((c, i) => {
-    const dash: ParsedEdge['dash'] = c.raw === '-.->' ? 'dashed' : 'solid'
-    return {
-      source: typed[i],
-      target: typed[i + 1],
-      arrowStart: c.raw.startsWith('<') ? 'arrow' : 'none',
-      arrowEnd: c.raw.includes('>') ? 'arrow' : 'none',
-      dash,
-      thick: c.raw === '==>',
-      label: c.label?.trim() || undefined,
-    }
-  })
-  return { nodes: typed, edges }
+  return { nodes: typed, edges: conns.map((c, i) => toEdge(c, i, typed)) }
+}
+
+/** 解析过程中的累积状态：Mermaid 记号 id → 文档节点 id 的映射，以及已建好的节点与连线 */
+interface ParseState {
+  nodes: Record<string, DiagramNode>
+  edges: Record<string, DiagramEdge>
+  idMap: Map<string, string>
+}
+
+function nodeIdOf(st: ParseState, mermaidId: string): string {
+  let id = st.idMap.get(mermaidId)
+  if (!id) {
+    id = `m_${createId().slice(0, 8)}`
+    st.idMap.set(mermaidId, id)
+  }
+  return id
+}
+
+/** 把一行解析出的节点与连线并入文档；同一记号 id 只建一个节点（先出现的文字与形状为准） */
+function addChain(st: ParseState, chain: { nodes: ParsedNode[]; edges: ParsedEdge[] }): void {
+  for (const pn of chain.nodes) {
+    const id = nodeIdOf(st, pn.id)
+    if (st.nodes[id]) continue
+    const n = createNode(pn.kind, { x: 0, y: 0 }, kindDefaultSize(pn.kind), pn.text)
+    n.id = id
+    st.nodes[id] = n
+  }
+  for (const pe of chain.edges) {
+    const e = createEdge(nodeIdOf(st, pe.source.id), nodeIdOf(st, pe.target.id), {
+      routing: 'bezier' as EdgeRouting,
+      arrowStart: pe.arrowStart,
+      arrowEnd: pe.arrowEnd,
+      label: pe.label,
+      style: { stroke: 'ink', strokeWidth: pe.thick ? 2.5 : 1.5, dash: pe.dash },
+    })
+    st.edges[e.id] = e
+  }
 }
 
 export function parseMermaid(text: string): MermaidImport {
-  const nodes: Record<string, DiagramNode> = {}
-  const edges: Record<string, DiagramEdge> = {}
-  const idMap = new Map<string, string>()
+  const st: ParseState = { nodes: {}, edges: {}, idMap: new Map() }
   let direction: 'TB' | 'LR' = 'TB'
   let skipped = 0
-
-  const nodeId = (mermaidId: string): string => {
-    let id = idMap.get(mermaidId)
-    if (!id) {
-      id = `m_${createId().slice(0, 8)}`
-      idMap.set(mermaidId, id)
-    }
-    return id
-  }
-
   for (const raw of text.split('\n')) {
     const line = raw.trim()
     if (!line || line.startsWith('%%')) continue
@@ -170,34 +196,10 @@ export function parseMermaid(text: string): MermaidImport {
       continue
     }
     const chain = parseChain(normalizeInlineLabel(line))
-    if (!chain) {
-      skipped += 1
-      continue
-    }
-    for (const pn of chain.nodes) {
-      const id = nodeId(pn.id)
-      if (!nodes[id]) {
-        const n = createNode(pn.kind, { x: 0, y: 0 }, kindDefaultSize(pn.kind), pn.text)
-        n.id = id
-        nodes[id] = n
-      }
-    }
-    for (const pe of chain.edges) {
-      const e = createEdge(nodeId(pe.source.id), nodeId(pe.target.id), {
-        routing: 'bezier' as EdgeRouting,
-        arrowStart: pe.arrowStart,
-        arrowEnd: pe.arrowEnd,
-        label: pe.label,
-        style: {
-          stroke: 'ink',
-          strokeWidth: pe.thick ? 2.5 : 1.5,
-          dash: pe.dash,
-        },
-      })
-      edges[e.id] = e
-    }
+    if (chain) addChain(st, chain)
+    else skipped += 1
   }
-  return { nodes, edges, direction, skipped }
+  return { nodes: st.nodes, edges: st.edges, direction, skipped }
 }
 
 function kindDefaultSize(kind: string): { w: number; h: number } {
@@ -221,12 +223,23 @@ function esc(text: string): string {
   return /[[\]{}()|<>]/.test(text) ? `"${text.replace(/"/g, '#quot;')}"` : text
 }
 
+/** 连线 → Mermaid 连接器：双向 / 反向 / 无箭头 / 虚线 / 粗线 / 普通，按此优先级取第一个符合的 */
+function connectorOf(edge: DiagramEdge): string {
+  const both = edge.arrowStart === 'arrow' && edge.arrowEnd === 'arrow'
+  const rules: Array<[boolean, string]> = [
+    [both, '<-->'],
+    [edge.arrowStart === 'arrow', '<--'],
+    [edge.arrowEnd === 'none', '---'],
+    [edge.style.dash === 'dashed', '-.->'],
+    [edge.style.strokeWidth > 2, '==>'],
+  ]
+  return rules.find(([hit]) => hit)?.[1] ?? '-->'
+}
+
 export function docToMermaid(doc: DiagramDoc): string {
   const lines: string[] = [`graph ${doc.settings.layoutDirection === 'LR' ? 'LR' : 'TD'}`]
-  const idOf = new Map<string, string>()
-  let counter = 0
-  for (const id of doc.zOrder) idOf.set(id, `N${counter++}`)
-
+  // 文档 id 是 UUID，导出时按叠放顺序换成 N0、N1… 的短记号
+  const idOf = new Map(doc.zOrder.map((id, i) => [id, `N${i}`]))
   for (const id of doc.zOrder) {
     const node = doc.nodes[id]
     if (!node) continue
@@ -237,14 +250,8 @@ export function docToMermaid(doc: DiagramDoc): string {
     const s = idOf.get(edge.source)
     const t = idOf.get(edge.target)
     if (!s || !t) continue
-    let conn = '-->'
-    if (edge.arrowStart === 'arrow' && edge.arrowEnd === 'arrow') conn = '<-->'
-    else if (edge.arrowStart === 'arrow') conn = '<--'
-    else if (edge.arrowEnd === 'none') conn = '---'
-    else if (edge.style.dash === 'dashed') conn = '-.->'
-    else if (edge.style.strokeWidth > 2) conn = '==>'
     const label = edge.label ? `|${esc(edge.label)}|` : ''
-    lines.push(`  ${s} ${conn}${label} ${t}`)
+    lines.push(`  ${s} ${connectorOf(edge)}${label} ${t}`)
   }
   return lines.join('\n')
 }
