@@ -1,6 +1,6 @@
 // CollabAdapter 的 yjs 实现（SPEC §7）：doc 的 nodes/edges/zOrder/title/settings
 // 存进 Y.Map，远端增量一次性回填（不进本地历史）；光标走 awareness。
-// 协作文档以「房间里第一份到达的文档」为初始内容，之后以 Y.Doc 为准。
+// 协作文档以「房间里第一份到达的文档」为初始内容（哪怕它还没有节点），之后以 Y.Doc 为准。
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import type { CollabAdapter, CollabCallbacks, CollabPeer } from './adapter'
@@ -44,12 +44,13 @@ class YjsCollabAdapter implements CollabAdapter {
     const nodes = ydoc.getMap<unknown>('nodes')
     const edges = ydoc.getMap<unknown>('edges')
 
-    // 首次同步完成：房间为空则以本地文档初始化；否则采用房间文档
+    // 首次同步完成：房间里还没有文档才以本地文档初始化；否则采用房间文档。
+    // 判断依据是房间里有没有文档本身，不看节点数：刚建好、还没画东西的图也属于房间（Issue #2）
     provider.on('sync', (isSynced: boolean) => {
       if (!isSynced || this.joined) return
       this.joined = true
       const remoteDoc = this.readDoc(ydoc)
-      if (!remoteDoc || Object.keys(remoteDoc.nodes).length === 0) {
+      if (!remoteDoc) {
         this.pushLocal(opts.doc)
       } else {
         this.applyingRemote = true

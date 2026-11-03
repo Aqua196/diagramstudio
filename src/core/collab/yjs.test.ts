@@ -106,6 +106,24 @@ describe('YjsCollabAdapter', () => {
     adapter.leave()
   })
 
+  it('房间已有文档但还没有节点：采用房间文档，不用本地文档覆盖（Issue #2）', () => {
+    const local = createDoc('flowchart', '未命名图表')
+    const callbacks = { onRemoteDoc: vi.fn(), onPeers: vi.fn(), onStatus: vi.fn() }
+    const adapter = createCollabAdapter()
+    adapter.join({ room: 'r-empty', doc: local, callbacks })
+    const provider: FakeProvider = h.state.instances[0]
+    const remote = createDoc('er', '订单系统')
+    provider.ydoc.getMap('meta').set('doc', remote)
+    provider.ydoc.getMap('meta').set('zOrder', [])
+    provider.fire('sync', true)
+    expect(callbacks.onRemoteDoc.mock.calls.at(-1)![0]).toMatchObject({
+      title: '订单系统',
+      type: 'er',
+    })
+    expect((provider.ydoc.getMap('meta').get('doc') as { title: string }).title).toBe('订单系统')
+    adapter.leave()
+  })
+
   it('pushLocal 把增量写入 nodes/edges/meta，且不回灌 onRemoteDoc（无回声）', () => {
     const { adapter, provider, doc, callbacks } = setup()
     provider.fire('sync', true)
