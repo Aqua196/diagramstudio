@@ -1,0 +1,24 @@
+# 集成分支与功能分支的质量门（见 CONTRIBUTING.md 第 3 节）：
+# 推送 dev / feature/** / fix/** 时执行 lint、类型检查和单元测试；main 的检查与发布在 pages.yml 中。
+name: CI
+
+on:
+  push:
+    branches: [dev, 'feature/**', 'fix/**']
+  pull_request:
+    branches: [dev, main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
