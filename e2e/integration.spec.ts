@@ -42,3 +42,22 @@ test('I12 ER 图导出 SVG：字段行的编辑控件不进成品，输入框保
   expect(report.bytes).toBeLessThan(800_000)
   expect(problems).toEqual([])
 })
+
+test('I13 插件能力声明 × 导出对话框：只有声明了 mermaid 的流程图可选 Mermaid 文本', async ({
+  page,
+}) => {
+  const problems = watchConsole(page)
+  const mermaidOption = async (type: 'flowchart' | 'mindmap' | 'er') => {
+    await freshHome(page)
+    await openExample(page, type)
+    await page.getByRole('button', { name: '导出', exact: true }).click()
+    const radio = page.getByRole('radio', { name: /Mermaid/ })
+    const enabled = await radio.isEnabled()
+    await page.keyboard.press('Escape')
+    return enabled
+  }
+  expect(await mermaidOption('flowchart')).toBe(true)
+  expect(await mermaidOption('mindmap')).toBe(false)
+  expect(await mermaidOption('er')).toBe(false)
+  expect(problems).toEqual([])
+})
