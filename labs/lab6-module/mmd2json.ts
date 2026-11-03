@@ -4,6 +4,7 @@
 // 构建：pnpm lab6:build    运行：pnpm lab6 <输入.mmd> > 输出.json
 import { readFileSync, writeFileSync } from 'node:fs'
 import { basename, extname } from 'node:path'
+import { parseArgs } from './args'
 import { importMermaidText } from '../../src/core/io/importer'
 import { docToJson } from '../../src/core/io/serialize'
 import type { DiagramDoc } from '../../src/core/model/types'
@@ -24,13 +25,12 @@ export function summarize(doc: DiagramDoc, skipped: number): string {
 
 /** 返回进程退出码：0 成功，1 内容无法导入，2 参数错误 */
 export function main(argv: string[]): number {
-  const o = argv.indexOf('-o')
-  const output = o >= 0 ? argv[o + 1] : undefined
-  const input = argv.find((a, i) => !a.startsWith('-') && i !== o + 1)
-  if (!input || (o >= 0 && !output)) {
+  const args = parseArgs(argv)
+  if (!args) {
     console.error(USAGE)
     return 2
   }
+  const { input, output } = args
   const text = readFileSync(input, 'utf8')
   const title = basename(input, extname(input))
   const r = importMermaidText(text, { title, edgeRouting: EDGE_ROUTING, emptyError: EMPTY_ERROR })
