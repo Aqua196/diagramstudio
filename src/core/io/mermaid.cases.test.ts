@@ -135,12 +135,18 @@ describe('异常与边界输入', () => {
     expect(Object.keys(r.nodes)).toHaveLength(3)
     expect(Object.keys(r.edges)).toHaveLength(2)
     expect(r.skipped).toBe(0)
+    // 一行多条语句；引号里的分号属于文字
+    expect(edges('graph TD\nA --> B; B --> C')).toHaveLength(2)
+    expect(texts('graph TD\nA["甲;乙"]')).toEqual(['甲;乙'])
   })
 
   it('E6 没有 graph / flowchart 声明的普通文字不当作流程图', () => {
     const r = parseMermaid('hello\nworld')
     expect(Object.keys(r.nodes)).toHaveLength(0)
     expect(r.skipped).toBe(2)
+    // 省略方向的 flowchart 声明是合法的，默认纵向
+    const bare = parseMermaid('flowchart\nA --> B')
+    expect([Object.keys(bare.nodes).length, bare.direction, bare.skipped]).toEqual([2, 'TB', 0])
   })
 
   it('E7 引号里的文字可以含连接器符号', () => {
