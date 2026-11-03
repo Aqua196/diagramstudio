@@ -20,6 +20,8 @@ type Win = Window & {
   __ds: { getDoc: () => { nodes: Record<string, { position: { x: number; y: number } }> } }
 }
 
+type Sample = Win['__samples'][number]
+
 /** 在应用脚本之前装好探针：统计 startViewTransition 调用次数、出现过的 ds-fx-* 动画类名 */
 async function installProbes(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -79,41 +81,35 @@ test('m1 看示例：卡片形变进编辑器，画布依次自绘；播完不�
 
 test('m2 Tab 加子主题：新节点从父节点飞出，连线终点每一帧都贴着节点左侧锚点', async ({ page }) => {
   const problems = watchConsole(page)
+  // 采样阶段用虚拟时钟逐帧推进（Issue #3）：不论机器快慢，380ms 的飞入动画都采到同样多的帧
+  await page.clock.install()
   await freshHome(page)
   await openWithoutTransition(page, () => openExample(page, 'mindmap'))
   await settle(page)
   await page.locator(NODE).filter({ hasText: '软件测试' }).first().click()
-  await page.evaluate(() => {
-    const w = window as unknown as Win
-    w.__samples = []
-    const t0 = performance.now()
-    const tick = () => {
+  await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 1000)
+  await page.keyboard.press('Tab')
+  const samples: Sample[] = []
+  for (let i = 0; i < 40; i++) {
+    await page.clock.runFor(16)
+    const s = await page.evaluate(() => {
       const n = document.querySelector<HTMLElement>('.react-flow__node.ds-fx-enter')
       const m = n && /translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(n.style.transform)
-      if (n && m) {
-        const path = document.querySelector(
-          `.react-flow__edge[data-id="__parent_${n.dataset.id}"] path.react-flow__edge-path`,
-        )
-        const nums = (path?.getAttribute('d') ?? '').match(/-?\d+(\.\d+)?/g)?.map(Number) ?? []
-        w.__samples.push({
-          x: +m[1],
-          y: +m[2],
-          h: n.offsetHeight,
-          ex: nums.at(-2),
-          ey: nums.at(-1),
-        })
-      }
-      if (performance.now() - t0 < 1500) requestAnimationFrame(tick)
-    }
-    requestAnimationFrame(tick)
-  })
-  await page.keyboard.press('Tab')
-  await page.waitForTimeout(1600)
-  const samples = await page.evaluate(() => (window as unknown as Win).__samples)
-  expect(new Set(samples.map((s) => `${s.x},${s.y}`)).size).toBeGreaterThanOrEqual(5)
+      if (!n || !m) return null
+      const path = document.querySelector(
+        `.react-flow__edge[data-id="__parent_${n.dataset.id}"] path.react-flow__edge-path`,
+      )
+      const nums = (path?.getAttribute('d') ?? '').match(/-?\d+(\.\d+)?/g)?.map(Number) ?? []
+      return { x: +m[1], y: +m[2], h: n.offsetHeight, ex: nums.at(-2), ey: nums.at(-1) }
+    })
+    if (s) samples.push(s)
+  }
+  await page.clock.resume()
+  // 逐帧推进 16ms，380ms 的动画应采到 20 帧上下；至少 10 个不同位置才算「飞出」而不是瞬移
+  expect(new Set(samples.map((s) => `${s.x},${s.y}`)).size).toBeGreaterThanOrEqual(10)
   // 连线终点相对节点左侧中点的偏移（锚点圆在边框外侧，约 -5px）在整个飞行过程中保持不变 = 线一直贴着节点
   const withEdge = samples.filter((s) => s.ex !== undefined)
-  expect(withEdge.length).toBeGreaterThanOrEqual(5)
+  expect(withEdge.length).toBeGreaterThanOrEqual(10)
   const dx = withEdge.map((s) => s.ex! - s.x)
   const dy = withEdge.map((s) => s.ey! - (s.y + s.h / 2))
   expect(Math.max(...dx) - Math.min(...dx)).toBeLessThan(1.5)
