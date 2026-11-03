@@ -2,6 +2,7 @@
 // 实验 9 集成测试（三）：协作适配器 × y-websocket 协议 × 项目自带的协作服务（server/dev.mjs）。
 // 在随机端口启动真实服务，两个真实的 YjsCollabAdapter 经 WebSocket 加入同一房间，不打桩。
 import { spawn, type ChildProcess } from 'node:child_process'
+import WebSocketImpl from 'ws'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import type { CollabAdapter, CollabPeer } from '@/core/collab/adapter'
 import { createDoc, createNode } from '@/core/model/factories'
@@ -18,12 +19,15 @@ beforeAll(async () => {
   })
   await new Promise<void>((resolve) => server.stdout!.once('data', () => resolve()))
   vi.stubEnv('VITE_COLLAB_WS', `ws://127.0.0.1:${PORT}`)
+  // Node.js 22 起才有内置 WebSocket；CI 按 .nvmrc 用 Node.js 20，此时改用协作服务同样依赖的 ws 包
+  if (typeof globalThis.WebSocket === 'undefined') vi.stubGlobal('WebSocket', WebSocketImpl)
   ;({ createCollabAdapter } = await import('@/core/collab/yjs'))
 }, 15_000)
 
 afterAll(() => {
   server.kill()
   vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
 })
 
 /** 加入房间并记录回调；返回最近一次收到的远端文档与成员 */
