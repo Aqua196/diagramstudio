@@ -19,6 +19,7 @@
 | 单元测试 | Vitest + jsdom | `src/core` 全部纯函数：命令/历史、布局、zod 校验、Mermaid、协作 diff、配色对比度、i18n 骨架 | SPEC §8 |
 | 交互逻辑单测 | Vitest + jsdom（真实 zustand store） | 快捷加号、统一建节点/连线、焦点交接、多选改色、插件上手钩子、空白文档回收 | REDESIGN.md §7 |
 | 动效 | Vitest 假时钟 + Playwright（开启 / 减少动态效果两种偏好） | 动效规划、补间、对账→帧→清理全链路；页面转场、连线跟随、残影、不进历史、减少动态效果下零动效 | docs/MOTION.md §8 |
+| 集成测试 | Vitest（jsdom；协作用例为 Node 环境 + 真实协作服务）+ Playwright | 跨模块接口：导入×校验×存储、命令行工具×网页导入、状态层×命令×插件、协作适配器×协作服务、画布×导出、插件能力×导出对话框（13 个，课程实验 9） | `labs/lab9-integration-test/README.md` |
 | 端到端 | Playwright + @axe-core/playwright | SPEC §8 的 8 个场景；两档视口 1440×900 / 1280×720；默认以「减少动态效果」运行（截图/计数/axe 不受动画中间态影响） | `playwright.config.ts` |
 | 质量门 | eslint / tsc -b / vitest --coverage / vite build | lint 零警告、core 行/语句/函数/分支覆盖 ≥80% | `vitest.config.ts` 阈值 |
 
@@ -26,7 +27,19 @@
 
 ## 2. 单元测试清单（Vitest）
 
-实测（2026-10-21，动效批次后）：**26 个测试文件，152 个用例**（`pnpm test`，jsdom）。
+实测（2026-11-03，课程实验 8、9 之后）：**33 个测试文件，192 个用例**（`pnpm test`，含 11 个 Vitest 集成用例）。此前（2026-10-21，动效批次后）为 26 个文件、152 个用例。
+
+课程实验新增：
+
+| 文件 | 内容 |
+| --- | --- |
+| `src/core/io/mermaid.cases.test.ts` | Mermaid 导入导出按等价类与边界值设计的 21 个用例（正常 8、异常与边界 7、往返 6）；首次运行发现 7 个缺陷并已修复，见 `labs/lab8-unit-test/README.md` |
+| `src/plugins/erFieldButtons.test.tsx` | 测试驱动开发：ER 字段键位「无 → PK → FK → PK+FK → 无」，项目第一个组件测试 |
+| `labs/lab6-module/args.test.ts` | 命令行工具 mmd2json 的参数解析（实验 7 冲突解决后补充，复现过一次回归） |
+| `src/test/integration/*.integration.test.ts` | 11 个集成用例；协作用例在随机端口启动 `server/dev.mjs`，两个真实适配器经 WebSocket 交互 |
+| `src/core/collab/yjs.test.ts` | 新增「房间已有文档但没有节点」用例（Issue #2） |
+
+动效批次新增：
 
 动效批次新增：
 
@@ -153,7 +166,9 @@
 | `e2e/guide.spec.ts` | 用户手册 8 张配图（仅 1440 档） |
 | `e2e/motion.spec.ts` | 动效（开启动效）：m1 首页形变进编辑器 + 画布自绘、播完无残留类名/转场命名、焦点落在画布；m2 Tab 加子主题逐帧采样，连线终点相对节点锚点的偏移全程不变；m3 删除残影立即出现且 `aria-hidden`+`inert`、真实节点数立即正确；m4 自动布局一次撤销回到原位（动效不进历史）；m5 连线工具条改样式不重建不丢焦点；m6（减少动态效果）全程零转场、零动效类名、无在播动画 |
 
-共用助手：`e2e/helpers.ts`（新建/示例、拖入、把柄连线、选边、`settle` 等动效播完、`openWithoutTransition`）、`e2e/perf.ts`（CDP Trace 主线程统计）。实测（2026-10-21，动效批次后）：1440 档 40 个、1280 档 32 个（另 8 个手册配图在 1280 档跳过），全部通过。
+| `e2e/integration.spec.ts` | 课程实验 9 集成用例：I12 ER 图导出 SVG 不带编辑控件、样式与大小正确（Issue #1）；I13 只有声明 mermaid 的插件可选 Mermaid 导出 |
+
+共用助手：`e2e/helpers.ts`（新建/示例、拖入、把柄连线、选边、`settle` 等动效播完、`openWithoutTransition`）、`e2e/perf.ts`（CDP Trace 主线程统计）。m2 已改用 Playwright 虚拟时钟逐帧采样（Issue #3）。实测（2026-10-21，动效批次后）：1440 档 40 个、1280 档 32 个（另 8 个手册配图在 1280 档跳过），全部通过。
 
 > 测试环境注意：配置里为测真实帧耗加了 `--disable-frame-rate-limit --disable-gpu-vsync`。这种无头模式下一旦播过 View Transition，`requestAnimationFrame` 就不再触发（默认参数与真实浏览器无此问题），Playwright 的点击稳定性检查会一直等待；因此除 m1 外的动效用例与性能用例都「不经转场进入编辑器后再打开动效」。应用侧另有 1.5s 转场看门狗。
 
@@ -176,7 +191,9 @@ SPEC §8 场景对照（全部已实现）：
 
 `vitest run --coverage`（v8 provider，`include: ['src/core/**/*.ts']`；阈值 lines/statements/functions/branches ≥80%）。
 
-**实测（2026-10-21，UI 改版后）**：语句/行 **98.78%**，分支 **87.40%**，函数 **99.08%**。分目录：
+**实测（2026-11-03，课程实验 9 之后）**：语句/行 **98.92%**，分支 **90.57%**，函数 **99.17%**（分支覆盖率的提升主要来自实验 8 的 Mermaid 异常与边界用例：mermaid.ts 分支 80% → 92%）。
+
+2026-10-21（UI 改版后）：语句/行 98.78%，分支 87.40%，函数 99.08%。分目录：
 
 | 目录 | 行% | 说明 |
 | --- | --- | --- |
@@ -187,9 +204,24 @@ SPEC §8 场景对照（全部已实现）：
 | core/collab | 96.20 | diff、yjs（假 provider 驱动真 Y.Doc） |
 | core（根文件） | 96.47 | events、palette（新增 `resolveStroke` 已覆盖）；plugin/adapter/command/types 为纯类型声明文件 |
 
-**历史对照**：阶段 2 收口 93.7% → 阶段 5–7 跌至 71.49%（新增 IO/网络文件未配测）→ 批次 C 补齐至 98.43% → 改版后 98.78%。
+**历史对照**：阶段 2 收口 93.7% → 阶段 5–7 跌至 71.49%（新增 IO/网络文件未配测）→ 批次 C 补齐至 98.43% → 改版后 98.78% → 课程实验 9 后 98.92%（分支 90.57%）。
 
 ## 5. 质量门实测结果
+
+2026-11-03 对 `main` 执行（课程实验 9 之后）：
+
+| 命令 | 结果 | 说明 |
+| --- | --- | --- |
+| `pnpm lint` / `pnpm typecheck` | ✅ 0 error 0 warning / 通过 | |
+| `pnpm test` | ✅ 33 文件 192 用例全绿 | 含 11 个 Vitest 集成用例 |
+| `pnpm test:coverage` | ✅ 语句 98.92 / 分支 90.57 / 函数 99.17 | 阈值 80% 全过 |
+| `pnpm build` | ✅ 零警告 | |
+| `pnpm exec playwright test` | ✅ 76 通过、8 跳过、0 失败 | 42 个用例 × 双视口；跳过的 8 项为只在 1440 档生成的手册配图；性能门在负载高的容器中会波动，见下方说明 |
+| `pnpm lab6:quality` | ✅ 0 处超标 | Mermaid 导入导出模块：圈复杂度 ≤10、函数 ≤50 行 |
+
+端到端说明：性能门「110 节点自动布局补间 p95 < 50ms」在云端容器中单独重复 6 次通过 5 次，p95 在 14–60ms 之间波动；本轮修改未涉及画布补间，按环境负载处理，结论仍以 PERFORMANCE.md 的测量为准。
+
+以下为 2026-10-21 的记录：
 
 2026-10-21 对 `redesign/canvas-first` 执行（Node 22、pnpm 10.34.6）：
 
@@ -226,7 +258,7 @@ SPEC §8 场景对照（全部已实现）：
 | D-10 | 功能边界（已修复）| 导出图框标题栏曾覆盖图内容——合成时预留 TITLE_BLOCK_H+间距 | `src/io/export.ts` |
 | D-05 | 功能边界 | 协作撤销对「目标元素已被他人删除」的情况跳过该补丁（immer 对不存在路径的 replace 不生效），表现为该元素无法恢复 | 已在 SPEC §7 声明 |
 | D-06 | 功能边界 | 协作房间存内存、无鉴权、无持久化（服务重启文档丢失）；昵称为 `用户{clientID%100}` 自动生成，不可改 | `server/dev.mjs`、`yjs.ts` |
-| D-07 | 功能边界 | Mermaid 仅为子集：不支持 subgraph、classDef、样式指令、注释外的高级语法；不认识的行跳过并计数 | `src/core/io/mermaid.ts` |
+| D-07 | 功能边界 | Mermaid 仅为子集：subgraph / end 跳过（子图内节点平铺导入），classDef、style、click 等跳过并计数；支持分号分隔的语句与引号内的特殊符号 | `src/core/io/mermaid.ts` |
 | D-08 | 平台 | 桌面优先：窗口 <1024 显示整屏提示，不做移动端适配 | `i18n/zh.ts` app.windowTooNarrow |
 | D-11 | 交互（已修复，改版）| 空画布提示「双击放节点」，实际被 React Flow 双击缩放吞掉（放大到 200%） | `useCanvasWiring` `zoomOnDoubleClick:false` + stage34 用例 |
 | D-12 | 交互（已修复，改版）| 空文档放第一个节点被初始 fitView 拽到正中，第二个落点与之重叠 | `useCanvasWiring` `useFitOnOpen`；features 场景 3 覆盖 |
@@ -236,3 +268,8 @@ SPEC §8 场景对照（全部已实现）：
 | D-16 | 性能（已修复，改版）| 每条连线都挂 EdgeLabelRenderer，800 条边每帧 800 次 querySelector | `DsEdge.tsx` 按需挂载 |
 | D-17 | 文档（已修复，改版）| README 引用的两张截图不存在；首页思维导图缩略图错乱（未布局即缩画） | README 指向手册配图；`MiniDiagram` 先布局 |
 | D-18 | 性能边界 | 全览（500 节点全可见）拖拽每步主线程约 137ms：受控模式下每帧全量处理节点数组 | 见 PERFORMANCE.md §5，未修 |
+| D-19 | 导入导出（已修复，课程实验 8）| Mermaid 单元测试发现 7 个缺陷：subgraph 的 end 成了节点、分号语句被跳过、无声明的普通文字被导入、引号内连接器、#quot; 未还原、竖线标签、空文字导出为形状名 | `labs/lab8-unit-test/README.md` 表 5；提交 6c0182d |
+| D-20 | 导出（已修复，Issue #1）| ER 图导出带出字段行编辑控件、输入框变成默认样式 | `src/io/svgSubtree.ts`；集成用例 I12 |
+| D-21 | 协作（已修复，Issue #2）| 房间文档还没有节点时，后加入的成员用自己的空白文档覆盖它（标题、图类型被改） | `src/core/collab/yjs.ts`；集成用例 I11 |
+| D-22 | 测试（已修复，Issue #3）| 动效用例 m2 依赖实时帧数，低帧率环境下不稳定 | `e2e/motion.spec.ts` 改用虚拟时钟 |
+| D-23 | 可维护性 | 编码规范要求函数 ≤50 行，界面层有 22 个文件 27 处超出（多为 React 钩子内定义了多个事件处理函数）；领域层仅协作适配器 join 一处 | 课程实验 6 全项目扫描，记为技术债 |
